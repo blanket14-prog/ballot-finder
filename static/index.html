@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Ballot Return Finder</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{
+  --blue:#185FA5;--blue-dark:#0C447C;--blue-bg:#E6F1FB;
+  --orange:#C05A00;--orange-bg:#FDF3E3;
+  --green-bg:#EAF3DE;--green:#3B6D11;
+  --red-bg:#FCEBEB;--red:#A32D2D;
+  --warn:#D97706;
+  --text:#1a1a1a;--text-2:#555;--text-3:#888;
+  --border:#ddd;--border-light:#eee;
+  --bg:#fff;--bg-2:#f5f5f5;
+  --radius:12px;--radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;}
+#app{display:flex;flex-direction:column;height:100%;max-width:600px;margin:0 auto;background:var(--bg);}
+
+/* loading overlay */
+#loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:12px;}
+#loading-overlay.hidden{display:none;}
+.spinner{width:32px;height:32px;border:3px solid var(--border-light);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:14px;color:var(--text-3);}
+
+#top-bar{padding:12px 16px 8px;border-bottom:1px solid var(--border-light);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;}
+#top-bar h1{font-size:17px;font-weight:600;}
+#info-bar{display:flex;gap:14px;padding:7px 16px;border-bottom:1px solid var(--border-light);background:var(--bg-2);flex-shrink:0;}
+.info-link{font-size:12px;color:var(--blue);cursor:pointer;display:flex;align-items:center;gap:4px;}
+#data-bar{padding:6px 16px;background:var(--bg-2);border-bottom:1px solid var(--border-light);font-size:11px;color:var(--text-3);flex-shrink:0;line-height:1.5;}
+#data-bar strong{color:var(--text-2);}
+#geocoding-banner{padding:7px 16px;background:#EEF6FF;border-bottom:1px solid #C3DDF9;font-size:12px;color:var(--blue);flex-shrink:0;display:none;text-align:center;}
+
+#stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border-light);border-bottom:1px solid var(--border-light);flex-shrink:0;}
+.stat{background:var(--bg);padding:10px 12px;}
+.stat-label{font-size:10px;color:var(--text-3);margin-bottom:2px;text-transform:uppercase;letter-spacing:.03em;}
+.stat-value{font-size:20px;font-weight:600;}
+.stat-value.warn{color:var(--warn);}
+
+#search-bar{padding:12px 16px;border-bottom:1px solid var(--border-light);flex-shrink:0;position:relative;z-index:100;}
+.search-row{display:flex;gap:8px;margin-bottom:10px;position:relative;}
+#addr-input{flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:15px;outline:none;-webkit-appearance:none;}
+#addr-input:focus{border-color:var(--blue);}
+#search-btn{padding:10px 16px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:500;cursor:pointer;white-space:nowrap;}
+#search-btn:active{background:var(--blue-dark);}
+#search-btn:disabled{opacity:.6;}
+#autocomplete-list{position:absolute;top:100%;left:0;right:80px;background:var(--bg);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius-sm) var(--radius-sm);box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:200;display:none;max-height:220px;overflow-y:auto;}
+.ac-item{padding:11px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border-light);}
+.ac-item:last-child{border-bottom:none;}
+.ac-item:hover,.ac-item.sel{background:var(--blue-bg);}
+.ac-main{font-weight:500;}
+.ac-sub{font-size:11px;color:var(--text-3);margin-top:1px;}
+
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.filter-row+.filter-row{margin-top:6px;}
+.filter-label{font-size:11px;color:var(--text-3);min-width:38px;}
+.chip{font-size:12px;padding:5px 11px;border-radius:20px;border:1px solid var(--border);background:var(--bg);color:var(--text-2);cursor:pointer;user-select:none;white-space:nowrap;}
+.chip.active{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);font-weight:500;}
+.chip.green{background:var(--green-bg);color:var(--green);border-color:#b2d98a;}
+.chip.orange{background:var(--orange-bg);color:var(--orange);border-color:#f0c060;}
+
+#tab-bar{display:none;flex-shrink:0;border-bottom:1px solid var(--border-light);}
+#tab-bar.visible{display:flex;}
+.tab-btn{flex:1;padding:11px;font-size:14px;font-weight:500;color:var(--text-3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);}
+
+#content{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+#map-view{display:none;flex-direction:column;flex:1;overflow:hidden;}
+#map-view.visible{display:flex;}
+#map{flex:1;min-height:0;}
+#roster-panel{flex-shrink:0;max-height:42vh;overflow-y:auto;border-top:1px solid var(--border-light);}
+.roster-empty{padding:20px 16px;text-align:center;font-size:13px;color:var(--text-3);}
+.roster-header{padding:12px 16px;border-bottom:1px solid var(--border-light);position:sticky;top:0;background:var(--bg);z-index:10;}
+.roster-addr{font-size:15px;font-weight:600;margin-bottom:2px;}
+.roster-meta{font-size:12px;color:var(--text-3);margin-bottom:6px;}
+.roster-badges{display:flex;gap:5px;flex-wrap:wrap;}
+.badge{font-size:11px;padding:2px 8px;border-radius:10px;white-space:nowrap;font-weight:500;}
+.badge.apt{background:var(--orange-bg);color:var(--orange);}
+.badge.home{background:var(--green-bg);color:var(--green);}
+.badge.dem{background:var(--blue-bg);color:var(--blue);}
+.badge.rep{background:var(--red-bg);color:var(--red);}
+.badge.una{background:var(--bg-2);color:var(--text-3);}
+.roster-row{display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border-light);gap:10px;}
+.roster-row:last-child{border-bottom:none;}
+.roster-left{flex:1;}
+.roster-name{font-size:14px;font-weight:500;}
+.roster-unit{font-size:11px;color:var(--text-3);margin-top:1px;}
+.roster-right{text-align:right;flex-shrink:0;}
+.roster-party{font-size:12px;color:var(--text-3);}
+.not-returned{font-size:11px;color:var(--warn);font-weight:600;margin-top:1px;}
+.more-btn{display:block;width:100%;padding:12px;text-align:center;font-size:13px;color:var(--blue);background:none;border:none;border-top:1px solid var(--border-light);cursor:pointer;font-weight:500;}
+
+#list-view{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#list-view.visible{display:block;}
+.list-header{padding:10px 16px;font-size:12px;color:var(--text-3);border-bottom:1px solid var(--border-light);background:var(--bg-2);position:sticky;top:0;z-index:5;}
+.hh-card{padding:12px 16px;border-bottom:1px solid var(--border-light);background:var(--bg);cursor:pointer;}
+.hh-card:active{background:var(--bg-2);}
+.hh-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;}
+.hh-rank{font-size:12px;color:var(--text-3);min-width:24px;padding-top:2px;}
+.hh-addr-block{flex:1;}
+.hh-street{font-size:15px;font-weight:600;}
+.hh-city{font-size:12px;color:var(--text-3);margin-top:1px;}
+.hh-badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;}
+.hh-dist{font-size:12px;color:var(--text-3);flex-shrink:0;padding-top:2px;}
+.hh-voters{border-top:1px solid var(--border-light);padding-top:8px;display:flex;flex-direction:column;gap:6px;}
+.voter-row{display:flex;align-items:center;gap:6px;font-size:13px;}
+.voter-name{flex:1;font-weight:500;}
+.voter-unit{font-size:11px;color:var(--text-3);}
+.voter-party{font-size:12px;color:var(--text-3);flex-shrink:0;}
+.voter-status{font-size:11px;color:var(--warn);font-weight:600;flex-shrink:0;}
+.list-more-note{font-size:12px;color:var(--text-3);padding-top:2px;}
+
+#empty-state{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:2rem;text-align:center;color:var(--text-3);}
+#empty-state svg{width:44px;height:44px;opacity:.35;}
+#empty-state p{font-size:14px;line-height:1.6;}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:flex-end;}
+.modal-overlay.open{display:flex;}
+@media(min-width:480px){.modal-overlay{align-items:center;justify-content:center;}}
+.modal-sheet{background:var(--bg);border-radius:var(--radius) var(--radius) 0 0;padding:20px 20px 36px;width:100%;max-height:85vh;overflow-y:auto;position:relative;}
+@media(min-width:480px){.modal-sheet{border-radius:var(--radius);max-width:500px;padding:24px;}}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;}
+@media(min-width:480px){.modal-handle{display:none;}}
+.modal-close{position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:50%;background:var(--bg-2);border:none;cursor:pointer;font-size:16px;color:var(--text-2);display:flex;align-items:center;justify-content:center;}
+.modal-title{font-size:17px;font-weight:600;margin-bottom:14px;padding-right:32px;}
+.modal-body{font-size:13px;color:var(--text-2);line-height:1.7;}
+.modal-body p{margin-bottom:10px;}
+.modal-body ul{padding-left:18px;margin-bottom:10px;}
+.modal-body li{margin-bottom:6px;}
+.modal-body strong{color:var(--text);}
+.modal-section{margin-bottom:16px;}
+.modal-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:6px;}
+
+#footer{padding:8px 16px;font-size:11px;color:var(--text-3);border-top:1px solid var(--border-light);text-align:center;flex-shrink:0;background:var(--bg-2);}
+</style>
+</head>
+<body>
+
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Loading…</div>
+</div>
+
+<div id="app">
+  <div id="top-bar">
+    <h1>📋 Ballot Return Finder</h1>
+  </div>
+
+  <div id="info-bar">
+    <span class="info-link" onclick="openModal('data-modal')">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><line x1="8" y1="7.5" x2="8" y2="11" stroke-linecap="round"/><circle cx="8" cy="5.5" r=".6" fill="currentColor" stroke="none"/></svg>
+      Data source
+    </span>
+    <span class="info-link" onclick="openModal('safety-modal')">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L14 4.5v4.5c0 3-2.5 5-6 5.5C2.5 14 0 12 0 9V4.5z" transform="translate(1,0)"/><path d="M5.5 8l2 2 3-3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Safety &amp; access
+    </span>
+  </div>
+
+  <div id="data-bar">
+    Data: <strong id="data-filename">—</strong> &nbsp;·&nbsp; Updated: <strong id="data-updated">—</strong>
+  </div>
+
+  <div id="geocoding-banner" id="geocoding-banner">
+    ⏳ <span id="geocoding-text">Geocoding addresses in background — searches will improve over time</span>
+  </div>
+
+  <div id="stats-row">
+    <div class="stat"><div class="stat-label">Total voters</div><div class="stat-value" id="stat-total">—</div></div>
+    <div class="stat"><div class="stat-label">Not returned</div><div class="stat-value warn" id="stat-pending">—</div></div>
+    <div class="stat"><div class="stat-label">Return rate</div><div class="stat-value" id="stat-rate">—</div></div>
+  </div>
+
+  <div id="search-bar">
+    <div class="search-row">
+      <input type="text" id="addr-input" placeholder="Enter a Denver address…"
+        autocomplete="off" autocorrect="off" spellcheck="false"
+        oninput="onInput()" onkeydown="onKeydown(event)"
+        onfocus="onFocus()" onblur="onBlur()"/>
+      <button id="search-btn" onclick="handleSearch()">Search</button>
+      <div id="autocomplete-list"></div>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">Party</span>
+      <span class="chip active" data-party="all" onclick="setParty('all')">All</span>
+      <span class="chip" data-party="DEM" onclick="setParty('DEM')">Democrat</span>
+      <span class="chip" data-party="REP" onclick="setParty('REP')">Republican</span>
+      <span class="chip" data-party="UAF" onclick="setParty('UAF')">Unaffiliated</span>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">Access</span>
+      <span class="chip active" data-access="all" onclick="setAccess('all')">All</span>
+      <span class="chip green" data-access="accessible" onclick="setAccess('accessible')">Houses</span>
+      <span class="chip orange" data-access="inaccessible" onclick="setAccess('inaccessible')">Apartments</span>
+    </div>
+  </div>
+
+  <div id="tab-bar">
+    <button class="tab-btn active" id="tab-map" onclick="switchTab('map')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      Map
+    </button>
+    <button class="tab-btn" id="tab-list" onclick="switchTab('list')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      List
+    </button>
+  </div>
+
+  <div id="content">
+    <div id="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      <p>Enter a Denver address above to find nearby voters who haven't returned their ballot.</p>
+    </div>
+    <div id="map-view">
+      <div id="map"></div>
+      <div id="roster-panel">
+        <div id="roster-content"><div class="roster-empty">Tap a pin to see who lives there</div></div>
+      </div>
+    </div>
+    <div id="list-view">
+      <div class="list-header" id="list-header">0 addresses</div>
+      <div id="household-list"></div>
+    </div>
+  </div>
+
+  <div id="footer">Voter data is public record under C.R.S. 1-2-227 · Denver Elections Division</div>
+</div>
+
+<!-- Data modal -->
+<div class="modal-overlay" id="data-modal" onclick="overlayClick(event,'data-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('data-modal')">✕</button>
+    <div class="modal-title">📊 Data Source</div>
+    <div class="modal-body">
+      <div class="modal-section">
+        <div class="modal-section-title">Source</div>
+        <p>Denver Elections Division — <strong>Voters With Ballots List (CE-068)</strong>, downloaded from <strong>denvergov.org</strong>.</p>
+        <p>File: <strong id="modal-filename">—</strong><br/>Loaded: <strong id="modal-loaded">—</strong></p>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">About this data</div>
+        <p>This is publicly available data published by the City and County of Denver under Colorado open records law (C.R.S. 1-2-227). Only voters whose ballot has <strong>not yet been received</strong> are shown. The data is refreshed each morning during the election cycle.</p>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">What this data does NOT include</div>
+        <ul>
+          <li>How anyone voted</li>
+          <li>Social Security numbers</li>
+          <li>Driver's license numbers</li>
+          <li>Email addresses or signatures</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Safety modal -->
+<div class="modal-overlay" id="safety-modal" onclick="overlayClick(event,'safety-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('safety-modal')">✕</button>
+    <div class="modal-title">🛡️ Safety &amp; Access Policy</div>
+    <div class="modal-body">
+      <p>Accessibility classifications are <strong>estimates based on address format only</strong> and do not reflect actual on-the-ground conditions.</p>
+      <div class="modal-section">
+        <div class="modal-section-title">All addresses</div>
+        <ul>
+          <li><strong>Always seek permission</strong> from the property owner or manager before entering private property.</li>
+          <li><strong>Obey all posted signs.</strong> No-soliciting and no-trespassing signs must be respected.</li>
+          <li><strong>If you do not feel safe, leave immediately.</strong></li>
+        </ul>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Houses marked "Accessible"</div>
+        <ul>
+          <li>Does <strong>not</strong> guarantee safe or legal access.</li>
+          <li>May be part of a <strong>gated community</strong> or have a locked gate, guard dog, or no-trespassing sign.</li>
+          <li>Verify conditions before approaching.</li>
+        </ul>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Apartments marked "Inaccessible"</div>
+        <ul>
+          <li>Multi-unit buildings frequently require buzzer or key access.</li>
+          <li>Do not enter a secured building without permission from a resident or property manager.</li>
+        </ul>
+      </div>
+      <p style="font-size:12px;color:#999;margin-top:4px;">These classifications are a convenience only and do not constitute legal advice. Contact your campaign coordinator with questions.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ────────────────────────────────────────────────────────
+let partyFilter = 'all', accessFilter = 'all';
+let lastResults = [], filteredResults = [];
+let mapInstance = null, markers = [], originMarker = null;
+let rosterState = { hh: null, shown: 0 };
+let lastOrigin = null;
+const PAGE = 10;
+let acResults = [], acIdx = -1, acTimer = null;
+let statusTimer = null;
+
+// ── INIT ─────────────────────────────────────────────────────────
+async function init() {
+  await checkStatus();
+  document.getElementById('loading-overlay').classList.add('hidden');
+  // Poll status every 30s to update geocoding banner
+  statusTimer = setInterval(checkStatus, 30000);
+}
+
+async function checkStatus() {
+  try {
+    const r = await fetch('/api/status');
+    const s = await r.json();
+    if (s.hasData) {
+      document.getElementById('stat-total').textContent = s.total.toLocaleString();
+      document.getElementById('stat-pending').textContent = s.pending.toLocaleString();
+      document.getElementById('stat-rate').textContent = s.returnRate + '%';
+      document.getElementById('data-filename').textContent = s.filename;
+      document.getElementById('data-updated').textContent = s.loadedAt;
+      document.getElementById('modal-filename').textContent = s.filename;
+      document.getElementById('modal-loaded').textContent = s.loadedAt;
+    } else {
+      document.getElementById('data-bar').textContent = 'No data loaded yet — contact your coordinator';
+    }
+    const banner = document.getElementById('geocoding-banner');
+    if (s.loading && s.loadProgress) {
+      banner.style.display = 'block';
+      document.getElementById('geocoding-text').textContent = s.loadProgress;
+    } else {
+      banner.style.display = 'none';
+    }
+  } catch(e) {}
+}
+
+// ── AUTOCOMPLETE ─────────────────────────────────────────────────
+function onInput() {
+  clearTimeout(acTimer);
+  const v = document.getElementById('addr-input').value.trim();
+  if (v.length < 3) { closeAC(); return; }
+  acTimer = setTimeout(() => fetchAC(v), 300);
+}
+
+async function fetchAC(q) {
+  try {
+    const r = await fetch('/api/autocomplete?q=' + encodeURIComponent(q));
+    acResults = await r.json();
+    renderAC();
+  } catch(e) { closeAC(); }
+}
+
+function renderAC() {
+  const list = document.getElementById('autocomplete-list');
+  if (!acResults.length) { closeAC(); return; }
+  list.style.display = 'block'; acIdx = -1;
+  list.innerHTML = acResults.map((r, i) =>
+    `<div class="ac-item" data-i="${i}" onmousedown="selectAC(${i})">
+      <div class="ac-main">${r.main}</div>
+      <div class="ac-sub">Denver, CO</div>
+    </div>`
+  ).join('');
+}
+
+function selectAC(i) {
+  const r = acResults[i];
+  document.getElementById('addr-input').value = r.main;
+  lastOrigin = { lat: r.lat, lng: r.lng };
+  closeAC();
+  doSearch(lastOrigin);
+}
+
+function closeAC() {
+  document.getElementById('autocomplete-list').style.display = 'none';
+  acResults = []; acIdx = -1;
+}
+
+function onKeydown(e) {
+  const list = document.getElementById('autocomplete-list');
+  if (list.style.display === 'none') { if(e.key==='Enter') handleSearch(); return; }
+  const items = list.querySelectorAll('.ac-item');
+  if (e.key === 'ArrowDown') { e.preventDefault(); acIdx = Math.min(acIdx+1,items.length-1); items.forEach((el,i)=>el.classList.toggle('sel',i===acIdx)); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); acIdx = Math.max(acIdx-1,-1); items.forEach((el,i)=>el.classList.toggle('sel',i===acIdx)); }
+  else if (e.key === 'Enter' && acIdx >= 0) { e.preventDefault(); selectAC(acIdx); }
+  else if (e.key === 'Escape') closeAC();
+}
+function onFocus() { if (acResults.length) renderAC(); }
+function onBlur() { setTimeout(closeAC, 150); }
+
+// ── SEARCH ───────────────────────────────────────────────────────
+async function handleSearch() {
+  closeAC();
+  const addr = document.getElementById('addr-input').value.trim();
+  if (!addr) { alert('Please enter a Denver address.'); return; }
+
+  const btn = document.getElementById('search-btn');
+  btn.textContent = 'Finding…'; btn.disabled = true;
+
+  try {
+    let origin = lastOrigin;
+    if (!origin) {
+      const r = await fetch('/api/geocode?address=' + encodeURIComponent(addr));
+      if (!r.ok) {
+        alert('Could not find that address in Denver. Try adding the street type, e.g. "552 S Pennsylvania St".');
+        btn.textContent = 'Search'; btn.disabled = false;
+        return;
+      }
+      origin = await r.json();
+      lastOrigin = origin;
+    }
+    await doSearch(origin);
+  } finally {
+    btn.textContent = 'Search'; btn.disabled = false;
+    document.getElementById('addr-input').blur();
+  }
+}
+
+async function doSearch(origin) {
+  const btn = document.getElementById('search-btn');
+  btn.textContent = 'Searching…'; btn.disabled = true;
+  try {
+    const url = `/api/search?lat=${origin.lat}&lng=${origin.lng}&party=${partyFilter}&access=${accessFilter}`;
+    const r = await fetch(url);
+    const data = await r.json();
+    lastResults = data.results || [];
+    filteredResults = lastResults;
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('tab-bar').classList.add('visible');
+    renderAll(lastResults, origin);
+    switchTab('map');
+  } catch(e) {
+    alert('Search failed. Please try again.');
+  }
+  btn.textContent = 'Search'; btn.disabled = false;
+}
+
+// ── FILTERS ──────────────────────────────────────────────────────
+function setParty(p) {
+  partyFilter = p;
+  document.querySelectorAll('.chip[data-party]').forEach(c=>c.classList.toggle('active',c.dataset.party===p));
+  if (lastOrigin) doSearch(lastOrigin);
+}
+function setAccess(a) {
+  accessFilter = a;
+  document.querySelectorAll('.chip[data-access]').forEach(c=>c.classList.toggle('active',c.dataset.access===a));
+  if (lastOrigin) doSearch(lastOrigin);
+}
+function switchTab(t) {
+  document.getElementById('tab-map').classList.toggle('active',t==='map');
+  document.getElementById('tab-list').classList.toggle('active',t==='list');
+  document.getElementById('map-view').classList.toggle('visible',t==='map');
+  document.getElementById('list-view').classList.toggle('visible',t==='list');
+  if (t==='map' && mapInstance) setTimeout(()=>mapInstance.invalidateSize(),60);
+}
+
+// ── RENDER ───────────────────────────────────────────────────────
+function renderAll(results, origin) {
+  renderMap(results, origin);
+  renderList(results);
+  document.getElementById('roster-content').innerHTML = '<div class="roster-empty">Tap a pin to see who lives there</div>';
+  rosterState = { hh: null, shown: 0 };
+}
+
+// ── MAP ──────────────────────────────────────────────────────────
+function makeIcon(hh, highlight) {
+  const bg = hh.apt ? '#C05A00' : '#185FA5';
+  const bd = hh.apt ? '#8B3D00' : '#0C447C';
+  const count = hh.voters.length;
+  const sz = highlight ? 17 : count > 1 ? 14 : 11;
+  const label = count > 1 ? String(count) : '';
+  return L.divIcon({
+    html: `<svg xmlns='http://www.w3.org/2000/svg' width='${sz*2}' height='${sz*2}'><circle cx='${sz}' cy='${sz}' r='${sz-1}' fill='${bg}' stroke='${bd}' stroke-width='2'/>${label?`<text x='${sz}' y='${sz+4}' text-anchor='middle' font-size='${sz<=12?9:11}' font-family='-apple-system,sans-serif' font-weight='bold' fill='white'>${label}</text>`:''}</svg>`,
+    className:'', iconSize:[sz*2,sz*2], iconAnchor:[sz,sz]
+  });
+}
+function makeOriginIcon() {
+  return L.divIcon({ html:`<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><circle cx='12' cy='12' r='9' fill='#1D9E75' stroke='white' stroke-width='2.5'/><circle cx='12' cy='12' r='4' fill='white'/></svg>`, className:'', iconSize:[24,24], iconAnchor:[12,12] });
+}
+function renderMap(results, origin) {
+  if (!mapInstance) {
+    mapInstance = L.map('map', { zoomControl:true, center:[39.7392,-104.9903], zoom:13, tap:true });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom:19 }).addTo(mapInstance);
+  }
+  markers.forEach(m=>mapInstance.removeLayer(m)); markers=[];
+  if (originMarker) mapInstance.removeLayer(originMarker);
+  if (origin) originMarker = L.marker([origin.lat,origin.lng],{icon:makeOriginIcon(),zIndexOffset:1000}).addTo(mapInstance);
+  results.forEach((hh,i)=>{
+    const m = L.marker([hh.lat,hh.lng],{icon:makeIcon(hh,false)}).addTo(mapInstance);
+    m.on('click',()=>showRoster(hh,i));
+    markers.push(m);
+  });
+  if (origin && results.length) {
+    const pts = results.map(h=>[h.lat,h.lng]);
+    const b = L.latLngBounds(pts); b.extend([origin.lat,origin.lng]);
+    mapInstance.fitBounds(b,{padding:[40,40]});
+  } else if (origin) { mapInstance.setView([origin.lat,origin.lng],15); }
+}
+
+// ── ROSTER ───────────────────────────────────────────────────────
+function showRoster(hh, idx) {
+  markers.forEach((m,i)=>{ if(results[i]) m.setIcon(makeIcon(lastResults[i],i===idx)); });
+  rosterState = { hh, shown: Math.min(PAGE, hh.voters.length) };
+  renderRoster();
+}
+function renderRoster() {
+  const {hh, shown} = rosterState; if (!hh) return;
+  const ab = hh.apt ? `<span class="badge apt">Apt — may be inaccessible</span>` : `<span class="badge home">House — verify before entry</span>`;
+  const pb = [...new Set(hh.voters.map(v=>v.party))].map(p=>`<span class="badge ${pClass(p)}">${pLabel(p)}</span>`).join(' ');
+  const rows = hh.voters.slice(0,shown).map(v=>
+    `<div class="roster-row"><div class="roster-left"><div class="roster-name">${v.name}</div>${v.unit?`<div class="roster-unit">Unit ${v.unit}</div>`:''}</div><div class="roster-right"><div class="roster-party">${pLabel(v.party)}</div><div class="not-returned">Not returned</div></div></div>`
+  ).join('');
+  const rem = hh.voters.length - shown;
+  const more = rem > 0 ? `<button class="more-btn" onclick="loadMore()">Show ${Math.min(rem,PAGE)} more &nbsp;(${rem} remaining)</button>` : '';
+  document.getElementById('roster-content').innerHTML =
+    `<div class="roster-header"><div class="roster-addr">${hh.buildingAddress}</div><div class="roster-meta">${hh.city}, ${hh.state} ${hh.zip} · ${dStr(hh.dist)} away · ${hh.voters.length} voter${hh.voters.length!==1?'s':''}</div><div class="roster-badges">${ab} ${pb}</div></div><div class="roster-list">${rows}</div>${more}`;
+  document.getElementById('roster-panel').scrollTop = 0;
+}
+function loadMore() { rosterState.shown = Math.min(rosterState.shown+PAGE, rosterState.hh.voters.length); renderRoster(); }
+
+// ── LIST ─────────────────────────────────────────────────────────
+function renderList(results) {
+  document.getElementById('list-header').textContent = `${results.length} address${results.length!==1?'es':''}`;
+  const ul = document.getElementById('household-list');
+  if (!results.length) { ul.innerHTML=`<div style="padding:2rem;text-align:center;color:#888;font-size:14px;">No results match the current filters.</div>`; return; }
+  ul.innerHTML = results.map((hh,i)=>{
+    const ab = hh.apt?`<span class="badge apt">Apt</span>`:`<span class="badge home">House</span>`;
+    const pb = [...new Set(hh.voters.map(v=>v.party))].map(p=>`<span class="badge ${pClass(p)}">${pLabel(p)}</span>`).join(' ');
+    const show = hh.voters.slice(0,5);
+    const more = hh.voters.length>5?`<div class="list-more-note">+ ${hh.voters.length-5} more — tap to see all</div>`:'';
+    const vrows = show.map(v=>`<div class="voter-row"><span class="voter-name">${v.name}${v.unit?` <span class="voter-unit">Unit ${v.unit}</span>`:''}</span><span class="voter-party">${pLabel(v.party)}</span><span class="voter-status">Not returned</span></div>`).join('');
+    return `<div class="hh-card" onclick="focusMarker(${i})"><div class="hh-top"><span class="hh-rank">#${i+1}</span><div class="hh-addr-block"><div class="hh-street">${hh.buildingAddress}</div><div class="hh-city">${hh.city}, ${hh.state} ${hh.zip}</div><div class="hh-badges">${ab}${pb}</div></div><span class="hh-dist">${dStr(hh.dist)}</span></div><div class="hh-voters">${vrows}${more}</div></div>`;
+  }).join('');
+}
+function focusMarker(i) {
+  if (!mapInstance||!markers[i]) return;
+  switchTab('map');
+  setTimeout(()=>{ mapInstance.invalidateSize(); mapInstance.setView(markers[i].getLatLng(),17); showRoster(lastResults[i],i); },80);
+}
+
+// ── UTILS ────────────────────────────────────────────────────────
+function pLabel(p){return p==='DEM'?'Democrat':p==='REP'?'Republican':'Unaffiliated';}
+function pClass(p){return p==='DEM'?'dem':p==='REP'?'rep':'una';}
+function dStr(d){return d<0.1?`${Math.round(d*5280)} ft`:`${d.toFixed(2)} mi`;}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function overlayClick(e,id){if(e.target===document.getElementById(id))closeModal(id);}
+
+init();
+</script>
+</body>
+</html>

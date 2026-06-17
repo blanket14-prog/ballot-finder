@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ballot Finder — Admin</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#1a1a1a;padding:32px 20px;}
+.card{background:#fff;border-radius:12px;padding:28px;max-width:520px;margin:0 auto;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+h1{font-size:20px;font-weight:600;margin-bottom:4px;}
+.sub{font-size:13px;color:#888;margin-bottom:28px;}
+.field{margin-bottom:18px;}
+label{display:block;font-size:13px;font-weight:500;margin-bottom:6px;color:#444;}
+input[type=password],input[type=file]{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:15px;outline:none;}
+input[type=password]:focus{border-color:#185FA5;}
+.file-area{border:2px dashed #ddd;border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;}
+.file-area:hover{border-color:#185FA5;background:#E6F1FB;}
+.file-area.has-file{border-color:#3B6D11;border-style:solid;background:#EAF3DE;}
+.file-area p{font-size:13px;color:#888;margin-top:6px;}
+.file-area .fname{font-size:14px;font-weight:600;color:#3B6D11;margin-top:4px;}
+input[type=file]{display:none;}
+button{width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;margin-top:8px;}
+button:hover{background:#0C447C;}
+button:disabled{opacity:.5;cursor:not-allowed;}
+.result{margin-top:20px;padding:14px 16px;border-radius:8px;font-size:14px;display:none;}
+.result.success{background:#EAF3DE;color:#3B6D11;border:1px solid #b2d98a;}
+.result.error{background:#FCEBEB;color:#A32D2D;border:1px solid #f0b8b8;}
+.progress{margin-top:16px;display:none;}
+.bar-wrap{background:#eee;border-radius:4px;height:6px;overflow:hidden;margin-bottom:6px;}
+.bar{height:100%;background:#185FA5;width:0%;transition:width .3s;}
+.prog-label{font-size:12px;color:#888;text-align:center;}
+.status-box{margin-top:20px;background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:14px 16px;font-size:13px;color:#555;}
+.status-box h3{font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:8px;}
+.status-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;}
+.status-row:last-child{border-bottom:none;}
+.status-val{font-weight:500;color:#1a1a1a;}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>📋 Ballot Finder — Admin</h1>
+  <p class="sub">Upload a new CE-068 data file each morning to refresh the volunteer tool.</p>
+
+  <div class="status-box" id="status-box" style="display:none">
+    <h3>Current data</h3>
+    <div class="status-row"><span>File</span><span class="status-val" id="s-file">—</span></div>
+    <div class="status-row"><span>Loaded</span><span class="status-val" id="s-loaded">—</span></div>
+    <div class="status-row"><span>Total voters</span><span class="status-val" id="s-total">—</span></div>
+    <div class="status-row"><span>Not returned</span><span class="status-val" id="s-pending">—</span></div>
+    <div class="status-row"><span>Return rate</span><span class="status-val" id="s-rate">—</span></div>
+    <div class="status-row" id="geo-row" style="display:none"><span>Geocoding</span><span class="status-val" id="s-geo" style="color:#185FA5">—</span></div>
+  </div>
+
+  <div style="margin-top:24px;">
+    <div class="field">
+      <label>Admin password</label>
+      <input type="password" id="password" placeholder="Enter admin password"/>
+    </div>
+
+    <div class="field">
+      <label>CE-068 voter file</label>
+      <div class="file-area" id="file-area" onclick="document.getElementById('file-input').click()">
+        <input type="file" id="file-input" accept=".txt,.csv" onchange="fileChosen(this)"/>
+        <div style="font-size:24px">📄</div>
+        <p>Tap to select the CE-068 file<br/><span style="font-size:11px">(CE-068_Voters_With_Ballots_...txt)</span></p>
+        <div class="fname" id="fname" style="display:none"></div>
+      </div>
+    </div>
+
+    <button id="upload-btn" onclick="upload()" disabled>Upload &amp; Refresh Data</button>
+
+    <div class="progress" id="progress">
+      <div class="bar-wrap"><div class="bar" id="bar"></div></div>
+      <div class="prog-label" id="prog-label">Uploading…</div>
+    </div>
+
+    <div class="result" id="result"></div>
+  </div>
+</div>
+
+<script>
+let selectedFile = null;
+
+async function loadStatus() {
+  try {
+    const r = await fetch('/api/status');
+    const s = await r.json();
+    if (s.hasData) {
+      document.getElementById('status-box').style.display = 'block';
+      document.getElementById('s-file').textContent = s.filename;
+      document.getElementById('s-loaded').textContent = s.loadedAt;
+      document.getElementById('s-total').textContent = s.total.toLocaleString();
+      document.getElementById('s-pending').textContent = s.pending.toLocaleString();
+      document.getElementById('s-rate').textContent = s.returnRate + '%';
+      const geoRow = document.getElementById('geo-row');
+      if (s.loading && s.loadProgress) {
+        geoRow.style.display = 'flex';
+        document.getElementById('s-geo').textContent = s.loadProgress;
+      } else {
+        geoRow.style.display = 'none';
+      }
+    }
+  } catch(e) {}
+}
+
+function fileChosen(input) {
+  if (!input.files[0]) return;
+  selectedFile = input.files[0];
+  const area = document.getElementById('file-area');
+  area.classList.add('has-file');
+  const fn = document.getElementById('fname');
+  fn.style.display = 'block';
+  fn.textContent = selectedFile.name + ' (' + fmtSize(selectedFile.size) + ')';
+  document.getElementById('upload-btn').disabled = false;
+}
+
+function fmtSize(b) { return b > 1048576 ? (b/1048576).toFixed(1)+' MB' : (b/1024).toFixed(0)+' KB'; }
+
+async function upload() {
+  const password = document.getElementById('password').value;
+  if (!password) { alert('Please enter the admin password.'); return; }
+  if (!selectedFile) { alert('Please select a file.'); return; }
+
+  const btn = document.getElementById('upload-btn');
+  btn.disabled = true; btn.textContent = 'Uploading…';
+  document.getElementById('progress').style.display = 'block';
+  document.getElementById('result').style.display = 'none';
+
+  const formData = new FormData();
+  formData.append('password', password);
+  formData.append('file', selectedFile);
+
+  // Simulate upload progress
+  let pct = 0;
+  const progInterval = setInterval(() => {
+    pct = Math.min(pct + 2, 90);
+    document.getElementById('bar').style.width = pct + '%';
+    document.getElementById('prog-label').textContent = pct < 30 ? 'Uploading file…' : pct < 70 ? 'Parsing voter records…' : 'Almost done…';
+  }, 300);
+
+  try {
+    const r = await fetch('/admin', { method: 'POST', body: formData });
+    clearInterval(progInterval);
+    document.getElementById('bar').style.width = '100%';
+
+    const data = await r.json();
+    const resultEl = document.getElementById('result');
+    resultEl.style.display = 'block';
+
+    if (r.ok && data.success) {
+      resultEl.className = 'result success';
+      resultEl.innerHTML = `✅ <strong>Data loaded successfully!</strong><br/>
+        ${data.total.toLocaleString()} total voters · ${data.pending.toLocaleString()} not returned · ${Math.round(data.returned/data.total*100)}% return rate<br/>
+        <span style="font-size:12px;color:#555;margin-top:4px;display:block;">Geocoding is running in the background — the map will improve over the next hour.</span>`;
+      document.getElementById('prog-label').textContent = 'Done!';
+      loadStatus();
+    } else {
+      resultEl.className = 'result error';
+      resultEl.textContent = '❌ Error: ' + (data.error || 'Upload failed');
+      document.getElementById('prog-label').textContent = 'Failed';
+    }
+  } catch(e) {
+    clearInterval(progInterval);
+    const resultEl = document.getElementById('result');
+    resultEl.style.display = 'block';
+    resultEl.className = 'result error';
+    resultEl.textContent = '❌ Upload failed: ' + e.message;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Upload & Refresh Data';
+}
+
+loadStatus();
+setInterval(loadStatus, 15000);
+</script>
+</body>
+</html>
