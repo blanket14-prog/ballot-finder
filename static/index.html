@@ -188,16 +188,13 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
     </div>
     <div class="filter-row">
       <span class="filter-label">Party</span>
-      <span class="chip active" data-party="all" onclick="setParty('all')">All</span>
-      <span class="chip" data-party="DEM" onclick="setParty('DEM')">Democrat</span>
-      <span class="chip" data-party="REP" onclick="setParty('REP')">Republican</span>
-      <span class="chip" data-party="UAF" onclick="setParty('UAF')">Unaffiliated</span>
+      <span class="chip active" data-party="DEM" onclick="toggleParty('DEM')">Democrat</span>
+      <span class="chip active" data-party="UAF" onclick="toggleParty('UAF')">Unaffiliated</span>
     </div>
     <div class="filter-row">
       <span class="filter-label">Access</span>
-      <span class="chip active" data-access="all" onclick="setAccess('all')">All</span>
-      <span class="chip green" data-access="accessible" onclick="setAccess('accessible')">Houses</span>
-      <span class="chip orange" data-access="inaccessible" onclick="setAccess('inaccessible')">Apartments</span>
+      <span class="chip green active" data-access="accessible" onclick="toggleAccess('accessible')">Houses</span>
+      <span class="chip orange active" data-access="inaccessible" onclick="toggleAccess('inaccessible')">Apartments</span>
     </div>
   </div>
 
@@ -299,7 +296,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
 
 <script>
 // ── STATE ────────────────────────────────────────────────────────
-let partyFilter = 'all', accessFilter = 'all';
+let partyFilters = new Set(['DEM','UAF']), accessFilters = new Set(['accessible','inaccessible']);
 let lastResults = [], filteredResults = [];
 let mapInstance = null, markers = [], originMarker = null;
 let rosterState = { hh: null, shown: 0 };
@@ -426,7 +423,9 @@ async function doSearch(origin) {
   const btn = document.getElementById('search-btn');
   btn.textContent = 'Searching…'; btn.disabled = true;
   try {
-    const url = `/api/search?lat=${origin.lat}&lng=${origin.lng}&party=${partyFilter}&access=${accessFilter}`;
+    const partyParam = [...partyFilters].join(',');
+  const accessParam = [...accessFilters].join(',');
+  const url = `/api/search?lat=${origin.lat}&lng=${origin.lng}&party=${partyParam}&access=${accessParam}`;
     const r = await fetch(url);
     const data = await r.json();
     lastResults = data.results || [];
@@ -442,14 +441,24 @@ async function doSearch(origin) {
 }
 
 // ── FILTERS ──────────────────────────────────────────────────────
-function setParty(p) {
-  partyFilter = p;
-  document.querySelectorAll('.chip[data-party]').forEach(c=>c.classList.toggle('active',c.dataset.party===p));
+function toggleParty(p) {
+  if (partyFilters.has(p)) {
+    if (partyFilters.size === 1) return;
+    partyFilters.delete(p);
+  } else {
+    partyFilters.add(p);
+  }
+  document.querySelectorAll('.chip[data-party]').forEach(c=>c.classList.toggle('active',partyFilters.has(c.dataset.party)));
   if (lastOrigin) doSearch(lastOrigin);
 }
-function setAccess(a) {
-  accessFilter = a;
-  document.querySelectorAll('.chip[data-access]').forEach(c=>c.classList.toggle('active',c.dataset.access===a));
+function toggleAccess(a) {
+  if (accessFilters.has(a)) {
+    if (accessFilters.size === 1) return;
+    accessFilters.delete(a);
+  } else {
+    accessFilters.add(a);
+  }
+  document.querySelectorAll('.chip[data-access]').forEach(c=>c.classList.toggle('active',accessFilters.has(c.dataset.access)));
   if (lastOrigin) doSearch(lastOrigin);
 }
 function switchTab(t) {
