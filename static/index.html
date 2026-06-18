@@ -434,6 +434,9 @@ async function doSearch(origin) {
     document.getElementById('tab-bar').classList.add('visible');
     renderAll(lastResults, origin);
     switchTab('map');
+    if (lastResults.length === 0) {
+      document.getElementById('roster-content').innerHTML = '<div class="roster-empty">⏳ No cached addresses near you yet — geocoding is still running. Try again in a few minutes or zoom out on the map.</div>';
+    }
   } catch(e) {
     alert('Search failed. Please try again.');
   }
@@ -509,12 +512,15 @@ function renderMap(results, origin) {
     const pts = results.map(h=>[h.lat,h.lng]);
     const b = L.latLngBounds(pts); b.extend([origin.lat,origin.lng]);
     mapInstance.fitBounds(b,{padding:[40,40]});
-  } else if (origin) { mapInstance.setView([origin.lat,origin.lng],15); }
+  } else if (origin) {
+    // No results yet — zoom to neighborhood level, show message
+    mapInstance.setView([origin.lat,origin.lng],13);
+  }
 }
 
 // ── ROSTER ───────────────────────────────────────────────────────
 function showRoster(hh, idx) {
-  markers.forEach((m,i)=>{ if(results[i]) m.setIcon(makeIcon(lastResults[i],i===idx)); });
+  markers.forEach((m,i)=>{ if(lastResults[i]) m.setIcon(makeIcon(lastResults[i],i===idx)); });
   rosterState = { hh, shown: Math.min(PAGE, hh.voters.length) };
   renderRoster();
 }
