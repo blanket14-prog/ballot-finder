@@ -437,18 +437,28 @@ def admin():
 # ── STARTUP ───────────────────────────────────────────────────────
 load_geocache()
 
-# Auto-reload saved data on startup (survives restarts)
-if os.path.exists(SAVED_DATA_FILE) and os.path.exists(SAVED_META_FILE):
-    try:
-        with open(SAVED_META_FILE, 'r') as f:
-            meta = json.load(f)
-        print(f"Found saved data: {meta.get('filename')} — reloading...")
-        with open(SAVED_DATA_FILE, 'r', encoding='utf-8') as f:
-            saved_text = f.read()
-        parse_from_disk(meta.get('filename', 'saved_data.txt'))
-        print("Saved data reloaded successfully.")
-    except Exception as e:
-        print(f"Auto-reload error: {e}")
+# Auto-reload saved data on startup in background thread
+# (avoids blocking gunicorn startup with 112MB parse)
+def startup_reload():
+    if os.path.exists(SAVED_DATA_FILE):
+        try:
+            filename = 'saved_data.txt'
+            if os.path.exists(SAVED_META_FILE):
+                with open(SAVED_META_FILE, 'r') as f:
+                    meta = json.load(f)
+                filename = meta.get('filename', filename)
+            size = os.path.getsize(SAVED_DATA_FILE)
+            print(f"Found saved data file: {filename} ({size:,} bytes) — reloading...")
+            parse_from_disk(filename)
+            print(f"Startup reload complete: {state['total']:,} total, {len(state['voters']):,} not returned")
+        except Exception as e:
+            print(f"Startup reload error: {e}")
+            import traceback; traceback.print_exc()
+    else:
+        print("No saved data file found — waiting for upload")
+
+t = threading.Thread(target=startup_reload, daemon=True)
+t.start()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)
