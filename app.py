@@ -304,15 +304,19 @@ def admin():
         return jsonify({'error': 'Empty filename'}), 400
     text = f.stream.read().decode('utf-8', errors='replace')
     filename = secure_filename(f.filename)
-    try:
-        parse_file(text, filename)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
-    t = threading.Thread(target=geocode_all_background, daemon=True)
+    # Parse and geocode in background so HTTP response returns immediately
+    def do_parse_and_geocode():
+        try:
+            parse_file(text, filename)
+            geocode_all_background()
+        except Exception as e:
+            print(f"Background parse error: {e}")
+    t = threading.Thread(target=do_parse_and_geocode, daemon=True)
     t.start()
+    # Return immediately — client polls /api/status for progress
     return jsonify({
-        'success': True, 'total': state['total'],
-        'pending': len(state['voters']), 'returned': state['returned'],
+        'success': True,
+        'message': 'File received. Parsing in background — check status for progress.',
         'filename': filename,
     })
 

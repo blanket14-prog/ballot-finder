@@ -3,7 +3,7 @@ services:
     name: ballot-finder
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --workers 2 --timeout 120
+    startCommand: gunicorn app:app --workers 2 --timeout 300 --keep-alive 300
     envVars:
       - key: ADMIN_PASSWORD
         generateValue: false
