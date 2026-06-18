@@ -12,29 +12,31 @@ h1{font-size:20px;font-weight:600;margin-bottom:4px;}
 .sub{font-size:13px;color:#888;margin-bottom:28px;}
 .field{margin-bottom:18px;}
 label{display:block;font-size:13px;font-weight:500;margin-bottom:6px;color:#444;}
-input[type=password],input[type=file]{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:15px;outline:none;}
+input[type=password]{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:15px;outline:none;}
 input[type=password]:focus{border-color:#185FA5;}
 .file-area{border:2px dashed #ddd;border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;}
 .file-area:hover{border-color:#185FA5;background:#E6F1FB;}
 .file-area.has-file{border-color:#3B6D11;border-style:solid;background:#EAF3DE;}
-.file-area p{font-size:13px;color:#888;margin-top:6px;}
-.file-area .fname{font-size:14px;font-weight:600;color:#3B6D11;margin-top:4px;}
+.file-icon{font-size:28px;margin-bottom:6px;}
+.file-area p{font-size:13px;color:#888;margin-top:4px;}
+.file-area .fname{font-size:14px;font-weight:600;color:#3B6D11;margin-top:6px;word-break:break-all;}
 input[type=file]{display:none;}
 button{width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;margin-top:8px;}
 button:hover{background:#0C447C;}
 button:disabled{opacity:.5;cursor:not-allowed;}
-.result{margin-top:20px;padding:14px 16px;border-radius:8px;font-size:14px;display:none;}
+.result{margin-top:16px;padding:14px 16px;border-radius:8px;font-size:14px;display:none;line-height:1.5;}
 .result.success{background:#EAF3DE;color:#3B6D11;border:1px solid #b2d98a;}
 .result.error{background:#FCEBEB;color:#A32D2D;border:1px solid #f0b8b8;}
-.progress{margin-top:16px;display:none;}
-.bar-wrap{background:#eee;border-radius:4px;height:6px;overflow:hidden;margin-bottom:6px;}
-.bar{height:100%;background:#185FA5;width:0%;transition:width .3s;}
+.progress{margin-top:14px;display:none;}
+.bar-wrap{background:#eee;border-radius:4px;height:8px;overflow:hidden;margin-bottom:6px;}
+.bar{height:100%;background:#185FA5;width:0%;transition:width .4s;}
 .prog-label{font-size:12px;color:#888;text-align:center;}
 .status-box{margin-top:20px;background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:14px 16px;font-size:13px;color:#555;}
 .status-box h3{font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:8px;}
-.status-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;}
+.status-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #eee;}
 .status-row:last-child{border-bottom:none;}
 .status-val{font-weight:500;color:#1a1a1a;}
+.geo-badge{font-size:11px;color:#185FA5;background:#E6F1FB;padding:2px 8px;border-radius:10px;}
 </style>
 </head>
 <body>
@@ -49,7 +51,9 @@ button:disabled{opacity:.5;cursor:not-allowed;}
     <div class="status-row"><span>Total voters</span><span class="status-val" id="s-total">—</span></div>
     <div class="status-row"><span>Not returned</span><span class="status-val" id="s-pending">—</span></div>
     <div class="status-row"><span>Return rate</span><span class="status-val" id="s-rate">—</span></div>
-    <div class="status-row" id="geo-row" style="display:none"><span>Geocoding</span><span class="status-val" id="s-geo" style="color:#185FA5">—</span></div>
+    <div class="status-row" id="geo-row" style="display:none">
+      <span>Geocoding</span><span class="status-val geo-badge" id="s-geo">—</span>
+    </div>
   </div>
 
   <div style="margin-top:24px;">
@@ -62,7 +66,7 @@ button:disabled{opacity:.5;cursor:not-allowed;}
       <label>CE-068 voter file</label>
       <div class="file-area" id="file-area" onclick="document.getElementById('file-input').click()">
         <input type="file" id="file-input" accept=".txt,.csv" onchange="fileChosen(this)"/>
-        <div style="font-size:24px">📄</div>
+        <div class="file-icon">📄</div>
         <p>Tap to select the CE-068 file<br/><span style="font-size:11px">(CE-068_Voters_With_Ballots_...txt)</span></p>
         <div class="fname" id="fname" style="display:none"></div>
       </div>
@@ -107,15 +111,16 @@ async function loadStatus() {
 function fileChosen(input) {
   if (!input.files[0]) return;
   selectedFile = input.files[0];
-  const area = document.getElementById('file-area');
-  area.classList.add('has-file');
+  document.getElementById('file-area').classList.add('has-file');
   const fn = document.getElementById('fname');
   fn.style.display = 'block';
   fn.textContent = selectedFile.name + ' (' + fmtSize(selectedFile.size) + ')';
   document.getElementById('upload-btn').disabled = false;
 }
 
-function fmtSize(b) { return b > 1048576 ? (b/1048576).toFixed(1)+' MB' : (b/1024).toFixed(0)+' KB'; }
+function fmtSize(b) {
+  return b > 1048576 ? (b/1048576).toFixed(1)+' MB' : (b/1024).toFixed(0)+' KB';
+}
 
 async function upload() {
   const password = document.getElementById('password').value;
@@ -123,42 +128,58 @@ async function upload() {
   if (!selectedFile) { alert('Please select a file.'); return; }
 
   const btn = document.getElementById('upload-btn');
-  btn.disabled = true; btn.textContent = 'Uploading…';
+  btn.disabled = true;
+  btn.textContent = 'Uploading…';
   document.getElementById('progress').style.display = 'block';
   document.getElementById('result').style.display = 'none';
+
+  // Animate progress bar while uploading
+  let pct = 0;
+  const progInterval = setInterval(() => {
+    // Slow crawl to 85% during upload, jump to 95% during parse
+    if (pct < 85) pct += 0.8;
+    else if (pct < 95) pct += 0.1;
+    document.getElementById('bar').style.width = pct + '%';
+    if (pct < 30) setLabel('Uploading file…');
+    else if (pct < 70) setLabel('Transferring data…');
+    else setLabel('Parsing voter records…');
+  }, 300);
 
   const formData = new FormData();
   formData.append('password', password);
   formData.append('file', selectedFile);
 
-  // Simulate upload progress
-  let pct = 0;
-  const progInterval = setInterval(() => {
-    pct = Math.min(pct + 2, 90);
-    document.getElementById('bar').style.width = pct + '%';
-    document.getElementById('prog-label').textContent = pct < 30 ? 'Uploading file…' : pct < 70 ? 'Parsing voter records…' : 'Almost done…';
-  }, 300);
-
   try {
-    const r = await fetch('/admin', { method: 'POST', body: formData });
+    // Use XMLHttpRequest so we can track real upload progress
+    const result = await uploadWithProgress(formData, (loaded, total) => {
+      const uploadPct = Math.round((loaded / total) * 80);
+      pct = Math.max(pct, uploadPct);
+      document.getElementById('bar').style.width = pct + '%';
+      setLabel(`Uploading… ${fmtSize(loaded)} of ${fmtSize(total)}`);
+    });
+
     clearInterval(progInterval);
     document.getElementById('bar').style.width = '100%';
 
-    const data = await r.json();
     const resultEl = document.getElementById('result');
     resultEl.style.display = 'block';
 
-    if (r.ok && data.success) {
+    if (result.success) {
+      setLabel('Done!');
       resultEl.className = 'result success';
+      const rate = result.total > 0 ? Math.round(result.returned / result.total * 100) : 0;
       resultEl.innerHTML = `✅ <strong>Data loaded successfully!</strong><br/>
-        ${data.total.toLocaleString()} total voters · ${data.pending.toLocaleString()} not returned · ${Math.round(data.returned/data.total*100)}% return rate<br/>
-        <span style="font-size:12px;color:#555;margin-top:4px;display:block;">Geocoding is running in the background — the map will improve over the next hour.</span>`;
-      document.getElementById('prog-label').textContent = 'Done!';
+        ${result.total.toLocaleString()} total voters &nbsp;·&nbsp;
+        ${result.pending.toLocaleString()} not yet returned &nbsp;·&nbsp;
+        ${rate}% return rate<br/>
+        <span style="font-size:12px;color:#555;margin-top:4px;display:block;">
+          Geocoding is now running in the background. The map will improve over the next few hours as addresses are located.
+        </span>`;
       loadStatus();
     } else {
+      setLabel('Failed');
       resultEl.className = 'result error';
-      resultEl.textContent = '❌ Error: ' + (data.error || 'Upload failed');
-      document.getElementById('prog-label').textContent = 'Failed';
+      resultEl.textContent = '❌ Error: ' + (result.error || 'Upload failed. Check password and file format.');
     }
   } catch(e) {
     clearInterval(progInterval);
@@ -166,10 +187,41 @@ async function upload() {
     resultEl.style.display = 'block';
     resultEl.className = 'result error';
     resultEl.textContent = '❌ Upload failed: ' + e.message;
+    setLabel('Failed');
   }
 
   btn.disabled = false;
   btn.textContent = 'Upload & Refresh Data';
+}
+
+function setLabel(text) {
+  document.getElementById('prog-label').textContent = text;
+}
+
+function uploadWithProgress(formData, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/admin');
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(e.loaded, e.total);
+    };
+
+    xhr.onload = () => {
+      try {
+        const data = JSON.parse(xhr.responseText);
+        resolve(data);
+      } catch(e) {
+        reject(new Error('Server returned invalid response'));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error('Network error during upload'));
+    xhr.ontimeout = () => reject(new Error('Upload timed out'));
+    xhr.timeout = 300000; // 5 minute timeout for large file
+
+    xhr.send(formData);
+  });
 }
 
 loadStatus();
