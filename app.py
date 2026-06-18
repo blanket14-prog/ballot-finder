@@ -8,7 +8,8 @@ import requests
 from flask import Flask, request, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
 
-app = Flask(__name__, static_folder='static')
+app = Flask(__name__, static_folder="static")
+app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024  # 200MB limit
 
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'changeme')
 GEOCACHE_FILE = 'data/geocache.json'
