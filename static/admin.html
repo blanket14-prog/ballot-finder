@@ -19,24 +19,27 @@ input[type=password]:focus{border-color:#185FA5;}
 .file-area.has-file{border-color:#3B6D11;border-style:solid;background:#EAF3DE;}
 .file-icon{font-size:28px;margin-bottom:6px;}
 .file-area p{font-size:13px;color:#888;margin-top:4px;}
-.file-area .fname{font-size:14px;font-weight:600;color:#3B6D11;margin-top:6px;word-break:break-all;}
+.fname{font-size:14px;font-weight:600;color:#3B6D11;margin-top:6px;word-break:break-all;display:none;}
 input[type=file]{display:none;}
 button{width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;margin-top:8px;}
 button:hover{background:#0C447C;}
 button:disabled{opacity:.5;cursor:not-allowed;}
-.result{margin-top:16px;padding:14px 16px;border-radius:8px;font-size:14px;display:none;line-height:1.5;}
+.result{margin-top:16px;padding:14px 16px;border-radius:8px;font-size:14px;display:none;line-height:1.6;}
 .result.success{background:#EAF3DE;color:#3B6D11;border:1px solid #b2d98a;}
 .result.error{background:#FCEBEB;color:#A32D2D;border:1px solid #f0b8b8;}
+.result.info{background:#E6F1FB;color:#185FA5;border:1px solid #c3ddf9;}
 .progress{margin-top:14px;display:none;}
 .bar-wrap{background:#eee;border-radius:4px;height:8px;overflow:hidden;margin-bottom:6px;}
-.bar{height:100%;background:#185FA5;width:0%;transition:width .4s;}
+.bar{height:100%;background:#185FA5;width:0%;transition:width .3s;}
 .prog-label{font-size:12px;color:#888;text-align:center;}
-.status-box{margin-top:20px;background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:14px 16px;font-size:13px;color:#555;}
+.status-box{margin-top:20px;background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:14px 16px;font-size:13px;color:#555;display:none;}
 .status-box h3{font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:8px;}
 .status-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #eee;}
 .status-row:last-child{border-bottom:none;}
 .status-val{font-weight:500;color:#1a1a1a;}
-.geo-badge{font-size:11px;color:#185FA5;background:#E6F1FB;padding:2px 8px;border-radius:10px;}
+.geo-badge{font-size:11px;color:#185FA5;background:#E6F1FB;padding:2px 8px;border-radius:10px;font-weight:500;}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid #b2d98a;border-top-color:#3B6D11;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px;}
+@keyframes spin{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
@@ -44,7 +47,7 @@ button:disabled{opacity:.5;cursor:not-allowed;}
   <h1>📋 Ballot Finder — Admin</h1>
   <p class="sub">Upload a new CE-068 data file each morning to refresh the volunteer tool.</p>
 
-  <div class="status-box" id="status-box" style="display:none">
+  <div class="status-box" id="status-box">
     <h3>Current data</h3>
     <div class="status-row"><span>File</span><span class="status-val" id="s-file">—</span></div>
     <div class="status-row"><span>Loaded</span><span class="status-val" id="s-loaded">—</span></div>
@@ -68,7 +71,7 @@ button:disabled{opacity:.5;cursor:not-allowed;}
         <input type="file" id="file-input" accept=".txt,.csv" onchange="fileChosen(this)"/>
         <div class="file-icon">📄</div>
         <p>Tap to select the CE-068 file<br/><span style="font-size:11px">(CE-068_Voters_With_Ballots_...txt)</span></p>
-        <div class="fname" id="fname" style="display:none"></div>
+        <div class="fname" id="fname"></div>
       </div>
     </div>
 
@@ -85,27 +88,31 @@ button:disabled{opacity:.5;cursor:not-allowed;}
 
 <script>
 let selectedFile = null;
+let statusPollTimer = null;
 
 async function loadStatus() {
   try {
     const r = await fetch('/api/status');
     const s = await r.json();
+    const box = document.getElementById('status-box');
     if (s.hasData) {
-      document.getElementById('status-box').style.display = 'block';
+      box.style.display = 'block';
       document.getElementById('s-file').textContent = s.filename;
       document.getElementById('s-loaded').textContent = s.loadedAt;
       document.getElementById('s-total').textContent = s.total.toLocaleString();
       document.getElementById('s-pending').textContent = s.pending.toLocaleString();
       document.getElementById('s-rate').textContent = s.returnRate + '%';
-      const geoRow = document.getElementById('geo-row');
-      if (s.loading && s.loadProgress) {
-        geoRow.style.display = 'flex';
-        document.getElementById('s-geo').textContent = s.loadProgress;
-      } else {
-        geoRow.style.display = 'none';
-      }
     }
-  } catch(e) {}
+    const geoRow = document.getElementById('geo-row');
+    if (s.loading && s.loadProgress) {
+      box.style.display = 'block';
+      geoRow.style.display = 'flex';
+      document.getElementById('s-geo').textContent = s.loadProgress;
+    } else {
+      geoRow.style.display = 'none';
+    }
+    return s;
+  } catch(e) { return null; }
 }
 
 function fileChosen(input) {
@@ -133,56 +140,53 @@ async function upload() {
   document.getElementById('progress').style.display = 'block';
   document.getElementById('result').style.display = 'none';
 
-  // Animate progress bar while uploading
-  let pct = 0;
-  const progInterval = setInterval(() => {
-    // Slow crawl to 85% during upload, jump to 95% during parse
-    if (pct < 85) pct += 0.8;
-    else if (pct < 95) pct += 0.1;
-    document.getElementById('bar').style.width = pct + '%';
-    if (pct < 30) setLabel('Uploading file…');
-    else if (pct < 70) setLabel('Transferring data…');
-    else setLabel('Parsing voter records…');
-  }, 300);
-
   const formData = new FormData();
   formData.append('password', password);
   formData.append('file', selectedFile);
 
   try {
-    // Use XMLHttpRequest so we can track real upload progress
-    const result = await uploadWithProgress(formData, (loaded, total) => {
-      const uploadPct = Math.round((loaded / total) * 80);
-      pct = Math.max(pct, uploadPct);
+    await uploadWithProgress(formData, (loaded, total) => {
+      const pct = Math.round((loaded / total) * 100);
       document.getElementById('bar').style.width = pct + '%';
       setLabel(`Uploading… ${fmtSize(loaded)} of ${fmtSize(total)}`);
     });
 
-    clearInterval(progInterval);
+    // Upload complete — now poll status while server parses in background
     document.getElementById('bar').style.width = '100%';
+    setLabel('File received — parsing in background…');
 
     const resultEl = document.getElementById('result');
     resultEl.style.display = 'block';
+    resultEl.className = 'result info';
+    resultEl.innerHTML = '<span class="spinner"></span> File uploaded successfully. Parsing voter records in the background — this takes about 30 seconds. The status box above will update automatically.';
 
-    if (result.success) {
-      setLabel('Done!');
-      resultEl.className = 'result success';
-      const rate = result.total > 0 ? Math.round(result.returned / result.total * 100) : 0;
-      resultEl.innerHTML = `✅ <strong>Data loaded successfully!</strong><br/>
-        ${result.total.toLocaleString()} total voters &nbsp;·&nbsp;
-        ${result.pending.toLocaleString()} not yet returned &nbsp;·&nbsp;
-        ${rate}% return rate<br/>
-        <span style="font-size:12px;color:#555;margin-top:4px;display:block;">
-          Geocoding is now running in the background. The map will improve over the next few hours as addresses are located.
-        </span>`;
-      loadStatus();
-    } else {
-      setLabel('Failed');
-      resultEl.className = 'result error';
-      resultEl.textContent = '❌ Error: ' + (result.error || 'Upload failed. Check password and file format.');
-    }
+    // Poll every 3 seconds until we see data
+    let attempts = 0;
+    clearInterval(statusPollTimer);
+    statusPollTimer = setInterval(async () => {
+      const s = await loadStatus();
+      attempts++;
+      if (s && s.hasData) {
+        clearInterval(statusPollTimer);
+        resultEl.className = 'result success';
+        const rate = s.returnRate;
+        resultEl.innerHTML = `✅ <strong>Data loaded successfully!</strong><br/>
+          ${s.total.toLocaleString()} total voters &nbsp;·&nbsp;
+          ${s.pending.toLocaleString()} not yet returned &nbsp;·&nbsp;
+          ${rate}% return rate<br/>
+          <span style="font-size:12px;color:#555;margin-top:4px;display:block;">
+            Geocoding is running in the background. Searches will work for already-cached addresses immediately and improve over the next few hours.
+          </span>`;
+        setLabel('Done!');
+      } else if (attempts > 40) {
+        // Give up after 2 minutes
+        clearInterval(statusPollTimer);
+        resultEl.className = 'result error';
+        resultEl.textContent = '⚠️ Upload completed but parsing is taking longer than expected. Check back in a few minutes — the data may still be loading.';
+      }
+    }, 3000);
+
   } catch(e) {
-    clearInterval(progInterval);
     const resultEl = document.getElementById('result');
     resultEl.style.display = 'block';
     resultEl.className = 'result error';
@@ -202,24 +206,24 @@ function uploadWithProgress(formData, onProgress) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/admin');
-
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) onProgress(e.loaded, e.total);
     };
-
     xhr.onload = () => {
-      try {
-        const data = JSON.parse(xhr.responseText);
-        resolve(data);
-      } catch(e) {
-        reject(new Error('Server returned invalid response'));
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(xhr.responseText);
+      } else {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          reject(new Error(data.error || 'Server error ' + xhr.status));
+        } catch(e) {
+          reject(new Error('Server error ' + xhr.status));
+        }
       }
     };
-
     xhr.onerror = () => reject(new Error('Network error during upload'));
+    xhr.timeout = 600000; // 10 minute timeout
     xhr.ontimeout = () => reject(new Error('Upload timed out'));
-    xhr.timeout = 300000; // 5 minute timeout for large file
-
     xhr.send(formData);
   });
 }
