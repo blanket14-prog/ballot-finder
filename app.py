@@ -82,6 +82,85 @@ def split_line(line, delim):
     result.append(cur)
     return result
 
+def parse_from_disk(filename):
+    """Parse the saved data file line by line to avoid loading 112MB into memory."""
+    import io
+    print(f"Parsing from disk: {SAVED_DATA_FILE}")
+    with open(SAVED_DATA_FILE, 'r', encoding='utf-8', errors='replace') as f:
+        first_line = f.readline().strip()
+        delim = '|' if '|' in first_line else ','
+        header_cols = split_line(first_line, delim)
+        col = {name.strip(): i for i, name in enumerate(header_cols)}
+
+        required = ['VOTER_ID','FIRST_NAME','LAST_NAME','PARTY',
+                    'RES_ADDRESS','RES_CITY','RES_STATE','RES_ZIP']
+        missing = [c for c in required if c not in col]
+        if missing:
+            raise ValueError(f"Missing columns: {missing}")
+
+        print(f"MAIL_BALLOT_RECEIVE_DATE at col {col.get('MAIL_BALLOT_RECEIVE_DATE')}, "
+              f"IN_PERSON_VOTE_DATE at col {col.get('IN_PERSON_VOTE_DATE')}")
+
+        total, returned, voters = 0, 0, []
+
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            cols = split_line(line, delim)
+            total += 1
+
+            def get(name, default='', _cols=cols):
+                idx = col.get(name)
+                if idx is None or idx >= len(_cols):
+                    return default
+                return _cols[idx].strip()
+
+            if is_date(get('MAIL_BALLOT_RECEIVE_DATE')) or is_date(get('IN_PERSON_VOTE_DATE')):
+                returned += 1
+                continue
+
+            res_addr = get('RES_ADDRESS')
+            if not res_addr:
+                continue
+
+            unit_match = re.search(r'#\s*(\S+)\s*$', res_addr)
+            unit = unit_match.group(1) if unit_match else None
+            building_addr = re.sub(r'\s*#\s*\S+\s*$', '', res_addr).strip() if unit else res_addr
+
+            city = get('RES_CITY') or 'DENVER'
+            state_abbr = get('RES_STATE') or 'CO'
+            zip5 = get('RES_ZIP').split('-')[0]
+            party = get('PARTY') or 'UAF'
+            geocode_key = f"{building_addr},{city},co,{zip5}".lower().replace('  ', ' ')
+
+            voters.append({
+                'name': f"{get('FIRST_NAME')} {get('LAST_NAME')}".strip(),
+                'unit': unit,
+                'buildingAddress': building_addr,
+                'city': city, 'state': state_abbr, 'zip': zip5,
+                'geocodeKey': geocode_key,
+                'party': party, 'apt': unit is not None,
+            })
+
+            if total % 100000 == 0:
+                print(f"  Parsed {total:,} rows so far...")
+
+    state['voters'] = voters
+    state['total'] = total
+    state['returned'] = returned
+    state['filename'] = filename
+    state['loaded_at'] = time.strftime('%-m/%-d/%Y at %-I:%M %p MDT')
+
+    try:
+        with open(SAVED_META_FILE, 'w') as fmeta:
+            json.dump({'filename': filename, 'loaded_at': state['loaded_at'],
+                       'total': total, 'returned': returned}, fmeta)
+    except Exception as e:
+        print(f"Meta save error: {e}")
+
+    print(f"Parsed {total:,} total, {len(voters):,} not returned, {returned:,} returned")
+
 def parse_text(text, filename):
     lines = text.split('\n')
     if not lines:
@@ -321,20 +400,26 @@ def admin():
     if not f.filename:
         return jsonify({'error': 'Empty filename'}), 400
 
-    text = f.stream.read().decode('utf-8', errors='replace')
     filename = secure_filename(f.filename)
 
-    # Save raw file to disk FIRST so restarts can recover
+    # Stream file directly to disk to avoid memory issues with 112MB file
     try:
-        with open(SAVED_DATA_FILE, 'w', encoding='utf-8') as fout:
-            fout.write(text)
-        print(f"Saved {len(text):,} bytes to disk")
+        bytes_written = 0
+        with open(SAVED_DATA_FILE, 'wb') as fout:
+            while True:
+                chunk = f.stream.read(1024 * 1024)  # 1MB chunks
+                if not chunk:
+                    break
+                fout.write(chunk)
+                bytes_written += len(chunk)
+        print(f"Streamed {bytes_written:,} bytes to disk")
     except Exception as e:
         print(f"File save error: {e}")
+        return jsonify({'error': f'Failed to save file: {e}'}), 500
 
     def do_parse_and_geocode():
         try:
-            parse_text(text, filename)
+            parse_from_disk(filename)
             geocode_all_background()
         except Exception as e:
             print(f"Background parse/geocode error: {e}")
@@ -360,7 +445,7 @@ if os.path.exists(SAVED_DATA_FILE) and os.path.exists(SAVED_META_FILE):
         print(f"Found saved data: {meta.get('filename')} — reloading...")
         with open(SAVED_DATA_FILE, 'r', encoding='utf-8') as f:
             saved_text = f.read()
-        parse_text(saved_text, meta.get('filename', 'saved_data.txt'))
+        parse_from_disk(meta.get('filename', 'saved_data.txt'))
         print("Saved data reloaded successfully.")
     except Exception as e:
         print(f"Auto-reload error: {e}")
