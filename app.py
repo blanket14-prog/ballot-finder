@@ -214,12 +214,15 @@ def api_search():
     except (TypeError, ValueError):
         return jsonify({'error': 'lat and lng required'}), 400
 
-    party = request.args.get('party', 'all')
-    access = request.args.get('access', 'all')
+    # Support comma-separated multi-select: e.g. party=DEM,UAF
+    party_param = request.args.get('party', 'DEM,UAF')
+    access_param = request.args.get('access', 'accessible,inaccessible')
+    party_set = set(party_param.split(','))
+    access_set = set(access_param.split(','))
 
     buildings = {}
     for v in state['voters']:
-        if party != 'all' and v['party'] != party:
+        if v['party'] not in party_set:
             continue
         k = v['geocodeKey']
         if k not in buildings:
@@ -237,10 +240,11 @@ def api_search():
         })
 
     result = list(buildings.values())
-    if access == 'accessible':
-        result = [b for b in result if not b['apt']]
-    elif access == 'inaccessible':
+    # Filter by access type
+    if 'accessible' not in access_set:
         result = [b for b in result if b['apt']]
+    elif 'inaccessible' not in access_set:
+        result = [b for b in result if not b['apt']]
 
     for b in result:
         b['dist'] = haversine(lat, lng, b['lat'], b['lng'])
