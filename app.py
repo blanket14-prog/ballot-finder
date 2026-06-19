@@ -356,12 +356,15 @@ startup_reload()
 def auto_geocode():
     if state['voters']:
         buildings = set(v['geocodeKey'] for v in state['voters'])
-        uncached = [k for k in buildings if k not in state['geocache']]
+        # Count addresses that are either not cached OR cached as None (failed)
+        uncached = [k for k in buildings if state['geocache'].get(k) is None]
+        cached_ok = [k for k in buildings if state['geocache'].get(k) is not None]
+        print(f"Geocache status: {len(cached_ok):,} cached, {len(uncached):,} need geocoding")
         if uncached:
-            print(f"Auto-starting geocoding: {len(uncached):,} addresses not yet cached")
+            print(f"Auto-starting geocoding for {len(uncached):,} addresses...")
             geocode_all_background()
         else:
-            print("All addresses already geocoded")
+            print("All addresses already geocoded successfully")
 
 t = threading.Thread(target=auto_geocode, daemon=True)
 t.start()
