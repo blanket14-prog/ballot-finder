@@ -107,11 +107,14 @@ def parse_from_disk(filename):
         zip5 = get('RES_ZIP').split('-')[0]
         party = get('PARTY') or 'UAF'
         geocode_key = f"{building_addr},{city},co,{zip5}".lower().replace('  ', ' ')
+        yob_raw = get('YOB','').strip()
+        yob = int(yob_raw) if yob_raw.isdigit() else None
         voters.append({
             'name': f"{get('FIRST_NAME')} {get('LAST_NAME')}".strip(),
             'unit': unit, 'buildingAddress': building_addr,
             'city': city, 'state': state_abbr, 'zip': zip5,
             'geocodeKey': geocode_key, 'party': party, 'apt': unit is not None,
+            'yob': yob,
         })
     state['voters'] = voters
     state['total'] = total
@@ -221,7 +224,7 @@ def api_search():
                 'city': v['city'], 'state': v['state'], 'zip': v['zip'],
                 'apt': v['apt'], 'lat': coords[0], 'lng': coords[1], 'voters': [],
             }
-        buildings[k]['voters'].append({'name': v['name'], 'unit': v['unit'], 'party': v['party']})
+        buildings[k]['voters'].append({'name': v['name'], 'unit': v['unit'], 'party': v['party'], 'yob': v.get('yob')})
     result = list(buildings.values())
     if 'accessible' not in access_set: result = [b for b in result if b['apt']]
     elif 'inaccessible' not in access_set: result = [b for b in result if not b['apt']]
