@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<title>Ballot Return Finder</title>
+<title>Ballot Finder</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
@@ -184,7 +184,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Displ
 </head>
 <body>
 <div id="app">
-  <div id="top-bar"><h1>📋 Ballot Return Finder</h1></div>
+  <div id="top-bar"><h1>📋 Ballot Finder</h1></div>
   <div id="stats-row">
     <div class="stat"><div class="stat-label">Total voters</div><div class="stat-value" id="stat-total">—</div></div>
     <div class="stat"><div class="stat-label">Not returned</div><div class="stat-value warn" id="stat-pending">—</div></div>
@@ -376,54 +376,54 @@ applyTheme();setInterval(applyTheme,60000);
 // SOURCE: https://www.denvergov.org/media/gis/WebDocs/Elections/Maps/LgMap_2026_PE_FINAL.pdf
 // Add addresses here when available — placeholder structure ready
 const DROP_BOXES = [
-  {name:"Athmar Recreation Center",address:"2680 W. Mexico Ave",lat:39.7001,lng:-105.0185},
-  {name:"Athmar Park Library",address:"1055 S. Tejon St.",lat:39.7046,lng:-105.015},
-  {name:"Aztlan Recreation Center",address:"4435 N. Navajo St.",lat:39.7786,lng:-105.0089},
-  {name:"Barnum Recreation Center",address:"360 N. Hooker St.",lat:39.7197,lng:-105.0258},
-  {name:"Bear Valley Branch Library",address:"5171 W. Dartmouth Ave.",lat:39.6687,lng:-105.0534},
-  {name:"Blair-Caldwell Library",address:"2401 Welton St.",lat:39.7497,lng:-104.9789},
-  {name:"Carla Madison Recreation Center",address:"2401 E. Colfax Ave.",lat:39.7407,lng:-104.9561},
-  {name:"Central Park Recreation Center",address:"9651 E. Martin Luther King Jr. Blvd.",lat:39.7524,lng:-104.8482},
-  {name:"City of Sheridan Municipal Center",address:"4101 S. Federal Blvd., Sheridan",lat:39.6467,lng:-105.0197},
-  {name:"Cook Park Recreation Center",address:"7100 Cherry Creek South Dr.",lat:39.6917,lng:-104.9181},
-  {name:"Denver Botanic Gardens",address:"1007 N. York St.",lat:39.7321,lng:-104.961},
-  {name:"Denver Elections Division",address:"200 W. 14th Ave.",lat:39.7328,lng:-104.9872},
-  {name:"Denver Museum of Nature & Science",address:"2001 N. Colorado Blvd.",lat:39.7474,lng:-104.9423},
-  {name:"Denver Police Dept. District 3",address:"1625 S. University Blvd.",lat:39.6939,lng:-104.961},
-  {name:"Eisenhower Recreation Center",address:"4300 E. Dartmouth Ave.",lat:39.6687,lng:-104.9308},
-  {name:"Eloise May Library",address:"1471 S. Parker Rd., Aurora",lat:39.6831,lng:-104.8821},
-  {name:"Emily Griffith Technical College",address:"1860 N. Lincoln St.",lat:39.7451,lng:-104.9837},
-  {name:"Glenarm Recreation Center",address:"2800 Glenarm Pl.",lat:39.7522,lng:-104.9789},
-  {name:"Glendale City Hall",address:"950 S. Birch St., Glendale",lat:39.6997,lng:-104.9427},
-  {name:"Green Valley Ranch Recreation Center",address:"4890 N. Argonne Way",lat:39.7956,lng:-104.8219},
-  {name:"Hampden Branch Library",address:"9755 E. Girard Ave.",lat:39.6569,lng:-104.8682},
-  {name:"Harvard Gulch Recreation Center",address:"550 E. Iliff Ave.",lat:39.6733,lng:-104.9685},
-  {name:"Harvey Park Recreation Center",address:"2120 S. Tennyson Way",lat:39.6709,lng:-105.0392},
-  {name:"Hiawatha Davis Jr Recreation Center",address:"3334 N. Holly St.",lat:39.7656,lng:-104.9427},
-  {name:"Highland Recreation Center",address:"2880 N. Osceola St.",lat:39.7579,lng:-105.0369},
-  {name:"La Familia Recreation Center",address:"65 S. Elati St.",lat:39.7261,lng:-105.0078},
-  {name:"Martin Luther King Jr Library",address:"9898 E. Colfax Ave., Aurora",lat:39.7407,lng:-104.8527},
-  {name:"MCA Administrative Offices",address:"8351 Northfield Blvd.",lat:39.7956,lng:-104.8608},
-  {name:"Montbello Branch Library",address:"12955 Albrook Dr.",lat:39.8024,lng:-104.8299},
-  {name:"Montbello Recreation Center",address:"15555 E. 53rd Ave.",lat:39.8051,lng:-104.8344},
-  {name:"Montclair Recreation Center",address:"729 N. Ulster Way",lat:39.7328,lng:-104.9028},
-  {name:"Regis University Bookstore",address:"5115 N. Federal Blvd.",lat:39.7956,lng:-105.0197},
-  {name:"Rodolfo 'Corky' Gonzales Library",address:"1498 N. Irving St.",lat:39.7451,lng:-105.0253},
-  {name:"Ross Cherry Creek Branch Library",address:"305 N. Milwaukee St.",lat:39.7158,lng:-104.9447},
-  {name:"RTD I-25 & Broadway Station",address:"901 S. Broadway",lat:39.712,lng:-104.988},
-  {name:"RTD Union Station Light Rail",address:"1601 Chestnut Pl.",lat:39.753,lng:-104.9997},
-  {name:"RTD Southmoor Station",address:"3737 S. Monaco Street Pkwy.",lat:39.6451,lng:-104.9447},
-  {name:"Rude Recreation Center",address:"2855 W. Holden Pl.",lat:39.6811,lng:-105.0346},
-  {name:"Scheitler Recreation Center",address:"5031 W. 46th Ave.",lat:39.7786,lng:-105.0646},
-  {name:"Southwest Recreation Center",address:"9200 W. Saratoga Pl., Littleton",lat:39.6233,lng:-105.1258},
-  {name:"Swansea Recreation Center",address:"2650 E. 49th Ave.",lat:39.7841,lng:-104.9561},
-  {name:"Tivoli Student Center (Auraria)",address:"900 Auraria Pkwy.",lat:39.744,lng:-105.0033},
-  {name:"University of Denver Ritchie Center",address:"2240 Buchtel Blvd S.",lat:39.6889,lng:-104.9618},
-  {name:"Washington Park Recreation Center",address:"701 S. Franklin St.",lat:39.7064,lng:-104.969},
-  {name:"Wellington Webb Municipal Building",address:"201 W. Colfax Ave.",lat:39.7397,lng:-104.988},
-  {name:"Westwood Community Center",address:"1000 S. Lowell Blvd.",lat:39.7021,lng:-105.0308},
-  {name:"Windsor Gardens",address:"595 S. Clinton St.",lat:39.6975,lng:-104.9238},
-  {name:"5090 Broadway Recreation Center",address:"5090 Broadway",lat:39.6755,lng:-104.988},
+  {name:'Athmar Recreation Center',address:'2680 W. Mexico Ave',lat:39.6999,lng:-105.0189},
+  {name:'Athmar Park Library',address:'1055 S. Tejon St.',lat:39.7046,lng:-105.0147},
+  {name:'Aztlan Recreation Center',address:'4435 N. Navajo St.',lat:39.7783,lng:-105.0092},
+  {name:'Barnum Recreation Center',address:'360 N. Hooker St.',lat:39.7195,lng:-105.0261},
+  {name:'Bear Valley Branch Library',address:'5171 W. Dartmouth Ave.',lat:39.6688,lng:-105.0536},
+  {name:'Blair-Caldwell Library',address:'2401 Welton St.',lat:39.7496,lng:-104.9791},
+  {name:'Carla Madison Recreation Center',address:'2401 E. Colfax Ave.',lat:39.7404,lng:-104.9562},
+  {name:'Central Park Recreation Center',address:'9651 E. Martin Luther King Jr. Blvd.',lat:39.7524,lng:-104.8487},
+  {name:'City of Sheridan Municipal Center',address:'4101 S. Federal Blvd., Sheridan',lat:39.6469,lng:-105.0199},
+  {name:'Cook Park Recreation Center',address:'7100 Cherry Creek South Dr.',lat:39.6917,lng:-104.9182},
+  {name:'Denver Botanic Gardens',address:'1007 N. York St.',lat:39.7322,lng:-104.961},
+  {name:'Denver Elections Division',address:'200 W. 14th Ave.',lat:39.7329,lng:-104.9874},
+  {name:'Denver Museum of Nature & Science',address:'2001 N. Colorado Blvd.',lat:39.7474,lng:-104.9424},
+  {name:'Denver Police Dept. District 3',address:'1625 S. University Blvd.',lat:39.6938,lng:-104.9611},
+  {name:'Eisenhower Recreation Center',address:'4300 E. Dartmouth Ave.',lat:39.6688,lng:-104.9308},
+  {name:'Eloise May Library',address:'1471 S. Parker Rd., Aurora',lat:39.683,lng:-104.8822},
+  {name:'Emily Griffith Technical College',address:'1860 N. Lincoln St.',lat:39.7452,lng:-104.984},
+  {name:'Glenarm Recreation Center',address:'2800 Glenarm Pl.',lat:39.7523,lng:-104.9788},
+  {name:'Glendale City Hall',address:'950 S. Birch St., Glendale',lat:39.7001,lng:-104.9427},
+  {name:'Green Valley Ranch Recreation Center',address:'4890 N. Argonne Way',lat:39.7957,lng:-104.8223},
+  {name:'Hampden Branch Library',address:'9755 E. Girard Ave.',lat:39.6569,lng:-104.8685},
+  {name:'Harvard Gulch Recreation Center',address:'550 E. Iliff Ave.',lat:39.6735,lng:-104.9685},
+  {name:'Harvey Park Recreation Center',address:'2120 S. Tennyson Way',lat:39.6709,lng:-105.0393},
+  {name:'Hiawatha Davis Jr Recreation Center',address:'3334 N. Holly St.',lat:39.7658,lng:-104.9428},
+  {name:'Highland Recreation Center',address:'2880 N. Osceola St.',lat:39.7579,lng:-105.0369},
+  {name:'La Familia Recreation Center',address:'65 S. Elati St.',lat:39.7262,lng:-105.0079},
+  {name:'Martin Luther King Jr Library',address:'9898 E. Colfax Ave., Aurora',lat:39.7404,lng:-104.8527},
+  {name:'MCA Administrative Offices',address:'8351 Northfield Blvd.',lat:39.7957,lng:-104.861},
+  {name:'Montbello Branch Library',address:'12955 Albrook Dr.',lat:39.8023,lng:-104.8299},
+  {name:'Montbello Recreation Center',address:'15555 E. 53rd Ave.',lat:39.8052,lng:-104.8346},
+  {name:'Montclair Recreation Center',address:'729 N. Ulster Way',lat:39.7329,lng:-104.9028},
+  {name:'Regis University Bookstore',address:'5115 N. Federal Blvd.',lat:39.7957,lng:-105.0197},
+  {name:"Rodolfo 'Corky' Gonzales Library",address:'1498 N. Irving St.',lat:39.7452,lng:-105.0253},
+  {name:'Ross Cherry Creek Branch Library',address:'305 N. Milwaukee St.',lat:39.7158,lng:-104.9448},
+  {name:'RTD I-25 & Broadway Station',address:'901 S. Broadway',lat:39.7119,lng:-104.988},
+  {name:'RTD Union Station Light Rail',address:'1601 Chestnut Pl.',lat:39.753,lng:-104.9997},
+  {name:'RTD Southmoor Station',address:'3737 S. Monaco Street Pkwy.',lat:39.6452,lng:-104.9448},
+  {name:'Rude Recreation Center',address:'2855 W. Holden Pl.',lat:39.6811,lng:-105.0346},
+  {name:'Scheitler Recreation Center',address:'5031 W. 46th Ave.',lat:39.7786,lng:-105.0647},
+  {name:'Southwest Recreation Center',address:'9200 W. Saratoga Pl., Littleton',lat:39.6233,lng:-105.1258},
+  {name:'Swansea Recreation Center',address:'2650 E. 49th Ave.',lat:39.7841,lng:-104.9562},
+  {name:'Tivoli Student Center (Auraria)',address:'900 Auraria Pkwy.',lat:39.7441,lng:-105.0033},
+  {name:'University of Denver Ritchie Center',address:'2240 Buchtel Blvd S.',lat:39.6888,lng:-104.9618},
+  {name:'Washington Park Recreation Center',address:'701 S. Franklin St.',lat:39.7063,lng:-104.9691},
+  {name:'Wellington Webb Municipal Building',address:'201 W. Colfax Ave.',lat:39.7397,lng:-104.988},
+  {name:'Westwood Community Center',address:'1000 S. Lowell Blvd.',lat:39.7021,lng:-105.0308},
+  {name:'Windsor Gardens',address:'595 S. Clinton St.',lat:39.6975,lng:-104.9238},
+  {name:'5090 Broadway Recreation Center',address:'5090 Broadway',lat:39.6756,lng:-104.988},
 ];
 
 function populateDropboxModal(){
@@ -704,11 +704,13 @@ function renderMap(results,origin){
     });
     mapInstance.invalidateSize();
     if(origin&&results.length){
-      const b=L.latLngBounds(results.map(h=>[h.lat,h.lng]));
+      // Zoom to show roughly the closest half of results (tighter view)
+      const half = results.slice(0, Math.max(1, Math.ceil(results.length / 2)));
+      const b = L.latLngBounds(half.map(h=>[h.lat,h.lng]));
       b.extend([origin.lat,origin.lng]);
-      mapInstance.fitBounds(b,{padding:[50,50],maxZoom:16});
+      mapInstance.fitBounds(b,{padding:[44,44],maxZoom:15,animate:false});
     }else if(origin){
-      mapInstance.setView([origin.lat,origin.lng],14);
+      mapInstance.setView([origin.lat,origin.lng],15);
     }
   });
 }
@@ -733,7 +735,18 @@ function closeRoster(){
   document.getElementById('roster-content').innerHTML='<div class="roster-empty">Tap a pin to see who lives there</div>';
   markers.forEach((m,i)=>{if(filteredResults[i])m.setIcon(makeIcon(filteredResults[i],false));});
   rosterState={hh:null,shown:0};
-  setTimeout(()=>mapInstance&&mapInstance.invalidateSize(),80);
+  setTimeout(()=>{
+    if(mapInstance){
+      mapInstance.invalidateSize();
+      // Re-fit to half results after closing roster
+      if(filteredResults.length && lastOrigin){
+        const half = filteredResults.slice(0, Math.max(1, Math.ceil(filteredResults.length/2)));
+        const b = L.latLngBounds(half.map(h=>[h.lat,h.lng]));
+        b.extend([lastOrigin.lat,lastOrigin.lng]);
+        mapInstance.fitBounds(b,{padding:[44,44],maxZoom:15});
+      }
+    }
+  },100);
 }
 function renderRoster(){
   const{hh,shown}=rosterState;if(!hh)return;
