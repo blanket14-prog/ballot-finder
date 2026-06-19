@@ -195,6 +195,18 @@ def haversine(la1, ln1, la2, ln2):
 def index():
     return send_from_directory('static', 'index.html')
 
+@app.route('/static/manifest.json')
+def manifest():
+    return send_from_directory('static', 'manifest.json')
+
+@app.route('/static/sw.js')
+def service_worker():
+    from flask import Response
+    with open('static/sw.js') as f:
+        js = f.read()
+    return Response(js, mimetype='application/javascript',
+                    headers={'Service-Worker-Allowed': '/'})
+
 @app.route('/api/status')
 def api_status():
     rate = round(state['returned'] / state['total'] * 100) if state['total'] > 0 else 0
