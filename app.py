@@ -227,7 +227,8 @@ def api_search():
     elif 'inaccessible' not in access_set: result = [b for b in result if not b['apt']]
     for b in result: b['dist'] = haversine(lat, lng, b['lat'], b['lng'])
     result.sort(key=lambda b: b['dist'])
-    result = result[:100]
+    limit = min(int(request.args.get('limit', 30)), 100)
+    result = result[:limit]
     for b in result:
         if b['apt']:
             b['voters'].sort(key=lambda v: (int(v['unit']) if v['unit'] and v['unit'].isdigit() else 9999, v['unit'] or ''))
