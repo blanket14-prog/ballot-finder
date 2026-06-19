@@ -126,24 +126,50 @@ def parse_from_disk(filename):
         print(f"Meta save error: {e}")
     print(f"Parsed {total} total, {len(voters)} not returned, {returned} returned")
 
+def geocode_census(building_addr, city, state_abbr, zip5):
+    """Use Census geocoder — no rate limits."""
+    key = f"{building_addr},{city},co,{zip5}".lower().replace('  ', ' ')
+    if key in state['geocache'] and state['geocache'][key] is not None:
+        return state['geocache'][key], key
+    try:
+        full = f"{building_addr}, {city}, {state_abbr} {zip5}"
+        r = requests.get(
+            'https://geocoding.geo.census.gov/geocoder/locations/onelineaddress',
+            params={'address': full, 'benchmark': 'Public_AR_Current', 'format': 'json'},
+            timeout=10)
+        matches = r.json().get('result', {}).get('addressMatches', [])
+        if matches:
+            c = matches[0]['coordinates']
+            lat, lng = float(c['y']), float(c['x'])
+            if 39.614 <= lat <= 39.914 and -105.110 <= lng <= -104.600:
+                result = [lat, lng]
+                state['geocache'][key] = result
+                return result, key
+    except Exception as e:
+        pass
+    state['geocache'][key] = None
+    return None, key
+
 def geocode_all_background():
     state['loading'] = True
     buildings = {}
     for v in state['voters']:
         k = v['geocodeKey']
         if k not in buildings: buildings[k] = v
-    need = {k: v for k, v in buildings.items() if k not in state['geocache']}
+    # Only geocode addresses not yet successfully cached
+    need = {k: v for k, v in buildings.items() 
+            if state['geocache'].get(k) is None}
     total = len(need)
     done = 0
-    print(f"Geocoding {total} new addresses...")
+    print(f"Geocoding {total} new addresses with Census geocoder...")
     for key, v in need.items():
-        geocode_nominatim(v['buildingAddress'], v['city'], v['state'], v['zip'])
+        geocode_census(v['buildingAddress'], v['city'], v['state'], v['zip'])
         done += 1
         state['load_progress'] = f"Geocoding {done:,} / {total:,} addresses…"
-        if done % 200 == 0:
+        if done % 500 == 0:
             save_geocache()
             print(f"  {done}/{total} geocoded")
-        time.sleep(1.1)
+        time.sleep(0.05)  # Census has no strict rate limit — 20 req/sec is safe
     save_geocache()
     state['loading'] = False
     state['load_progress'] = ''
