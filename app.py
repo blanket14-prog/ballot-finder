@@ -120,7 +120,12 @@ def parse_from_disk(filename):
     state['total'] = total
     state['returned'] = returned
     state['filename'] = filename
-    state['loaded_at'] = time.strftime('%-m/%-d/%Y at %-I:%M %p MDT')
+    # Use Mountain time for display
+    import datetime
+    # UTC-6 for MDT (Mountain Daylight Time)
+    mdt = datetime.timezone(datetime.timedelta(hours=-6))
+    now_mdt = datetime.datetime.now(mdt)
+    state['loaded_at'] = now_mdt.strftime('%-m/%-d/%Y at %-I:%M %p MDT')
     try:
         with open(SAVED_META_FILE, 'w') as f:
             json.dump({'filename': filename, 'loaded_at': state['loaded_at'],
