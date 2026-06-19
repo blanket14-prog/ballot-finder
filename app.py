@@ -6,7 +6,7 @@ app = Flask(__name__, static_folder='static')
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
 
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'changeme')
-DATA_DIR = 'data'
+DATA_DIR = os.environ.get('DATA_DIR', '/opt/render/project/src/data')
 GEOCACHE_FILE = os.path.join(DATA_DIR, 'geocache.json')
 SAVED_DATA_FILE = os.path.join(DATA_DIR, 'current_data.txt')
 SAVED_META_FILE = os.path.join(DATA_DIR, 'meta.json')
