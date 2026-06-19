@@ -7,137 +7,158 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-/* ── THEME: auto dark/light based on Denver sunrise/sunset ── */
-:root {
+:root{
   --bg:#ffffff;--surface:#f5f5f7;--surface2:#ebebed;--surface3:#e0e0e2;
   --accent:#6c63ff;--accent2:#5b52d4;--green:#16a34a;--orange:#ea580c;
   --text:#111111;--text2:#444444;--text3:#888888;
   --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);
   --radius:16px;--radius-sm:10px;--shadow:0 4px 24px rgba(0,0,0,0.1);
-  --chip-inactive:#ffffff;--chip-inactive-border:rgba(0,0,0,0.2);--chip-inactive-text:#444;
+  --chip-bg:transparent;--chip-border:rgba(0,0,0,0.18);--chip-text:#555;
+  --card-bg:#ffffff;--card-border:rgba(0,0,0,0.08);
 }
-.dark {
+.dark{
   --bg:#0f0f13;--surface:#1a1a24;--surface2:#22222f;--surface3:#2a2a3a;
   --accent:#6c63ff;--accent2:#a78bfa;--green:#22c55e;--orange:#f97316;
   --text:#f1f0ff;--text2:#a09cc0;--text3:#6b6890;
-  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
   --shadow:0 4px 24px rgba(0,0,0,0.4);
-  --chip-inactive:transparent;--chip-inactive-border:rgba(255,255,255,0.2);--chip-inactive-text:#a09cc0;
+  --chip-bg:transparent;--chip-border:rgba(255,255,255,0.18);--chip-text:#a09cc0;
+  --card-bg:#1a1a24;--card-border:rgba(255,255,255,0.07);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;transition:background .3s,color .3s;}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;}
 #app{display:flex;flex-direction:column;height:100%;max-width:600px;margin:0 auto;background:var(--bg);}
 
-/* ── HEADER ── */
-#top-bar{padding:16px 16px 12px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border);}
-#top-bar h1{font-size:20px;font-weight:700;letter-spacing:-.3px;background:linear-gradient(135deg,var(--text) 0%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.subtitle{font-size:12px;color:var(--text3);margin-top:2px;}
+/* ── TOP BAR ── */
+#top-bar{padding:12px 16px 10px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+#top-bar h1{font-size:18px;font-weight:700;letter-spacing:-.3px;background:linear-gradient(135deg,var(--text) 0%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;flex:1;}
+.theme-icon{font-size:16px;cursor:pointer;opacity:.6;}
 
 /* ── STATS ── */
-#stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 16px;flex-shrink:0;}
-.stat{background:var(--surface);border-radius:var(--radius-sm);padding:10px 12px;border:1px solid var(--border);}
-.stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
-.stat-value{font-size:20px;font-weight:700;color:var(--text);}
+#stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:10px 12px;flex-shrink:0;}
+.stat{background:var(--surface);border-radius:10px;padding:8px 10px;border:1px solid var(--border);}
+.stat-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;}
+.stat-value{font-size:18px;font-weight:700;color:var(--text);}
 .stat-value.warn{color:#fb923c;}
 
 /* ── GEOCODING BANNER ── */
-#geocoding-banner{margin:0 16px 4px;padding:8px 12px;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.2);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);display:none;text-align:center;flex-shrink:0;}
+#geocoding-banner{margin:0 12px 4px;padding:6px 12px;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.2);border-radius:8px;font-size:11px;color:var(--accent);display:none;text-align:center;flex-shrink:0;}
 
-/* ── SEARCH ── */
-#search-bar{padding:8px 16px 12px;flex-shrink:0;}
-.search-row{display:flex;gap:8px;margin-bottom:10px;position:relative;}
-#addr-input{flex:1;padding:12px 14px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:15px;outline:none;-webkit-appearance:none;}
+/* ── SEARCH BAR ── */
+#search-bar{padding:8px 12px 6px;flex-shrink:0;}
+.search-row{display:flex;gap:6px;position:relative;}
+#addr-input{flex:1;padding:11px 13px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:15px;outline:none;-webkit-appearance:none;}
 #addr-input::placeholder{color:var(--text3);}
 #addr-input:focus{border-color:var(--accent);}
-#search-btn{padding:12px 18px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .15s;}
+#search-btn{padding:11px 16px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;transition:opacity .15s;white-space:nowrap;}
 #search-btn:active{opacity:.8;}
 #search-btn:disabled{opacity:.5;}
-#autocomplete-list{position:absolute;top:100%;left:0;right:80px;background:var(--surface2);border:1px solid var(--border2);border-top:none;border-radius:0 0 var(--radius-sm) var(--radius-sm);z-index:200;display:none;max-height:200px;overflow-y:auto;box-shadow:var(--shadow);}
-.ac-item{padding:11px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);color:var(--text);}
+/* Filter toggle button */
+#filter-toggle{padding:11px 13px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text2);font-weight:500;white-space:nowrap;transition:all .15s;flex-shrink:0;}
+#filter-toggle.has-active{border-color:var(--accent);color:var(--accent);}
+.filter-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:none;}
+#filter-toggle.has-active .filter-dot{display:block;}
+
+#autocomplete-list{position:absolute;top:100%;left:0;right:0;background:var(--surface2);border:1px solid var(--border2);border-top:none;border-radius:0 0 var(--radius-sm) var(--radius-sm);z-index:200;display:none;max-height:200px;overflow-y:auto;box-shadow:var(--shadow);margin-top:1px;}
+.ac-item{padding:10px 13px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);color:var(--text);}
 .ac-item:last-child{border-bottom:none;}
 .ac-item:hover,.ac-item.sel{background:var(--surface3);}
+.ac-sub{font-size:11px;color:var(--text3);margin-top:1px;}
 
-/* ── FILTERS ── */
-.filter-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;}
+/* ── FILTER PANEL ── */
+#filter-panel{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 12px;flex-shrink:0;display:none;}
+#filter-panel.open{display:block;}
+.filter-row{display:flex;align-items:center;gap:6px;margin-bottom:7px;flex-wrap:wrap;}
 .filter-row:last-child{margin-bottom:0;}
-.filter-label{font-size:11px;color:var(--text3);min-width:42px;font-weight:500;}
-.chip{font-size:12px;padding:6px 12px;border-radius:20px;border:1px solid var(--chip-inactive-border);background:var(--chip-inactive);color:var(--chip-inactive-text);cursor:pointer;user-select:none;white-space:nowrap;font-weight:500;transition:all .15s;}
+.filter-label{font-size:11px;color:var(--text3);min-width:42px;font-weight:500;flex-shrink:0;}
+.chips{display:flex;gap:5px;flex-wrap:wrap;}
+.chip{font-size:12px;padding:5px 11px;border-radius:20px;border:1px solid var(--chip-border);background:var(--chip-bg);color:var(--chip-text);cursor:pointer;user-select:none;white-space:nowrap;font-weight:500;transition:all .15s;}
 .chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
-.count-chip{font-size:12px;padding:5px 11px;border-radius:20px;border:1px solid var(--border2);background:var(--chip-inactive);color:var(--chip-inactive-text);cursor:pointer;font-weight:500;transition:all .15s;}
+.count-chip{font-size:12px;padding:5px 10px;border-radius:20px;border:1px solid var(--chip-border);background:var(--chip-bg);color:var(--chip-text);cursor:pointer;font-weight:500;transition:all .15s;}
 .count-chip.active{background:var(--surface3);color:var(--text);border-color:var(--border2);}
+.dark .count-chip.active{background:var(--surface3);}
 
 /* ── TABS ── */
 #tab-bar{display:none;flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);}
 #tab-bar.visible{display:flex;}
-.tab-btn{flex:1;padding:12px;font-size:13px;font-weight:600;color:var(--text3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;}
+.tab-btn{flex:1;padding:11px;font-size:13px;font-weight:600;color:var(--text3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s;}
 .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
 
 /* ── CONTENT ── */
 #content{flex:1;overflow:hidden;display:flex;flex-direction:column;}
-#empty-state{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:2rem;text-align:center;color:var(--text3);}
-.empty-icon{font-size:48px;opacity:.5;}
+#empty-state{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:2rem;text-align:center;color:var(--text3);}
+.empty-icon{font-size:44px;opacity:.4;}
 #empty-state p{font-size:14px;line-height:1.6;max-width:260px;}
+.pin-hint{font-size:12px;color:var(--accent);margin-top:4px;opacity:.8;}
 
 /* ── MAP ── */
 #map-view{display:none;flex-direction:column;flex:1;overflow:hidden;}
 #map-view.visible{display:flex;}
 #map{flex:1;min-height:0;}
+.map-hint{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.65);color:#fff;font-size:11px;padding:5px 12px;border-radius:20px;pointer-events:none;z-index:500;white-space:nowrap;opacity:0;transition:opacity .3s;}
+.map-hint.show{opacity:1;}
+#map-wrapper{position:relative;flex:1;min-height:0;}
 
 /* ── ROSTER ── */
-#roster-panel{flex-shrink:0;max-height:45vh;overflow-y:auto;background:var(--surface);border-top:2px solid var(--accent);display:none;}
+#roster-panel{flex-shrink:0;max-height:44vh;overflow-y:auto;background:var(--card-bg);border-top:2px solid var(--accent);display:none;}
 #roster-panel.visible{display:block;}
-.roster-header{padding:12px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:10;display:flex;align-items:flex-start;justify-content:space-between;}
-.roster-header-left{flex:1;}
-.roster-addr{font-size:15px;font-weight:700;color:var(--text);margin-bottom:2px;}
-.roster-meta{font-size:12px;color:var(--text3);}
-.roster-close{width:30px;height:30px;border-radius:50%;background:var(--surface3);border:none;color:var(--text2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:8px;}
-.roster-badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
-.badge{font-size:11px;padding:3px 9px;border-radius:10px;font-weight:600;white-space:nowrap;}
-.badge.apt{background:rgba(249,115,22,0.15);color:#f97316;border:1px solid rgba(249,115,22,0.3);}
-.badge.home{background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.2);}
-.badge.dem{background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);}
-.badge.rep{background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);}
+.roster-header{padding:11px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card-bg);z-index:10;display:flex;align-items:flex-start;justify-content:space-between;}
+.roster-addr{font-size:15px;font-weight:700;color:var(--text);}
+.roster-meta{font-size:11px;color:var(--text3);margin-top:2px;}
+.roster-close{width:28px;height:28px;border-radius:50%;background:var(--surface3);border:none;color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:8px;}
+.roster-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;}
+.badge{font-size:11px;padding:2px 8px;border-radius:8px;font-weight:600;}
+.badge.apt{background:rgba(249,115,22,0.15);color:#f97316;border:1px solid rgba(249,115,22,0.25);}
+.badge.home{background:rgba(34,197,94,0.12);color:var(--green);border:1px solid rgba(34,197,94,0.2);}
+.badge.dem{background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.25);}
+.badge.rep{background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.2);}
 .badge.una{background:var(--surface3);color:var(--text2);border:1px solid var(--border);}
-.roster-voter-list{padding:4px 0;}
-.roster-row{display:flex;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border);gap:10px;}
+.roster-row{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);gap:8px;}
 .roster-row:last-child{border-bottom:none;}
-.roster-left{flex:1;}
-.roster-name{font-size:14px;font-weight:600;color:var(--text);}
-.roster-unit{font-size:11px;color:var(--text3);margin-top:2px;}
+.roster-name{flex:1;font-size:14px;font-weight:600;color:var(--text);}
+.roster-unit{font-size:11px;color:var(--text3);margin-top:1px;}
 .roster-right{text-align:right;flex-shrink:0;}
 .roster-party{font-size:11px;color:var(--text3);}
-.not-returned{font-size:11px;color:#fb923c;font-weight:700;margin-top:2px;}
-.more-btn{display:block;width:100%;padding:12px;text-align:center;font-size:13px;color:var(--accent);background:none;border:none;border-top:1px solid var(--border);cursor:pointer;font-weight:600;}
-.roster-empty{padding:20px 16px;text-align:center;font-size:13px;color:var(--text3);}
+.not-returned{font-size:11px;color:#fb923c;font-weight:700;margin-top:1px;}
+.more-btn{display:block;width:100%;padding:11px;text-align:center;font-size:13px;color:var(--accent);background:none;border:none;border-top:1px solid var(--border);cursor:pointer;font-weight:600;}
+.roster-empty{padding:18px 14px;text-align:center;font-size:13px;color:var(--text3);}
 
-/* ── LIST ── */
+/* ── LIST VIEW ── */
 #list-view{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 #list-view.visible{display:block;}
-.list-header{padding:10px 16px;font-size:12px;color:var(--text3);background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;}
-.route-badge{font-size:11px;background:rgba(108,99,255,0.1);color:var(--accent);padding:2px 8px;border-radius:10px;border:1px solid rgba(108,99,255,0.2);font-weight:600;}
-.block-divider{padding:8px 16px 4px;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:37px;z-index:4;}
-.hh-card{padding:13px 16px;border-bottom:1px solid var(--border);background:var(--bg);cursor:pointer;transition:background .1s;}
+.list-header{padding:8px 14px;font-size:12px;color:var(--text3);background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:8px;}
+.route-badge{font-size:11px;background:rgba(108,99,255,0.1);color:var(--accent);padding:2px 8px;border-radius:8px;border:1px solid rgba(108,99,255,0.18);font-weight:600;}
+.block-divider{padding:7px 14px;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;}
+
+/* HOUSE CARD — clear visual separation */
+.hh-card{border-bottom:1px solid var(--border);background:var(--bg);cursor:pointer;transition:background .1s;}
 .hh-card:active{background:var(--surface);}
-.hh-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;}
-.hh-rank{font-size:13px;font-weight:700;color:var(--accent);min-width:26px;padding-top:1px;}
-.hh-addr-block{flex:1;}
-.hh-street{font-size:15px;font-weight:700;color:var(--text);}
-.hh-city{font-size:12px;color:var(--text3);margin-top:2px;}
-.hh-badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;}
-.hh-dist{font-size:12px;color:var(--text3);flex-shrink:0;padding-top:2px;font-weight:500;}
-.hh-voters{border-top:1px solid var(--border);padding-top:8px;display:flex;flex-direction:column;gap:6px;}
-.voter-row{display:flex;align-items:center;gap:6px;font-size:13px;}
-.voter-name{flex:1;font-weight:500;color:var(--text);}
-.voter-unit{font-size:11px;color:var(--text3);}
-.voter-party{font-size:11px;color:var(--text3);flex-shrink:0;}
-.voter-status{font-size:11px;color:#fb923c;font-weight:700;flex-shrink:0;}
-.list-more-note{font-size:12px;color:var(--text3);padding-top:3px;}
+.hh-top{display:flex;align-items:flex-start;gap:10px;padding:11px 14px 8px;}
+.hh-rank{font-size:13px;font-weight:700;color:var(--accent);min-width:22px;padding-top:1px;flex-shrink:0;}
+.hh-addr-block{flex:1;min-width:0;}
+.hh-street{font-size:14px;font-weight:700;color:var(--text);}
+.hh-city{font-size:11px;color:var(--text3);margin-top:1px;}
+.hh-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;}
+.hh-dist{font-size:11px;color:var(--text3);flex-shrink:0;padding-top:2px;}
+
+/* VOTER LIST inside card — clearly grouped */
+.hh-voters{background:var(--surface);margin:0 12px 10px;border-radius:8px;border:1px solid var(--border);overflow:hidden;}
+.voter-row{display:flex;align-items:center;padding:9px 12px;border-bottom:1px solid var(--border);gap:8px;}
+.voter-row:last-child{border-bottom:none;}
+.voter-num{font-size:11px;color:var(--text3);min-width:18px;font-weight:600;}
+.voter-info{flex:1;min-width:0;}
+.voter-name{font-size:13px;font-weight:600;color:var(--text);}
+.voter-unit{font-size:11px;color:var(--text3);margin-top:1px;}
+.voter-right{text-align:right;flex-shrink:0;}
+.voter-party{font-size:11px;color:var(--text3);}
+.voter-status{font-size:11px;color:#fb923c;font-weight:700;margin-top:1px;}
+.list-more-note{padding:7px 12px;font-size:11px;color:var(--text3);background:var(--surface);border-top:1px solid var(--border);}
 
 /* ── FOOTER ── */
-#footer{padding:12px 16px;flex-shrink:0;border-top:1px solid var(--border);background:var(--surface);}
-.footer-links{display:flex;gap:12px;margin-bottom:6px;}
+#footer{padding:10px 14px;flex-shrink:0;border-top:1px solid var(--border);background:var(--surface);}
+.footer-links{display:flex;gap:12px;margin-bottom:4px;}
 .footer-link{font-size:12px;color:var(--accent);cursor:pointer;display:flex;align-items:center;gap:4px;}
-.footer-note{font-size:11px;color:var(--text3);line-height:1.5;}
+.footer-note{font-size:10px;color:var(--text3);}
 
 /* ── MODALS ── */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:flex-end;backdrop-filter:blur(4px);}
@@ -147,15 +168,19 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Displ
 @media(min-width:480px){.modal-sheet{border-radius:var(--radius);max-width:500px;padding:24px;}}
 .modal-handle{width:36px;height:4px;background:var(--surface3);border-radius:2px;margin:0 auto 16px;}
 @media(min-width:480px){.modal-handle{display:none;}}
-.modal-close{position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:50%;background:var(--surface3);border:none;cursor:pointer;font-size:16px;color:var(--text2);display:flex;align-items:center;justify-content:center;}
+.modal-close{position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:50%;background:var(--surface3);border:none;cursor:pointer;font-size:15px;color:var(--text2);display:flex;align-items:center;justify-content:center;}
 .modal-title{font-size:17px;font-weight:700;margin-bottom:14px;padding-right:32px;color:var(--text);}
 .modal-body{font-size:13px;color:var(--text2);line-height:1.7;}
 .modal-body p{margin-bottom:10px;}
-.modal-body ul{padding-left:18px;margin-bottom:10px;}
-.modal-body li{margin-bottom:6px;}
+.modal-body ul{padding-left:16px;margin-bottom:10px;}
+.modal-body li{margin-bottom:5px;}
 .modal-body strong{color:var(--text);}
-.modal-section{margin-bottom:16px;}
+.modal-section{margin-bottom:14px;}
 .modal-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:6px;}
+
+/* ── PIN DROP MODE ── */
+#pin-mode-bar{display:none;padding:10px 14px;background:rgba(108,99,255,0.12);border-bottom:2px solid var(--accent);text-align:center;font-size:13px;color:var(--accent);font-weight:600;flex-shrink:0;cursor:pointer;}
+#pin-mode-bar.active{display:block;}
 </style>
 </head>
 <body>
@@ -163,7 +188,6 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Displ
 
   <div id="top-bar">
     <h1>📋 Ballot Return Finder</h1>
-    <div class="subtitle">Find voters near you who haven't returned their ballot</div>
   </div>
 
   <div id="stats-row">
@@ -172,48 +196,66 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Displ
     <div class="stat"><div class="stat-label">Return rate</div><div class="stat-value" id="stat-rate">—</div></div>
   </div>
 
-  <div id="geocoding-banner"><span id="geocoding-text">Geocoding addresses…</span></div>
+  <div id="geocoding-banner"><span id="geocoding-text"></span></div>
 
   <div id="search-bar">
-    <div class="search-row">
+    <div class="search-row" style="position:relative">
       <input type="text" id="addr-input" placeholder="Enter your Denver address…"
         autocomplete="off" autocorrect="off" spellcheck="false"
         oninput="onInput()" onkeydown="onKeydown(event)"
         onfocus="onFocus()" onblur="onBlur()"/>
+      <button id="filter-toggle" onclick="toggleFilters()" title="Filters">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+        <span class="filter-dot"></span>
+      </button>
       <button id="search-btn" onclick="handleSearch()">Search</button>
       <div id="autocomplete-list"></div>
     </div>
+  </div>
+
+  <!-- Collapsible filter panel -->
+  <div id="filter-panel">
     <div class="filter-row">
       <span class="filter-label">Party</span>
-      <span class="chip active" data-party="DEM" onclick="toggleParty('DEM')">Democrat</span>
-      <span class="chip active" data-party="UAF" onclick="toggleParty('UAF')">Unaffiliated</span>
+      <div class="chips">
+        <span class="chip active" data-party="DEM" onclick="toggleParty('DEM')">Democrat</span>
+        <span class="chip active" data-party="UAF" onclick="toggleParty('UAF')">Unaffiliated</span>
+      </div>
     </div>
     <div class="filter-row">
       <span class="filter-label">Access</span>
-      <span class="chip active" data-access="accessible" onclick="toggleAccess('accessible')">Houses</span>
-      <span class="chip active" data-access="inaccessible" onclick="toggleAccess('inaccessible')">Apartments</span>
+      <div class="chips">
+        <span class="chip active" data-access="accessible" onclick="toggleAccess('accessible')">Houses</span>
+        <span class="chip active" data-access="inaccessible" onclick="toggleAccess('inaccessible')">Apartments</span>
+      </div>
     </div>
     <div class="filter-row">
       <span class="filter-label">Age</span>
-      <span class="chip active" data-age="under45" onclick="toggleAge('under45')">Under 45</span>
-      <span class="chip active" data-age="over45" onclick="toggleAge('over45')">45 & over</span>
+      <div class="chips">
+        <span class="chip active" data-age="under45" onclick="toggleAge('under45')">Under 45</span>
+        <span class="chip active" data-age="over45" onclick="toggleAge('over45')">45 &amp; over</span>
+      </div>
     </div>
     <div class="filter-row">
       <span class="filter-label">Show</span>
-      <span class="count-chip" data-count="10" onclick="setCount(10)">10</span>
-      <span class="count-chip active" data-count="30" onclick="setCount(30)">30</span>
-      <span class="count-chip" data-count="20" onclick="setCount(20)">20</span>
-      <span class="count-chip" data-count="50" onclick="setCount(50)">50</span>
+      <div class="chips">
+        <span class="count-chip" data-count="10" onclick="setCount(10)">10</span>
+        <span class="count-chip active" data-count="30" onclick="setCount(30)">30</span>
+        <span class="count-chip" data-count="20" onclick="setCount(20)">20</span>
+        <span class="count-chip" data-count="50" onclick="setCount(50)">50</span>
+      </div>
     </div>
   </div>
 
+  <div id="pin-mode-bar" onclick="cancelPinMode()">📍 Tap the map to drop a pin at your location — tap here to cancel</div>
+
   <div id="tab-bar">
     <button class="tab-btn active" id="tab-map" onclick="switchTab('map')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
       Map
     </button>
     <button class="tab-btn" id="tab-list" onclick="switchTab('list')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
       Walk List
     </button>
   </div>
@@ -221,10 +263,13 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Displ
   <div id="content">
     <div id="empty-state">
       <div class="empty-icon">🗺️</div>
-      <p>Enter your address to find nearby voters who haven't returned their ballot yet.</p>
+      <p>Enter your address to find nearby voters who haven't returned their ballot.</p>
+      <div class="pin-hint">Or tap the map to drop a pin at your location</div>
     </div>
     <div id="map-view">
-      <div id="map"></div>
+      <div id="map-wrapper">
+        <div id="map"></div>
+      </div>
       <div id="roster-panel">
         <div id="roster-content"><div class="roster-empty">Tap a pin to see who lives there</div></div>
       </div>
@@ -241,12 +286,12 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Displ
   <div id="footer">
     <div class="footer-links">
       <a class="footer-link" onclick="openModal('data-modal')">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><line x1="8" y1="7.5" x2="8" y2="11" stroke-linecap="round"/><circle cx="8" cy="5.5" r=".6" fill="currentColor" stroke="none"/></svg>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><line x1="8" y1="7.5" x2="8" y2="11" stroke-linecap="round"/><circle cx="8" cy="5.5" r=".6" fill="currentColor" stroke="none"/></svg>
         Data source
       </a>
       <a class="footer-link" onclick="openModal('safety-modal')">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L14 4.5v4.5c0 3-2.5 5-6 5.5C2.5 14 0 12 0 9V4.5z" transform="translate(1,0)"/><path d="M5.5 8l2 2 3-3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Safety & access
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L14 4.5v4.5c0 3-2.5 5-6 5.5C2.5 14 0 12 0 9V4.5z" transform="translate(1,0)"/></svg>
+        Safety &amp; access
       </a>
     </div>
     <div class="footer-note">Voter data is public record under C.R.S. 1-2-227 · Denver Elections Division</div>
@@ -262,16 +307,16 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Displ
     <div class="modal-body">
       <div class="modal-section">
         <div class="modal-section-title">Source</div>
-        <p>Denver Elections Division — <strong>Voters With Ballots List (CE-068)</strong>, downloaded from <strong>denvergov.org</strong>.</p>
+        <p>Denver Elections Division — <strong>Voters With Ballots List (CE-068)</strong> from <strong>denvergov.org</strong>.</p>
         <p>File: <strong id="modal-filename">—</strong><br/>Loaded: <strong id="modal-loaded">—</strong></p>
       </div>
       <div class="modal-section">
         <div class="modal-section-title">About this data</div>
-        <p>Publicly available data under Colorado open records law (C.R.S. 1-2-227). Only voters whose ballot has <strong>not yet been received</strong> are shown. Refreshed each morning during the election cycle.</p>
+        <p>Publicly available under C.R.S. 1-2-227. Only voters whose ballot has <strong>not yet been received</strong> are shown. Refreshed each morning during the election cycle.</p>
       </div>
       <div class="modal-section">
         <div class="modal-section-title">What this data does NOT include</div>
-        <ul><li>How anyone voted</li><li>Social Security numbers</li><li>Driver's license numbers</li><li>Email addresses or signatures</li></ul>
+        <ul><li>How anyone voted</li><li>Social Security or driver's license numbers</li><li>Email addresses or signatures</li></ul>
       </div>
     </div>
   </div>
@@ -282,341 +327,319 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Displ
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <button class="modal-close" onclick="closeModal('safety-modal')">✕</button>
-    <div class="modal-title">🛡️ Safety & Access Policy</div>
+    <div class="modal-title">🛡️ Safety &amp; Access</div>
     <div class="modal-body">
-      <p>Accessibility classifications are <strong>estimates only</strong> and do not reflect actual conditions.</p>
+      <p>Accessibility classifications are <strong>estimates only</strong> based on address format.</p>
       <div class="modal-section">
         <div class="modal-section-title">All addresses</div>
         <ul>
-          <li><strong>Always seek permission</strong> from the property owner before entering private property.</li>
-          <li><strong>Obey all posted signs.</strong> No-soliciting and no-trespassing signs must be respected.</li>
+          <li><strong>Always seek permission</strong> before entering private property.</li>
+          <li><strong>Obey posted no-soliciting and no-trespassing signs.</strong></li>
           <li><strong>If you do not feel safe, leave immediately.</strong></li>
         </ul>
       </div>
       <div class="modal-section">
-        <div class="modal-section-title">Houses & Apartments</div>
-        <ul>
-          <li>Houses may be part of a <strong>gated community</strong> or have restricted access.</li>
-          <li>Apartments frequently require buzzer or key access. Do not enter without permission.</li>
-        </ul>
+        <div class="modal-section-title">Apartments</div>
+        <ul><li>Frequently require buzzer or key access. Do not enter without permission.</li></ul>
       </div>
-      <p style="font-size:12px;color:var(--text3);margin-top:8px;">These classifications do not constitute legal advice. Contact your campaign coordinator with questions.</p>
     </div>
   </div>
 </div>
 
 <script>
-// ── DENVER SUNRISE/SUNSET ──────────────────────────────────────
-// Denver lat/lng for sun calculation
-const DENVER_LAT = 39.7392;
-const DENVER_LNG = -104.9903;
-
-function getSunTimes(date) {
-  // Simple sunrise/sunset calculation for Denver
-  const J = date.getTime() / 86400000 + 2440587.5;
-  const n = Math.ceil(J - 2451545.0 + 0.0008);
-  const Js = n - DENVER_LNG / 360;
-  const M = (357.5291 + 0.98560028 * Js) % 360;
-  const C = 1.9148 * Math.sin(M * Math.PI/180) + 0.02 * Math.sin(2*M*Math.PI/180) + 0.0003 * Math.sin(3*M*Math.PI/180);
-  const lam = (M + C + 180 + 102.9372) % 360;
-  const Jt = 2451545.0 + Js + 0.0053 * Math.sin(M*Math.PI/180) - 0.0069 * Math.sin(2*lam*Math.PI/180);
-  const decl = Math.asin(Math.sin(lam*Math.PI/180) * Math.sin(23.4397*Math.PI/180));
-  const cosW = (Math.sin(-0.833*Math.PI/180) - Math.sin(DENVER_LAT*Math.PI/180)*Math.sin(decl)) / (Math.cos(DENVER_LAT*Math.PI/180)*Math.cos(decl));
-  const W = Math.acos(Math.max(-1, Math.min(1, cosW))) * 180/Math.PI;
-  const Jrise = Jt - W/360;
-  const Jset = Jt + W/360;
-  const toDate = j => new Date((j - 2440587.5) * 86400000);
-  return { sunrise: toDate(Jrise), sunset: toDate(Jset) };
+// ── THEME ────────────────────────────────────────────────────────
+const DLAT=39.7392,DLNG=-104.9903;
+function getSunTimes(d){
+  const J=d.getTime()/86400000+2440587.5,n=Math.ceil(J-2451545.0+0.0008);
+  const Js=n-DLNG/360,M=(357.5291+0.98560028*Js)%360;
+  const C=1.9148*Math.sin(M*Math.PI/180)+0.02*Math.sin(2*M*Math.PI/180)+0.0003*Math.sin(3*M*Math.PI/180);
+  const lam=(M+C+180+102.9372)%360;
+  const Jt=2451545.0+Js+0.0053*Math.sin(M*Math.PI/180)-0.0069*Math.sin(2*lam*Math.PI/180);
+  const decl=Math.asin(Math.sin(lam*Math.PI/180)*Math.sin(23.4397*Math.PI/180));
+  const cosW=(Math.sin(-0.833*Math.PI/180)-Math.sin(DLAT*Math.PI/180)*Math.sin(decl))/(Math.cos(DLAT*Math.PI/180)*Math.cos(decl));
+  const W=Math.acos(Math.max(-1,Math.min(1,cosW)))*180/Math.PI;
+  const toDate=j=>new Date((j-2440587.5)*86400000);
+  return{sunrise:toDate(Jt-W/360),sunset:toDate(Jt+W/360)};
 }
-
-function applyTheme() {
-  const now = new Date();
-  const { sunrise, sunset } = getSunTimes(now);
-  // Dark from 30min after sunset to 30min after sunrise
-  const sunriseEnd = new Date(sunrise.getTime() + 30*60000);
-  const sunsetStart = new Date(sunset.getTime() + 30*60000);
-  const isDark = now < sunriseEnd || now >= sunsetStart;
-  document.documentElement.classList.toggle('dark', isDark);
+function applyTheme(){
+  const now=new Date(),{sunrise,sunset}=getSunTimes(now);
+  const isDark=now<new Date(sunrise.getTime()+30*60000)||now>=new Date(sunset.getTime()+30*60000);
+  document.documentElement.classList.toggle('dark',isDark);
 }
+applyTheme();setInterval(applyTheme,60000);
 
-applyTheme();
-setInterval(applyTheme, 60000); // Check every minute
-
-// ── STATE ────────────────────────────────────────────────────────
-let partyFilters = new Set(['DEM','UAF']);
-let accessFilters = new Set(['accessible','inaccessible']);
-let ageFilters = new Set(['under45','over45']);
-let resultCount = 30;
-let lastResults = [], filteredResults = [];
-let mapInstance = null, markers = [], originMarker = null, lastOrigin = null;
-let rosterState = { hh: null, shown: 0 };
-let acResults = [], acIdx = -1, acTimer = null;
-const PAGE = 10;
-const CURRENT_YEAR = new Date().getFullYear();
+// ── STATE ─────────────────────────────────────────────────────────
+let partyFilters=new Set(['DEM','UAF']);
+let accessFilters=new Set(['accessible','inaccessible']);
+let ageFilters=new Set(['under45','over45']);
+let resultCount=30;
+let lastResults=[],filteredResults=[];
+let mapInstance=null,markers=[],originMarker=null,pinMarker=null,lastOrigin=null;
+let rosterState={hh:null,shown:0};
+let acResults=[],acIdx=-1,acTimer=null;
+let filtersOpen=false;
+let pinModeActive=false;
+const PAGE=10,CY=new Date().getFullYear();
 
 // ── INIT ─────────────────────────────────────────────────────────
-async function init() {
+async function init(){
   await checkStatus();
-  setInterval(checkStatus, 20000);
+  setInterval(checkStatus,20000);
 }
-
-async function checkStatus() {
-  try {
-    const r = await fetch('/api/status');
-    const s = await r.json();
-    if (s.hasData) {
-      document.getElementById('stat-total').textContent = s.total.toLocaleString();
-      document.getElementById('stat-pending').textContent = s.pending.toLocaleString();
-      document.getElementById('stat-rate').textContent = s.returnRate + '%';
-      document.getElementById('modal-filename').textContent = s.filename;
-      document.getElementById('modal-loaded').textContent = s.loadedAt;
+async function checkStatus(){
+  try{
+    const s=await(await fetch('/api/status')).json();
+    if(s.hasData){
+      document.getElementById('stat-total').textContent=s.total.toLocaleString();
+      document.getElementById('stat-pending').textContent=s.pending.toLocaleString();
+      document.getElementById('stat-rate').textContent=s.returnRate+'%';
+      document.getElementById('modal-filename').textContent=s.filename;
+      document.getElementById('modal-loaded').textContent=s.loadedAt;
     }
-    const banner = document.getElementById('geocoding-banner');
-    if (s.loading && s.loadProgress) {
-      banner.style.display = 'block';
-      document.getElementById('geocoding-text').textContent = '⏳ ' + s.loadProgress;
-    } else { banner.style.display = 'none'; }
-  } catch(e) {}
+    const banner=document.getElementById('geocoding-banner');
+    if(s.loading&&s.loadProgress){banner.style.display='block';document.getElementById('geocoding-text').textContent='⏳ '+s.loadProgress;}
+    else banner.style.display='none';
+  }catch(e){}
 }
 
-// ── AUTOCOMPLETE ─────────────────────────────────────────────────
-function onInput() {
+// ── FILTERS ───────────────────────────────────────────────────────
+function toggleFilters(){
+  filtersOpen=!filtersOpen;
+  document.getElementById('filter-panel').classList.toggle('open',filtersOpen);
+}
+function updateFilterBadge(){
+  const nonDefault=partyFilters.size<2||accessFilters.size<2||ageFilters.size<2||resultCount!==30;
+  document.getElementById('filter-toggle').classList.toggle('has-active',nonDefault);
+}
+function toggleParty(p){
+  if(partyFilters.has(p)){if(partyFilters.size===1)return;partyFilters.delete(p);}else partyFilters.add(p);
+  document.querySelectorAll('.chip[data-party]').forEach(c=>c.classList.toggle('active',partyFilters.has(c.dataset.party)));
+  updateFilterBadge();if(lastOrigin)doSearch(lastOrigin);
+}
+function toggleAccess(a){
+  if(accessFilters.has(a)){if(accessFilters.size===1)return;accessFilters.delete(a);}else accessFilters.add(a);
+  document.querySelectorAll('.chip[data-access]').forEach(c=>c.classList.toggle('active',accessFilters.has(c.dataset.access)));
+  updateFilterBadge();if(lastOrigin)doSearch(lastOrigin);
+}
+function toggleAge(a){
+  if(ageFilters.has(a)){if(ageFilters.size===1)return;ageFilters.delete(a);}else ageFilters.add(a);
+  document.querySelectorAll('.chip[data-age]').forEach(c=>c.classList.toggle('active',ageFilters.has(c.dataset.age)));
+  updateFilterBadge();if(lastOrigin)doSearch(lastOrigin);
+}
+function setCount(n){
+  resultCount=n;
+  document.querySelectorAll('.count-chip').forEach(c=>c.classList.toggle('active',parseInt(c.dataset.count)===n));
+  updateFilterBadge();if(lastOrigin)doSearch(lastOrigin);
+}
+
+// ── AUTOCOMPLETE ──────────────────────────────────────────────────
+function onInput(){
   clearTimeout(acTimer);
-  const v = document.getElementById('addr-input').value.trim();
-  if (v.length < 3) { closeAC(); return; }
-  acTimer = setTimeout(() => fetchAC(v), 300);
+  lastOrigin=null; // reset when user types new address
+  const v=document.getElementById('addr-input').value.trim();
+  if(v.length<3){closeAC();return;}
+  acTimer=setTimeout(()=>fetchAC(v),300);
 }
-async function fetchAC(q) {
-  try {
-    const r = await fetch('/api/autocomplete?q=' + encodeURIComponent(q));
-    acResults = await r.json();
-    renderAC();
-  } catch(e) { closeAC(); }
+async function fetchAC(q){
+  try{acResults=await(await fetch('/api/autocomplete?q='+encodeURIComponent(q))).json();renderAC();}
+  catch(e){closeAC();}
 }
-function renderAC() {
-  const list = document.getElementById('autocomplete-list');
-  if (!acResults.length) { closeAC(); return; }
-  list.style.display = 'block'; acIdx = -1;
-  list.innerHTML = acResults.map((r,i) =>
-    `<div class="ac-item" onmousedown="selectAC(${i})"><div style="font-weight:500">${r.main}</div><div style="font-size:11px;color:var(--text3)">Denver, CO</div></div>`
-  ).join('');
+function renderAC(){
+  const list=document.getElementById('autocomplete-list');
+  if(!acResults.length){closeAC();return;}
+  list.style.display='block';acIdx=-1;
+  list.innerHTML=acResults.map((r,i)=>`<div class="ac-item" onmousedown="selectAC(${i})"><div style="font-weight:500">${r.main}</div><div class="ac-sub">Denver, CO</div></div>`).join('');
 }
-function selectAC(i) {
-  const r = acResults[i];
-  document.getElementById('addr-input').value = r.main;
-  lastOrigin = { lat: r.lat, lng: r.lng };
-  closeAC();
-  doSearch(lastOrigin);
+function selectAC(i){
+  const r=acResults[i];
+  document.getElementById('addr-input').value=r.main;
+  lastOrigin={lat:r.lat,lng:r.lng};
+  closeAC();doSearch(lastOrigin);
 }
-function closeAC() {
-  document.getElementById('autocomplete-list').style.display = 'none';
-  acResults = []; acIdx = -1;
-}
-function onKeydown(e) {
-  const list = document.getElementById('autocomplete-list');
-  if (list.style.display === 'none') { if(e.key==='Enter') { closeAC(); handleSearch(); } return; }
-  const items = list.querySelectorAll('.ac-item');
-  if (e.key==='ArrowDown'){e.preventDefault();acIdx=Math.min(acIdx+1,items.length-1);items.forEach((el,i)=>el.classList.toggle('sel',i===acIdx));}
+function closeAC(){document.getElementById('autocomplete-list').style.display='none';acResults=[];acIdx=-1;}
+function onKeydown(e){
+  const list=document.getElementById('autocomplete-list');
+  if(list.style.display==='none'){if(e.key==='Enter'){closeAC();handleSearch();}return;}
+  const items=list.querySelectorAll('.ac-item');
+  if(e.key==='ArrowDown'){e.preventDefault();acIdx=Math.min(acIdx+1,items.length-1);items.forEach((el,i)=>el.classList.toggle('sel',i===acIdx));}
   else if(e.key==='ArrowUp'){e.preventDefault();acIdx=Math.max(acIdx-1,-1);items.forEach((el,i)=>el.classList.toggle('sel',i===acIdx));}
   else if(e.key==='Enter'&&acIdx>=0){e.preventDefault();selectAC(acIdx);}
   else if(e.key==='Escape')closeAC();
 }
-function onFocus(){ if(acResults.length) renderAC(); }
-function onBlur(){ setTimeout(closeAC,150); }
+function onFocus(){if(acResults.length)renderAC();}
+function onBlur(){setTimeout(closeAC,150);}
 
-// ── FILTERS ──────────────────────────────────────────────────────
-function toggleParty(p) {
-  if(partyFilters.has(p)){if(partyFilters.size===1)return;partyFilters.delete(p);}else partyFilters.add(p);
-  document.querySelectorAll('.chip[data-party]').forEach(c=>c.classList.toggle('active',partyFilters.has(c.dataset.party)));
-  if(lastOrigin)doSearch(lastOrigin);
-}
-function toggleAccess(a) {
-  if(accessFilters.has(a)){if(accessFilters.size===1)return;accessFilters.delete(a);}else accessFilters.add(a);
-  document.querySelectorAll('.chip[data-access]').forEach(c=>c.classList.toggle('active',accessFilters.has(c.dataset.access)));
-  if(lastOrigin)doSearch(lastOrigin);
-}
-function toggleAge(a) {
-  if(ageFilters.has(a)){if(ageFilters.size===1)return;ageFilters.delete(a);}else ageFilters.add(a);
-  document.querySelectorAll('.chip[data-age]').forEach(c=>c.classList.toggle('active',ageFilters.has(c.dataset.age)));
-  if(lastOrigin)doSearch(lastOrigin);
-}
-function setCount(n) {
-  resultCount = n;
-  document.querySelectorAll('.count-chip').forEach(c=>c.classList.toggle('active',parseInt(c.dataset.count)===n));
-  if(lastOrigin)doSearch(lastOrigin);
-}
-
-// ── SEARCH ───────────────────────────────────────────────────────
-async function handleSearch() {
+// ── SEARCH ────────────────────────────────────────────────────────
+async function handleSearch(){
   closeAC();
-  const addr = document.getElementById('addr-input').value.trim();
+  const addr=document.getElementById('addr-input').value.trim();
   if(!addr){alert('Please enter a Denver address.');return;}
-  const btn = document.getElementById('search-btn');
+  const btn=document.getElementById('search-btn');
   btn.textContent='Finding…';btn.disabled=true;
-  try {
-    let origin = lastOrigin;
+  try{
+    let origin=lastOrigin;
     if(!origin){
-      const r = await fetch('/api/geocode?address='+encodeURIComponent(addr));
-      if(!r.ok){alert('Could not find that address in Denver. Try adding the street type, e.g. "552 S Pennsylvania St".');btn.textContent='Search';btn.disabled=false;return;}
-      origin = await r.json();
-      lastOrigin = origin;
+      const r=await fetch('/api/geocode?address='+encodeURIComponent(addr));
+      if(!r.ok){alert('Could not find that address in Denver. Try adding the street type, e.g. "552 S Pennsylvania St".');return;}
+      origin=await r.json();lastOrigin=origin;
     }
     await doSearch(origin);
-  } finally { btn.textContent='Search';btn.disabled=false;document.getElementById('addr-input').blur(); }
+  }finally{btn.textContent='Search';btn.disabled=false;document.getElementById('addr-input').blur();}
 }
 
-async function doSearch(origin) {
-  const partyParam = [...partyFilters].join(',');
-  const accessParam = [...accessFilters].join(',');
-  // Include age filter and extra results to filter client-side
-  const url = `/api/search?lat=${origin.lat}&lng=${origin.lng}&party=${partyParam}&access=${accessParam}&limit=${resultCount*2}`;
-  try {
-    const r = await fetch(url);
-    const data = await r.json();
-    let results = data.results || [];
-
-    // Client-side age filter based on YOB
-    if(ageFilters.size === 1) {
-      const wantUnder = ageFilters.has('under45');
-      results = results.filter(hh => {
-        const matchVoters = hh.voters.filter(v => {
-          if(!v.yob) return true; // no DOB data, include
-          const age = CURRENT_YEAR - v.yob;
-          return wantUnder ? age < 45 : age >= 45;
+async function doSearch(origin){
+  const url=`/api/search?lat=${origin.lat}&lng=${origin.lng}&party=${[...partyFilters].join(',')}&access=${[...accessFilters].join(',')}&limit=${resultCount*2}`;
+  try{
+    let results=(await(await fetch(url)).json()).results||[];
+    // Age filter
+    if(ageFilters.size===1){
+      const wantUnder=ageFilters.has('under45');
+      results=results.filter(hh=>{
+        hh.voters=hh.voters.filter(v=>{
+          if(!v.yob)return true;
+          return wantUnder?(CY-v.yob)<45:(CY-v.yob)>=45;
         });
-        hh.voters = matchVoters;
-        return matchVoters.length > 0;
+        return hh.voters.length>0;
       });
     }
-
-    results = results.slice(0, resultCount);
-
-    // Optimize walk order by street block
-    lastResults = optimizeWalkOrder(results, origin);
+    results=results.slice(0,resultCount);
+    lastResults=optimizeWalkOrder(results,origin);
     document.getElementById('empty-state').style.display='none';
     document.getElementById('tab-bar').classList.add('visible');
-    renderAll(lastResults, origin);
+    filteredResults=lastResults;
+    renderAll(lastResults,origin);
     switchTab('map');
-  } catch(e){ alert('Search failed. Please try again.'); }
+  }catch(e){alert('Search failed. Please try again.');}
 }
 
-// ── WALK ORDER OPTIMIZATION ───────────────────────────────────────
-// Groups addresses by street block, then sorts blocks by proximity
-// and alternates sides of the street for efficient canvassing
-function optimizeWalkOrder(results, origin) {
-  if(results.length === 0) return results;
-
-  // Step 1: Group by street block (100-block increments)
-  const blocks = new Map();
-  results.forEach(hh => {
-    const numMatch = hh.buildingAddress.match(/^(\d+)/);
-    const houseNum = numMatch ? parseInt(numMatch[1]) : 0;
-    const blockNum = Math.floor(houseNum / 100) * 100;
-    const streetName = hh.buildingAddress.replace(/^\d+\s*/, '').trim().toUpperCase();
-    const blockKey = `${blockNum}-${streetName}`;
-    if(!blocks.has(blockKey)) blocks.set(blockKey, { key: blockKey, streetName, blockNum, houses: [], lat: 0, lng: 0 });
-    blocks.get(blockKey).houses.push(hh);
+// ── WALK ORDER ────────────────────────────────────────────────────
+function optimizeWalkOrder(results,origin){
+  if(!results.length)return results;
+  // Group by block (100s) + street name
+  const blocks=new Map();
+  results.forEach(hh=>{
+    const num=parseInt(hh.buildingAddress.match(/^(\d+)/)?.[1]||0);
+    const block=Math.floor(num/100)*100;
+    const street=hh.buildingAddress.replace(/^\d+\s*/,'').trim().toUpperCase();
+    const key=`${block}|${street}`;
+    if(!blocks.has(key))blocks.set(key,{key,street,block,houses:[],lat:0,lng:0});
+    blocks.get(key).houses.push(hh);
   });
-
-  // Step 2: Compute block centroid
-  blocks.forEach(block => {
-    block.lat = block.houses.reduce((s,h)=>s+h.lat,0)/block.houses.length;
-    block.lng = block.houses.reduce((s,h)=>s+h.lng,0)/block.houses.length;
-  });
-
-  // Step 3: Sort blocks by nearest neighbor from origin
-  const blockList = Array.from(blocks.values());
-  const orderedBlocks = [];
-  const remaining = [...blockList];
-  let current = { lat: origin.lat, lng: origin.lng };
-
-  while(remaining.length > 0) {
-    let nearestIdx = 0, nearestDist = Infinity;
-    for(let i=0;i<remaining.length;i++) {
-      const d = haversine(current.lat, current.lng, remaining[i].lat, remaining[i].lng);
-      if(d < nearestDist) { nearestDist = d; nearestIdx = i; }
-    }
-    const block = remaining.splice(nearestIdx, 1)[0];
-    orderedBlocks.push(block);
-    current = { lat: block.lat, lng: block.lng };
+  blocks.forEach(b=>{b.lat=b.houses.reduce((s,h)=>s+h.lat,0)/b.houses.length;b.lng=b.houses.reduce((s,h)=>s+h.lng,0)/b.houses.length;});
+  // Nearest-neighbor sort of blocks
+  const rem=[...blocks.values()],ordered=[];
+  let cur={lat:origin.lat,lng:origin.lng};
+  while(rem.length){
+    let ni=0,nd=Infinity;
+    rem.forEach((b,i)=>{const d=hav(cur.lat,cur.lng,b.lat,b.lng);if(d<nd){nd=d;ni=i;}});
+    const b=rem.splice(ni,1)[0];ordered.push(b);cur={lat:b.lat,lng:b.lng};
   }
-
-  // Step 4: Within each block, sort by house number
-  // Even numbers one side, odd numbers other side
-  // Walk up even side then back down odd side (or vice versa)
-  const ordered = [];
-  orderedBlocks.forEach(block => {
-    const evens = block.houses.filter(h => {
-      const n = parseInt(h.buildingAddress.match(/^(\d+)/)?.[1] || 0);
-      return n % 2 === 0;
-    }).sort((a,b) => {
-      const na = parseInt(a.buildingAddress.match(/^(\d+)/)?.[1]||0);
-      const nb = parseInt(b.buildingAddress.match(/^(\d+)/)?.[1]||0);
-      return na - nb;
-    });
-    const odds = block.houses.filter(h => {
-      const n = parseInt(h.buildingAddress.match(/^(\d+)/)?.[1] || 0);
-      return n % 2 !== 0;
-    }).sort((a,b) => {
-      const na = parseInt(a.buildingAddress.match(/^(\d+)/)?.[1]||0);
-      const nb = parseInt(b.buildingAddress.match(/^(\d+)/)?.[1]||0);
-      return nb - na; // reverse order so you walk back down the other side
-    });
-    // Attach block label to first house in each group
-    const blockHouses = [...evens, ...odds];
-    if(blockHouses.length > 0) {
-      blockHouses[0]._blockLabel = `${block.blockNum} block of ${block.streetName}`;
-    }
-    ordered.push(...blockHouses);
+  // Within each block: evens ascending, odds descending (walk one side then back)
+  const out=[];
+  ordered.forEach(b=>{
+    const evens=b.houses.filter(h=>parseInt(h.buildingAddress.match(/^(\d+)/)?.[1]||0)%2===0).sort((a,b)=>houseNum(a)-houseNum(b));
+    const odds=b.houses.filter(h=>parseInt(h.buildingAddress.match(/^(\d+)/)?.[1]||0)%2!==0).sort((a,b)=>houseNum(b)-houseNum(a));
+    const group=[...evens,...odds];
+    if(group.length)group[0]._blockLabel=`${b.block} block of ${b.street}`;
+    out.push(...group);
   });
+  return out;
+}
+function houseNum(h){return parseInt(h.buildingAddress.match(/^(\d+)/)?.[1]||0);}
 
-  return ordered;
+// ── PIN DROP MODE ─────────────────────────────────────────────────
+function startPinMode(){
+  pinModeActive=true;
+  document.getElementById('pin-mode-bar').classList.add('active');
+  if(mapInstance){
+    mapInstance.getContainer().style.cursor='crosshair';
+    showMapHint('Tap anywhere on the map to set your location');
+  }
+}
+function cancelPinMode(){
+  pinModeActive=false;
+  document.getElementById('pin-mode-bar').classList.remove('active');
+  if(mapInstance)mapInstance.getContainer().style.cursor='';
+}
+function handleMapClick(e){
+  if(!pinModeActive)return;
+  const{lat,lng}=e.latlng;
+  cancelPinMode();
+  lastOrigin={lat,lng};
+  document.getElementById('addr-input').value='';
+  if(pinMarker)mapInstance.removeLayer(pinMarker);
+  pinMarker=L.marker([lat,lng],{icon:makeOriginIcon(),zIndexOffset:1000}).addTo(mapInstance);
+  doSearch({lat,lng});
 }
 
-// ── RENDER ───────────────────────────────────────────────────────
-function renderAll(results, origin) {
-  filteredResults = results;
-  renderMap(results, origin||lastOrigin);
-  renderList(results);
-  closeRoster();
-}
-
-// ── MAP ──────────────────────────────────────────────────────────
-function makeIcon(hh, highlight) {
-  const color = hh.apt ? '#f97316' : '#6c63ff';
-  const sz = highlight ? 18 : hh.voters.length > 1 ? 15 : 11;
-  const label = hh.voters.length > 1 ? String(hh.voters.length) : '';
+// ── MAP ───────────────────────────────────────────────────────────
+function makeIcon(hh,highlight){
+  const color=hh.apt?'#f97316':'#6c63ff';
+  const sz=highlight?18:hh.voters.length>1?15:11;
+  const lbl=hh.voters.length>1?String(hh.voters.length):'';
   return L.divIcon({
-    html:`<svg xmlns='http://www.w3.org/2000/svg' width='${sz*2}' height='${sz*2}'><circle cx='${sz}' cy='${sz}' r='${sz-1}' fill='${color}' stroke='rgba(255,255,255,0.4)' stroke-width='1.5'/>${label?`<text x='${sz}' y='${sz+4}' text-anchor='middle' font-size='${sz<=12?9:11}' font-family='-apple-system,sans-serif' font-weight='bold' fill='white'>${label}</text>`:''}</svg>`,
+    html:`<svg xmlns='http://www.w3.org/2000/svg' width='${sz*2}' height='${sz*2}'><circle cx='${sz}' cy='${sz}' r='${sz-1}' fill='${color}' stroke='rgba(255,255,255,0.4)' stroke-width='1.5'/>${lbl?`<text x='${sz}' y='${sz+4}' text-anchor='middle' font-size='${sz<=12?9:11}' font-family='-apple-system,sans-serif' font-weight='bold' fill='white'>${lbl}</text>`:''}</svg>`,
     className:'',iconSize:[sz*2,sz*2],iconAnchor:[sz,sz]
   });
 }
 function makeOriginIcon(){
-  return L.divIcon({html:`<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28'><circle cx='14' cy='14' r='10' fill='#22c55e' stroke='rgba(255,255,255,0.5)' stroke-width='2'/><circle cx='14' cy='14' r='4' fill='white'/></svg>`,className:'',iconSize:[28,28],iconAnchor:[14,14]});
+  return L.divIcon({html:`<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28'><circle cx='14' cy='14' r='11' fill='#22c55e' stroke='white' stroke-width='2'/><circle cx='14' cy='14' r='4' fill='white'/></svg>`,className:'',iconSize:[28,28],iconAnchor:[14,14]});
+}
+function makePinIcon(){
+  return L.divIcon({html:`<svg xmlns='http://www.w3.org/2000/svg' width='28' height='36'><path d='M14 2C8.5 2 4 6.5 4 12c0 7 10 22 10 22S24 19 24 12c0-5.5-4.5-10-10-10z' fill='#6c63ff' stroke='white' stroke-width='1.5'/><circle cx='14' cy='12' r='4' fill='white'/></svg>`,className:'',iconSize:[28,36],iconAnchor:[14,34]});
 }
 
-function renderMap(results, origin) {
+let mapHintTimer=null;
+function showMapHint(msg){
+  const el=document.getElementById('map-hint')||createHint();
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(mapHintTimer);mapHintTimer=setTimeout(()=>el.classList.remove('show'),3000);
+}
+function createHint(){
+  const el=document.createElement('div');el.id='map-hint';el.className='map-hint';
+  document.getElementById('map-wrapper').appendChild(el);return el;
+}
+
+function renderMap(results,origin){
   if(!mapInstance){
-    mapInstance = L.map('map',{zoomControl:true,center:[39.7392,-104.9903],zoom:13,tap:true});
+    mapInstance=L.map('map',{zoomControl:true,center:[39.7392,-104.9903],zoom:13,tap:true});
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',maxZoom:19}).addTo(mapInstance);
+    mapInstance.on('click',handleMapClick);
+    // Long-press for pin drop on mobile
+    let pressTimer=null;
+    mapInstance.on('mousedown touchstart',()=>{pressTimer=setTimeout(()=>startPinMode(),600);});
+    mapInstance.on('mouseup touchend',()=>clearTimeout(pressTimer));
+    // Add pin drop button
+    const pinBtn=L.Control.extend({
+      onAdd:()=>{
+        const btn=L.DomUtil.create('button','leaflet-bar');
+        btn.innerHTML='📍';btn.title='Drop pin at location';
+        btn.style.cssText='width:34px;height:34px;font-size:16px;border:none;background:var(--bg);cursor:pointer;border-radius:4px;';
+        btn.onclick=(e)=>{L.DomEvent.stopPropagation(e);startPinMode();};
+        return btn;
+      }
+    });
+    new pinBtn({position:'topleft'}).addTo(mapInstance);
   }
   markers.forEach(m=>mapInstance.removeLayer(m));markers=[];
   if(originMarker)mapInstance.removeLayer(originMarker);
-  if(origin)originMarker=L.marker([origin.lat,origin.lng],{icon:makeOriginIcon(),zIndexOffset:1000}).addTo(mapInstance);
+  if(pinMarker)mapInstance.removeLayer(pinMarker);
+  if(origin){
+    originMarker=L.marker([origin.lat,origin.lng],{icon:makeOriginIcon(),zIndexOffset:1000}).addTo(mapInstance);
+  }
   results.forEach((hh,i)=>{
     const m=L.marker([hh.lat,hh.lng],{icon:makeIcon(hh,false)}).addTo(mapInstance);
     m.on('click',()=>showRoster(hh,i));
     markers.push(m);
   });
   if(origin&&results.length){
-    const pts=results.map(h=>[h.lat,h.lng]);
-    const b=L.latLngBounds(pts);b.extend([origin.lat,origin.lng]);
+    const b=L.latLngBounds(results.map(h=>[h.lat,h.lng]));b.extend([origin.lat,origin.lng]);
     mapInstance.fitBounds(b,{padding:[40,40]});
-  } else if(origin){mapInstance.setView([origin.lat,origin.lng],14);}
+  }else if(origin)mapInstance.setView([origin.lat,origin.lng],14);
 }
 
-// ── ROSTER ───────────────────────────────────────────────────────
-function showRoster(hh, idx) {
+// ── ROSTER ────────────────────────────────────────────────────────
+function showRoster(hh,idx){
   markers.forEach((m,i)=>m.setIcon(makeIcon(filteredResults[i],i===idx)));
   rosterState={hh,shown:Math.min(PAGE,hh.voters.length)};
   renderRoster();
@@ -633,42 +656,52 @@ function closeRoster(){
 function renderRoster(){
   const{hh,shown}=rosterState;if(!hh)return;
   const ab=hh.apt?`<span class="badge apt">Apartment</span>`:`<span class="badge home">House</span>`;
-  const pb=[...new Set(hh.voters.map(v=>v.party))].map(p=>`<span class="badge ${pClass(p)}">${pLabel(p)}</span>`).join(' ');
   const rows=hh.voters.slice(0,shown).map(v=>
-    `<div class="roster-row"><div class="roster-left"><div class="roster-name">${v.name}</div>${v.unit?`<div class="roster-unit">Unit ${v.unit}</div>`:''}</div><div class="roster-right"><div class="roster-party">${pLabel(v.party)}</div><div class="not-returned">Not returned</div></div></div>`
+    `<div class="roster-row"><div><div class="roster-name">${v.name}</div>${v.unit?`<div class="roster-unit">Unit ${v.unit}</div>`:''}</div><div class="roster-right"><div class="roster-party">${pLabel(v.party)}</div><div class="not-returned">Not returned</div></div></div>`
   ).join('');
   const rem=hh.voters.length-shown;
-  const more=rem>0?`<button class="more-btn" onclick="loadMore()">Show ${Math.min(rem,PAGE)} more (${rem} remaining)</button>`:'';
   document.getElementById('roster-content').innerHTML=
-    `<div class="roster-header"><div class="roster-header-left"><div class="roster-addr">${hh.buildingAddress}</div><div class="roster-meta">${hh.city}, ${hh.state} ${hh.zip} · ${dStr(hh.dist)} away · ${hh.voters.length} voter${hh.voters.length!==1?'s':''}</div><div class="roster-badges">${ab} ${pb}</div></div><button class="roster-close" onclick="closeRoster()">✕</button></div><div class="roster-voter-list">${rows}</div>${more}`;
-  document.getElementById('roster-panel').scrollTop=0;
+    `<div class="roster-header"><div><div class="roster-addr">${hh.buildingAddress}</div><div class="roster-meta">${hh.city}, CO ${hh.zip} · ${dStr(hh.dist)} · ${hh.voters.length} voter${hh.voters.length!==1?'s':''}</div><div class="roster-badges">${ab}</div></div><button class="roster-close" onclick="closeRoster()">✕</button></div>${rows}${rem>0?`<button class="more-btn" onclick="loadMore()">+${Math.min(rem,PAGE)} more</button>`:''}`;
 }
 function loadMore(){rosterState.shown=Math.min(rosterState.shown+PAGE,rosterState.hh.voters.length);renderRoster();}
 
-// ── LIST (WALK ORDER WITH BLOCK DIVIDERS) ─────────────────────────
-function renderList(results) {
+// ── LIST VIEW ─────────────────────────────────────────────────────
+function renderList(results){
   document.getElementById('list-count').textContent=`${results.length} address${results.length!==1?'es':''}`;
   const ul=document.getElementById('household-list');
   if(!results.length){
-    ul.innerHTML=`<div style="padding:3rem 2rem;text-align:center;color:var(--text3);font-size:14px;">⏳ No cached addresses near you yet — geocoding is still running. Try again in a few minutes.</div>`;
+    ul.innerHTML=`<div style="padding:3rem 2rem;text-align:center;color:var(--text3);font-size:14px;">⏳ No cached addresses near you yet — geocoding is still running. Check back in a few minutes.</div>`;
     return;
   }
-  let html='';
-  let stopNum=0;
+  let html='',stop=0;
   results.forEach((hh,i)=>{
-    stopNum++;
-    if(hh._blockLabel){
-      html+=`<div class="block-divider">📍 ${hh._blockLabel}</div>`;
-    }
+    stop++;
+    if(hh._blockLabel)html+=`<div class="block-divider">📍 ${hh._blockLabel}</div>`;
     const ab=hh.apt?`<span class="badge apt">Apt</span>`:`<span class="badge home">House</span>`;
-    const pb=[...new Set(hh.voters.map(v=>v.party))].map(p=>`<span class="badge ${pClass(p)}">${pLabel(p)}</span>`).join(' ');
-    const show=hh.voters.slice(0,5);
-    const more=hh.voters.length>5?`<div class="list-more-note">+ ${hh.voters.length-5} more — tap to see all</div>`:'';
-    const vrows=show.map(v=>`<div class="voter-row"><span class="voter-name">${v.name}${v.unit?` <span class="voter-unit">Apt ${v.unit}</span>`:''}</span><span class="voter-party">${pLabel(v.party)}</span><span class="voter-status">Not returned</span></div>`).join('');
+    const pb=[...new Set(hh.voters.map(v=>v.party))].map(p=>`<span class="badge ${pClass(p)}">${pLabel(p)}</span>`).join('');
+    // Voter rows with numbered list inside a card
+    const show=hh.voters.slice(0,6);
+    const vrows=show.map((v,vi)=>`
+      <div class="voter-row">
+        <span class="voter-num">${vi+1}</span>
+        <div class="voter-info">
+          <div class="voter-name">${v.name}</div>
+          ${v.unit?`<div class="voter-unit">Unit ${v.unit}</div>`:''}
+        </div>
+        <div class="voter-right">
+          <div class="voter-party">${pLabel(v.party)}</div>
+          <div class="voter-status">Not returned</div>
+        </div>
+      </div>`).join('');
+    const more=hh.voters.length>6?`<div class="list-more-note">+${hh.voters.length-6} more — tap to see all</div>`:'';
     html+=`<div class="hh-card" onclick="focusMarker(${i})">
       <div class="hh-top">
-        <span class="hh-rank">${stopNum}</span>
-        <div class="hh-addr-block"><div class="hh-street">${hh.buildingAddress}</div><div class="hh-city">${hh.city}, ${hh.state} ${hh.zip}</div><div class="hh-badges">${ab}${pb}</div></div>
+        <span class="hh-rank">${stop}</span>
+        <div class="hh-addr-block">
+          <div class="hh-street">${hh.buildingAddress}</div>
+          <div class="hh-city">${hh.city}, CO ${hh.zip}</div>
+          <div class="hh-badges">${ab}${pb}</div>
+        </div>
         <span class="hh-dist">${dStr(hh.dist)}</span>
       </div>
       <div class="hh-voters">${vrows}${more}</div>
@@ -682,6 +715,12 @@ function focusMarker(i){
   switchTab('map');
   setTimeout(()=>{mapInstance.invalidateSize();mapInstance.setView(markers[i].getLatLng(),17);showRoster(filteredResults[i],i);},80);
 }
+function renderAll(results,origin){
+  filteredResults=results;
+  renderMap(results,origin||lastOrigin);
+  renderList(results);
+  closeRoster();
+}
 function switchTab(t){
   document.getElementById('tab-map').classList.toggle('active',t==='map');
   document.getElementById('tab-list').classList.toggle('active',t==='list');
@@ -690,12 +729,8 @@ function switchTab(t){
   if(t==='map'&&mapInstance)setTimeout(()=>mapInstance.invalidateSize(),60);
 }
 
-// ── UTILS ────────────────────────────────────────────────────────
-function haversine(la1,ln1,la2,ln2){
-  const R=3958.8,dLa=(la2-la1)*Math.PI/180,dLn=(ln2-ln1)*Math.PI/180;
-  const a=Math.sin(dLa/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLn/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-}
+// ── UTILS ─────────────────────────────────────────────────────────
+function hav(la1,ln1,la2,ln2){const R=3958.8,dLa=(la2-la1)*Math.PI/180,dLn=(ln2-ln1)*Math.PI/180;const a=Math.sin(dLa/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLn/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
 function pLabel(p){return p==='DEM'?'Democrat':p==='REP'?'Republican':'Unaffiliated';}
 function pClass(p){return p==='DEM'?'dem':p==='REP'?'rep':'una';}
 function dStr(d){return d<0.1?`${Math.round(d*5280)} ft`:`${d.toFixed(2)} mi`;}
