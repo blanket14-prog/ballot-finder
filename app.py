@@ -335,8 +335,9 @@ def startup_reload():
     else:
         print("No saved data file found — waiting for upload")
 
-t = threading.Thread(target=startup_reload, daemon=True)
-t.start()
+# Run startup reload synchronously — blocks until data is loaded
+# This ensures data is ready before gunicorn accepts any requests
+startup_reload()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)
