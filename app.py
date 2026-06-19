@@ -276,6 +276,20 @@ def api_autocomplete():
     except Exception:
         return jsonify([])
 
+
+@app.route('/api/start-geocoding', methods=['POST'])
+def start_geocoding():
+    password = request.json.get('password', '')
+    if password != ADMIN_PASSWORD:
+        return jsonify({'error': 'Invalid password'}), 401
+    if state['loading']:
+        return jsonify({'message': 'Geocoding already running'})
+    if not state['voters']:
+        return jsonify({'error': 'No data loaded'}), 400
+    t = threading.Thread(target=geocode_all_background, daemon=True)
+    t.start()
+    return jsonify({'success': True, 'message': 'Geocoding started'})
+
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     if request.method == 'GET':
@@ -336,8 +350,21 @@ def startup_reload():
         print("No saved data file found — waiting for upload")
 
 # Run startup reload synchronously — blocks until data is loaded
-# This ensures data is ready before gunicorn accepts any requests
 startup_reload()
+
+# After loading, auto-start geocoding if there are uncached addresses
+def auto_geocode():
+    if state['voters']:
+        buildings = set(v['geocodeKey'] for v in state['voters'])
+        uncached = [k for k in buildings if k not in state['geocache']]
+        if uncached:
+            print(f"Auto-starting geocoding: {len(uncached):,} addresses not yet cached")
+            geocode_all_background()
+        else:
+            print("All addresses already geocoded")
+
+t = threading.Thread(target=auto_geocode, daemon=True)
+t.start()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)
