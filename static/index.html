@@ -7,162 +7,155 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
+/* ── THEME: auto dark/light based on Denver sunrise/sunset ── */
 :root {
-  --bg: #0f0f13;
-  --surface: #1a1a24;
-  --surface2: #22222f;
-  --surface3: #2a2a3a;
-  --accent: #6c63ff;
-  --accent2: #a78bfa;
-  --green: #22c55e;
-  --orange: #f97316;
-  --red: #ef4444;
-  --blue: #3b82f6;
-  --text: #f1f0ff;
-  --text2: #a09cc0;
-  --text3: #6b6890;
-  --border: rgba(255,255,255,0.08);
-  --border2: rgba(255,255,255,0.14);
-  --radius: 16px;
-  --radius-sm: 10px;
-  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --bg:#ffffff;--surface:#f5f5f7;--surface2:#ebebed;--surface3:#e0e0e2;
+  --accent:#6c63ff;--accent2:#5b52d4;--green:#16a34a;--orange:#ea580c;
+  --text:#111111;--text2:#444444;--text3:#888888;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);
+  --radius:16px;--radius-sm:10px;--shadow:0 4px 24px rgba(0,0,0,0.1);
+  --chip-inactive:#ffffff;--chip-inactive-border:rgba(0,0,0,0.2);--chip-inactive-text:#444;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; }
-
-#app { display: flex; flex-direction: column; height: 100%; max-width: 600px; margin: 0 auto; background: var(--bg); }
+.dark {
+  --bg:#0f0f13;--surface:#1a1a24;--surface2:#22222f;--surface3:#2a2a3a;
+  --accent:#6c63ff;--accent2:#a78bfa;--green:#22c55e;--orange:#f97316;
+  --text:#f1f0ff;--text2:#a09cc0;--text3:#6b6890;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+  --shadow:0 4px 24px rgba(0,0,0,0.4);
+  --chip-inactive:transparent;--chip-inactive-border:rgba(255,255,255,0.2);--chip-inactive-text:#a09cc0;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;transition:background .3s,color .3s;}
+#app{display:flex;flex-direction:column;height:100%;max-width:600px;margin:0 auto;background:var(--bg);}
 
 /* ── HEADER ── */
-#top-bar { padding: 16px 16px 12px; flex-shrink: 0; background: var(--bg); border-bottom: 1px solid var(--border); }
-#top-bar h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; background: linear-gradient(135deg, #fff 0%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-#top-bar .subtitle { font-size: 12px; color: var(--text3); margin-top: 2px; }
+#top-bar{padding:16px 16px 12px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border);}
+#top-bar h1{font-size:20px;font-weight:700;letter-spacing:-.3px;background:linear-gradient(135deg,var(--text) 0%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.subtitle{font-size:12px;color:var(--text3);margin-top:2px;}
 
 /* ── STATS ── */
-#stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; padding: 12px 16px; flex-shrink: 0; }
-.stat { background: var(--surface); border-radius: var(--radius-sm); padding: 10px 12px; border: 1px solid var(--border); }
-.stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
-.stat-value { font-size: 20px; font-weight: 700; color: var(--text); }
-.stat-value.warn { color: #fb923c; }
+#stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 16px;flex-shrink:0;}
+.stat{background:var(--surface);border-radius:var(--radius-sm);padding:10px 12px;border:1px solid var(--border);}
+.stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.stat-value{font-size:20px;font-weight:700;color:var(--text);}
+.stat-value.warn{color:#fb923c;}
 
 /* ── GEOCODING BANNER ── */
-#geocoding-banner { margin: 0 16px 4px; padding: 8px 12px; background: rgba(108,99,255,0.12); border: 1px solid rgba(108,99,255,0.25); border-radius: var(--radius-sm); font-size: 12px; color: var(--accent2); display: none; text-align: center; flex-shrink: 0; }
+#geocoding-banner{margin:0 16px 4px;padding:8px 12px;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.2);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);display:none;text-align:center;flex-shrink:0;}
 
 /* ── SEARCH ── */
-#search-bar { padding: 8px 16px 12px; flex-shrink: 0; }
-.search-row { display: flex; gap: 8px; margin-bottom: 10px; position: relative; }
-#addr-input { flex: 1; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); font-size: 15px; outline: none; -webkit-appearance: none; }
-#addr-input::placeholder { color: var(--text3); }
-#addr-input:focus { border-color: var(--accent); }
-#search-btn { padding: 12px 18px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: opacity .15s; }
-#search-btn:active { opacity: .8; }
-#search-btn:disabled { opacity: .5; }
-
-#autocomplete-list { position: absolute; top: 100%; left: 0; right: 80px; background: var(--surface2); border: 1px solid var(--border2); border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm); z-index: 200; display: none; max-height: 200px; overflow-y: auto; box-shadow: var(--shadow); }
-.ac-item { padding: 11px 14px; font-size: 13px; cursor: pointer; border-bottom: 1px solid var(--border); color: var(--text); }
-.ac-item:last-child { border-bottom: none; }
-.ac-item:hover, .ac-item.sel { background: var(--surface3); }
+#search-bar{padding:8px 16px 12px;flex-shrink:0;}
+.search-row{display:flex;gap:8px;margin-bottom:10px;position:relative;}
+#addr-input{flex:1;padding:12px 14px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:15px;outline:none;-webkit-appearance:none;}
+#addr-input::placeholder{color:var(--text3);}
+#addr-input:focus{border-color:var(--accent);}
+#search-btn{padding:12px 18px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .15s;}
+#search-btn:active{opacity:.8;}
+#search-btn:disabled{opacity:.5;}
+#autocomplete-list{position:absolute;top:100%;left:0;right:80px;background:var(--surface2);border:1px solid var(--border2);border-top:none;border-radius:0 0 var(--radius-sm) var(--radius-sm);z-index:200;display:none;max-height:200px;overflow-y:auto;box-shadow:var(--shadow);}
+.ac-item{padding:11px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);color:var(--text);}
+.ac-item:last-child{border-bottom:none;}
+.ac-item:hover,.ac-item.sel{background:var(--surface3);}
 
 /* ── FILTERS ── */
-.filter-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
-.filter-row:last-child { margin-bottom: 0; }
-.filter-label { font-size: 11px; color: var(--text3); min-width: 38px; font-weight: 500; }
-.chip { font-size: 12px; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border2); background: transparent; color: var(--text2); cursor: pointer; user-select: none; white-space: nowrap; font-weight: 500; transition: all .15s; }
-.chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-
-/* result count filter */
-.count-filter { display: flex; gap: 6px; align-items: center; margin-top: 4px; }
-.count-chip { font-size: 12px; padding: 5px 10px; border-radius: 20px; border: 1px solid var(--border2); background: transparent; color: var(--text2); cursor: pointer; font-weight: 500; transition: all .15s; }
-.count-chip.active { background: var(--surface3); color: var(--text); border-color: var(--border2); }
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;}
+.filter-row:last-child{margin-bottom:0;}
+.filter-label{font-size:11px;color:var(--text3);min-width:42px;font-weight:500;}
+.chip{font-size:12px;padding:6px 12px;border-radius:20px;border:1px solid var(--chip-inactive-border);background:var(--chip-inactive);color:var(--chip-inactive-text);cursor:pointer;user-select:none;white-space:nowrap;font-weight:500;transition:all .15s;}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.count-chip{font-size:12px;padding:5px 11px;border-radius:20px;border:1px solid var(--border2);background:var(--chip-inactive);color:var(--chip-inactive-text);cursor:pointer;font-weight:500;transition:all .15s;}
+.count-chip.active{background:var(--surface3);color:var(--text);border-color:var(--border2);}
 
 /* ── TABS ── */
-#tab-bar { display: none; flex-shrink: 0; background: var(--surface); border-bottom: 1px solid var(--border); }
-#tab-bar.visible { display: flex; }
-.tab-btn { flex: 1; padding: 12px; font-size: 13px; font-weight: 600; color: var(--text3); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all .15s; }
-.tab-btn.active { color: var(--accent2); border-bottom-color: var(--accent); }
+#tab-bar{display:none;flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);}
+#tab-bar.visible{display:flex;}
+.tab-btn{flex:1;padding:12px;font-size:13px;font-weight:600;color:var(--text3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
 
 /* ── CONTENT ── */
-#content { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
-#empty-state { flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; padding: 2rem; text-align: center; color: var(--text3); }
-#empty-state .empty-icon { font-size: 48px; opacity: .5; }
-#empty-state p { font-size: 14px; line-height: 1.6; max-width: 260px; }
+#content{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+#empty-state{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:2rem;text-align:center;color:var(--text3);}
+.empty-icon{font-size:48px;opacity:.5;}
+#empty-state p{font-size:14px;line-height:1.6;max-width:260px;}
 
-/* ── MAP VIEW ── */
-#map-view { display: none; flex-direction: column; flex: 1; overflow: hidden; }
-#map-view.visible { display: flex; }
-#map { flex: 1; min-height: 0; }
+/* ── MAP ── */
+#map-view{display:none;flex-direction:column;flex:1;overflow:hidden;}
+#map-view.visible{display:flex;}
+#map{flex:1;min-height:0;}
 
-/* ── ROSTER PANEL ── */
-#roster-panel { flex-shrink: 0; max-height: 45vh; overflow-y: auto; background: var(--surface); border-top: 1px solid var(--border2); display: none; }
-#roster-panel.visible { display: block; }
-.roster-header { padding: 12px 16px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 10; display: flex; align-items: flex-start; justify-content: space-between; }
-.roster-header-left { flex: 1; }
-.roster-addr { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
-.roster-meta { font-size: 12px; color: var(--text3); }
-.roster-close { width: 30px; height: 30px; border-radius: 50%; background: var(--surface3); border: none; color: var(--text2); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-left: 8px; }
-.roster-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
-.badge { font-size: 11px; padding: 3px 9px; border-radius: 10px; font-weight: 600; white-space: nowrap; }
-.badge.apt { background: rgba(249,115,22,0.15); color: var(--orange); border: 1px solid rgba(249,115,22,0.3); }
-.badge.home { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
-.badge.dem { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
-.badge.rep { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
-.badge.una { background: var(--surface3); color: var(--text2); border: 1px solid var(--border); }
-.roster-row { display: flex; align-items: center; padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 10px; }
-.roster-row:last-child { border-bottom: none; }
-.roster-left { flex: 1; }
-.roster-name { font-size: 14px; font-weight: 600; color: var(--text); }
-.roster-unit { font-size: 11px; color: var(--text3); margin-top: 2px; }
-.roster-right { text-align: right; flex-shrink: 0; }
-.roster-party { font-size: 11px; color: var(--text3); }
-.not-returned { font-size: 11px; color: #fb923c; font-weight: 700; margin-top: 2px; }
-.more-btn { display: block; width: 100%; padding: 12px; text-align: center; font-size: 13px; color: var(--accent2); background: none; border: none; border-top: 1px solid var(--border); cursor: pointer; font-weight: 600; }
-.roster-empty { padding: 20px 16px; text-align: center; font-size: 13px; color: var(--text3); }
+/* ── ROSTER ── */
+#roster-panel{flex-shrink:0;max-height:45vh;overflow-y:auto;background:var(--surface);border-top:2px solid var(--accent);display:none;}
+#roster-panel.visible{display:block;}
+.roster-header{padding:12px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:10;display:flex;align-items:flex-start;justify-content:space-between;}
+.roster-header-left{flex:1;}
+.roster-addr{font-size:15px;font-weight:700;color:var(--text);margin-bottom:2px;}
+.roster-meta{font-size:12px;color:var(--text3);}
+.roster-close{width:30px;height:30px;border-radius:50%;background:var(--surface3);border:none;color:var(--text2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:8px;}
+.roster-badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
+.badge{font-size:11px;padding:3px 9px;border-radius:10px;font-weight:600;white-space:nowrap;}
+.badge.apt{background:rgba(249,115,22,0.15);color:#f97316;border:1px solid rgba(249,115,22,0.3);}
+.badge.home{background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.2);}
+.badge.dem{background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);}
+.badge.rep{background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);}
+.badge.una{background:var(--surface3);color:var(--text2);border:1px solid var(--border);}
+.roster-voter-list{padding:4px 0;}
+.roster-row{display:flex;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border);gap:10px;}
+.roster-row:last-child{border-bottom:none;}
+.roster-left{flex:1;}
+.roster-name{font-size:14px;font-weight:600;color:var(--text);}
+.roster-unit{font-size:11px;color:var(--text3);margin-top:2px;}
+.roster-right{text-align:right;flex-shrink:0;}
+.roster-party{font-size:11px;color:var(--text3);}
+.not-returned{font-size:11px;color:#fb923c;font-weight:700;margin-top:2px;}
+.more-btn{display:block;width:100%;padding:12px;text-align:center;font-size:13px;color:var(--accent);background:none;border:none;border-top:1px solid var(--border);cursor:pointer;font-weight:600;}
+.roster-empty{padding:20px 16px;text-align:center;font-size:13px;color:var(--text3);}
 
-/* ── LIST VIEW ── */
-#list-view { display: none; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-#list-view.visible { display: block; }
-.list-header { padding: 10px 16px; font-size: 12px; color: var(--text3); background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; }
-.list-header-left { display: flex; align-items: center; gap: 8px; }
-.route-badge { font-size: 11px; background: rgba(108,99,255,0.2); color: var(--accent2); padding: 2px 8px; border-radius: 10px; border: 1px solid rgba(108,99,255,0.3); font-weight: 600; }
-.hh-card { padding: 13px 16px; border-bottom: 1px solid var(--border); background: var(--bg); cursor: pointer; transition: background .1s; }
-.hh-card:active { background: var(--surface); }
-.hh-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
-.hh-rank { font-size: 13px; font-weight: 700; color: var(--accent2); min-width: 26px; padding-top: 1px; }
-.hh-addr-block { flex: 1; }
-.hh-street { font-size: 15px; font-weight: 700; color: var(--text); }
-.hh-city { font-size: 12px; color: var(--text3); margin-top: 2px; }
-.hh-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
-.hh-dist { font-size: 12px; color: var(--text3); flex-shrink: 0; padding-top: 2px; font-weight: 500; }
-.hh-voters { border-top: 1px solid var(--border); padding-top: 8px; display: flex; flex-direction: column; gap: 6px; }
-.voter-row { display: flex; align-items: center; gap: 6px; font-size: 13px; }
-.voter-name { flex: 1; font-weight: 500; color: var(--text); }
-.voter-unit { font-size: 11px; color: var(--text3); }
-.voter-party { font-size: 11px; color: var(--text3); flex-shrink: 0; }
-.voter-status { font-size: 11px; color: #fb923c; font-weight: 700; flex-shrink: 0; }
-.list-more-note { font-size: 12px; color: var(--text3); padding-top: 3px; }
+/* ── LIST ── */
+#list-view{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#list-view.visible{display:block;}
+.list-header{padding:10px 16px;font-size:12px;color:var(--text3);background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;}
+.route-badge{font-size:11px;background:rgba(108,99,255,0.1);color:var(--accent);padding:2px 8px;border-radius:10px;border:1px solid rgba(108,99,255,0.2);font-weight:600;}
+.block-divider{padding:8px 16px 4px;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:37px;z-index:4;}
+.hh-card{padding:13px 16px;border-bottom:1px solid var(--border);background:var(--bg);cursor:pointer;transition:background .1s;}
+.hh-card:active{background:var(--surface);}
+.hh-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;}
+.hh-rank{font-size:13px;font-weight:700;color:var(--accent);min-width:26px;padding-top:1px;}
+.hh-addr-block{flex:1;}
+.hh-street{font-size:15px;font-weight:700;color:var(--text);}
+.hh-city{font-size:12px;color:var(--text3);margin-top:2px;}
+.hh-badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;}
+.hh-dist{font-size:12px;color:var(--text3);flex-shrink:0;padding-top:2px;font-weight:500;}
+.hh-voters{border-top:1px solid var(--border);padding-top:8px;display:flex;flex-direction:column;gap:6px;}
+.voter-row{display:flex;align-items:center;gap:6px;font-size:13px;}
+.voter-name{flex:1;font-weight:500;color:var(--text);}
+.voter-unit{font-size:11px;color:var(--text3);}
+.voter-party{font-size:11px;color:var(--text3);flex-shrink:0;}
+.voter-status{font-size:11px;color:#fb923c;font-weight:700;flex-shrink:0;}
+.list-more-note{font-size:12px;color:var(--text3);padding-top:3px;}
 
 /* ── FOOTER ── */
-#footer { padding: 12px 16px; flex-shrink: 0; border-top: 1px solid var(--border); background: var(--surface); }
-.footer-links { display: flex; gap: 12px; margin-bottom: 6px; }
-.footer-link { font-size: 12px; color: var(--accent2); cursor: pointer; display: flex; align-items: center; gap: 4px; text-decoration: none; }
-.footer-note { font-size: 11px; color: var(--text3); line-height: 1.5; }
+#footer{padding:12px 16px;flex-shrink:0;border-top:1px solid var(--border);background:var(--surface);}
+.footer-links{display:flex;gap:12px;margin-bottom:6px;}
+.footer-link{font-size:12px;color:var(--accent);cursor:pointer;display:flex;align-items:center;gap:4px;}
+.footer-note{font-size:11px;color:var(--text3);line-height:1.5;}
 
 /* ── MODALS ── */
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 9999; align-items: flex-end; backdrop-filter: blur(4px); }
-.modal-overlay.open { display: flex; }
-@media(min-width:480px){ .modal-overlay { align-items: center; justify-content: center; } }
-.modal-sheet { background: var(--surface); border-radius: var(--radius) var(--radius) 0 0; padding: 20px 20px 36px; width: 100%; max-height: 85vh; overflow-y: auto; position: relative; border-top: 1px solid var(--border2); }
-@media(min-width:480px){ .modal-sheet { border-radius: var(--radius); max-width: 500px; padding: 24px; } }
-.modal-handle { width: 36px; height: 4px; background: var(--surface3); border-radius: 2px; margin: 0 auto 16px; }
-@media(min-width:480px){ .modal-handle { display: none; } }
-.modal-close { position: absolute; top: 16px; right: 16px; width: 28px; height: 28px; border-radius: 50%; background: var(--surface3); border: none; cursor: pointer; font-size: 16px; color: var(--text2); display: flex; align-items: center; justify-content: center; }
-.modal-title { font-size: 17px; font-weight: 700; margin-bottom: 14px; padding-right: 32px; color: var(--text); }
-.modal-body { font-size: 13px; color: var(--text2); line-height: 1.7; }
-.modal-body p { margin-bottom: 10px; }
-.modal-body ul { padding-left: 18px; margin-bottom: 10px; }
-.modal-body li { margin-bottom: 6px; }
-.modal-body strong { color: var(--text); }
-.modal-section { margin-bottom: 16px; }
-.modal-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text3); margin-bottom: 6px; }
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:flex-end;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+@media(min-width:480px){.modal-overlay{align-items:center;justify-content:center;}}
+.modal-sheet{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;padding:20px 20px 36px;width:100%;max-height:85vh;overflow-y:auto;position:relative;border-top:1px solid var(--border2);}
+@media(min-width:480px){.modal-sheet{border-radius:var(--radius);max-width:500px;padding:24px;}}
+.modal-handle{width:36px;height:4px;background:var(--surface3);border-radius:2px;margin:0 auto 16px;}
+@media(min-width:480px){.modal-handle{display:none;}}
+.modal-close{position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:50%;background:var(--surface3);border:none;cursor:pointer;font-size:16px;color:var(--text2);display:flex;align-items:center;justify-content:center;}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:14px;padding-right:32px;color:var(--text);}
+.modal-body{font-size:13px;color:var(--text2);line-height:1.7;}
+.modal-body p{margin-bottom:10px;}
+.modal-body ul{padding-left:18px;margin-bottom:10px;}
+.modal-body li{margin-bottom:6px;}
+.modal-body strong{color:var(--text);}
+.modal-section{margin-bottom:16px;}
+.modal-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:6px;}
 </style>
 </head>
 <body>
@@ -179,7 +172,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'SF P
     <div class="stat"><div class="stat-label">Return rate</div><div class="stat-value" id="stat-rate">—</div></div>
   </div>
 
-  <div id="geocoding-banner" id="geocoding-banner">⏳ <span id="geocoding-text">Geocoding addresses…</span></div>
+  <div id="geocoding-banner"><span id="geocoding-text">Geocoding addresses…</span></div>
 
   <div id="search-bar">
     <div class="search-row">
@@ -201,9 +194,14 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'SF P
       <span class="chip active" data-access="inaccessible" onclick="toggleAccess('inaccessible')">Apartments</span>
     </div>
     <div class="filter-row">
+      <span class="filter-label">Age</span>
+      <span class="chip active" data-age="under45" onclick="toggleAge('under45')">Under 45</span>
+      <span class="chip active" data-age="over45" onclick="toggleAge('over45')">45 & over</span>
+    </div>
+    <div class="filter-row">
       <span class="filter-label">Show</span>
-      <span class="count-chip active" data-count="30" onclick="setCount(30)">30</span>
       <span class="count-chip" data-count="10" onclick="setCount(10)">10</span>
+      <span class="count-chip active" data-count="30" onclick="setCount(30)">30</span>
       <span class="count-chip" data-count="20" onclick="setCount(20)">20</span>
       <span class="count-chip" data-count="50" onclick="setCount(50)">50</span>
     </div>
@@ -225,20 +223,16 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'SF P
       <div class="empty-icon">🗺️</div>
       <p>Enter your address to find nearby voters who haven't returned their ballot yet.</p>
     </div>
-
     <div id="map-view">
       <div id="map"></div>
       <div id="roster-panel">
         <div id="roster-content"><div class="roster-empty">Tap a pin to see who lives there</div></div>
       </div>
     </div>
-
     <div id="list-view">
       <div class="list-header">
-        <div class="list-header-left">
-          <span id="list-count">0 addresses</span>
-          <span class="route-badge">🚶 Optimized route</span>
-        </div>
+        <span id="list-count">0 addresses</span>
+        <span class="route-badge">🚶 Walk order</span>
       </div>
       <div id="household-list"></div>
     </div>
@@ -273,16 +267,11 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'SF P
       </div>
       <div class="modal-section">
         <div class="modal-section-title">About this data</div>
-        <p>This is publicly available data published by the City and County of Denver under Colorado open records law (C.R.S. 1-2-227). Only voters whose ballot has <strong>not yet been received</strong> are shown. The data is refreshed each morning during the election cycle.</p>
+        <p>Publicly available data under Colorado open records law (C.R.S. 1-2-227). Only voters whose ballot has <strong>not yet been received</strong> are shown. Refreshed each morning during the election cycle.</p>
       </div>
       <div class="modal-section">
         <div class="modal-section-title">What this data does NOT include</div>
-        <ul>
-          <li>How anyone voted</li>
-          <li>Social Security numbers</li>
-          <li>Driver's license numbers</li>
-          <li>Email addresses or signatures</li>
-        </ul>
+        <ul><li>How anyone voted</li><li>Social Security numbers</li><li>Driver's license numbers</li><li>Email addresses or signatures</li></ul>
       </div>
     </div>
   </div>
@@ -295,7 +284,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'SF P
     <button class="modal-close" onclick="closeModal('safety-modal')">✕</button>
     <div class="modal-title">🛡️ Safety & Access Policy</div>
     <div class="modal-body">
-      <p>Accessibility classifications are <strong>estimates based on address format only</strong> and do not reflect actual conditions.</p>
+      <p>Accessibility classifications are <strong>estimates only</strong> and do not reflect actual conditions.</p>
       <div class="modal-section">
         <div class="modal-section-title">All addresses</div>
         <ul>
@@ -305,43 +294,70 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'SF P
         </ul>
       </div>
       <div class="modal-section">
-        <div class="modal-section-title">Houses</div>
+        <div class="modal-section-title">Houses & Apartments</div>
         <ul>
-          <li>May be part of a <strong>gated community</strong> or have restricted access.</li>
-          <li>Use your own judgment at every door.</li>
+          <li>Houses may be part of a <strong>gated community</strong> or have restricted access.</li>
+          <li>Apartments frequently require buzzer or key access. Do not enter without permission.</li>
         </ul>
       </div>
-      <div class="modal-section">
-        <div class="modal-section-title">Apartments</div>
-        <ul>
-          <li>Frequently require buzzer or key access.</li>
-          <li>Do not enter a secured building without permission.</li>
-        </ul>
-      </div>
-      <p style="font-size:12px;color:var(--text3);margin-top:8px;">These classifications are a convenience only and do not constitute legal advice. Contact your campaign coordinator with questions.</p>
+      <p style="font-size:12px;color:var(--text3);margin-top:8px;">These classifications do not constitute legal advice. Contact your campaign coordinator with questions.</p>
     </div>
   </div>
 </div>
 
 <script>
+// ── DENVER SUNRISE/SUNSET ──────────────────────────────────────
+// Denver lat/lng for sun calculation
+const DENVER_LAT = 39.7392;
+const DENVER_LNG = -104.9903;
+
+function getSunTimes(date) {
+  // Simple sunrise/sunset calculation for Denver
+  const J = date.getTime() / 86400000 + 2440587.5;
+  const n = Math.ceil(J - 2451545.0 + 0.0008);
+  const Js = n - DENVER_LNG / 360;
+  const M = (357.5291 + 0.98560028 * Js) % 360;
+  const C = 1.9148 * Math.sin(M * Math.PI/180) + 0.02 * Math.sin(2*M*Math.PI/180) + 0.0003 * Math.sin(3*M*Math.PI/180);
+  const lam = (M + C + 180 + 102.9372) % 360;
+  const Jt = 2451545.0 + Js + 0.0053 * Math.sin(M*Math.PI/180) - 0.0069 * Math.sin(2*lam*Math.PI/180);
+  const decl = Math.asin(Math.sin(lam*Math.PI/180) * Math.sin(23.4397*Math.PI/180));
+  const cosW = (Math.sin(-0.833*Math.PI/180) - Math.sin(DENVER_LAT*Math.PI/180)*Math.sin(decl)) / (Math.cos(DENVER_LAT*Math.PI/180)*Math.cos(decl));
+  const W = Math.acos(Math.max(-1, Math.min(1, cosW))) * 180/Math.PI;
+  const Jrise = Jt - W/360;
+  const Jset = Jt + W/360;
+  const toDate = j => new Date((j - 2440587.5) * 86400000);
+  return { sunrise: toDate(Jrise), sunset: toDate(Jset) };
+}
+
+function applyTheme() {
+  const now = new Date();
+  const { sunrise, sunset } = getSunTimes(now);
+  // Dark from 30min after sunset to 30min after sunrise
+  const sunriseEnd = new Date(sunrise.getTime() + 30*60000);
+  const sunsetStart = new Date(sunset.getTime() + 30*60000);
+  const isDark = now < sunriseEnd || now >= sunsetStart;
+  document.documentElement.classList.toggle('dark', isDark);
+}
+
+applyTheme();
+setInterval(applyTheme, 60000); // Check every minute
+
 // ── STATE ────────────────────────────────────────────────────────
 let partyFilters = new Set(['DEM','UAF']);
 let accessFilters = new Set(['accessible','inaccessible']);
+let ageFilters = new Set(['under45','over45']);
 let resultCount = 30;
 let lastResults = [], filteredResults = [];
 let mapInstance = null, markers = [], originMarker = null, lastOrigin = null;
 let rosterState = { hh: null, shown: 0 };
 let acResults = [], acIdx = -1, acTimer = null;
-let statusTimer = null;
 const PAGE = 10;
+const CURRENT_YEAR = new Date().getFullYear();
 
 // ── INIT ─────────────────────────────────────────────────────────
 async function init() {
   await checkStatus();
-  statusTimer = setInterval(checkStatus, 20000);
-  document.getElementById('addr-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter' && acIdx < 0) { closeAC(); handleSearch(); }
-  });
+  setInterval(checkStatus, 20000);
 }
 
 async function checkStatus() {
@@ -354,18 +370,12 @@ async function checkStatus() {
       document.getElementById('stat-rate').textContent = s.returnRate + '%';
       document.getElementById('modal-filename').textContent = s.filename;
       document.getElementById('modal-loaded').textContent = s.loadedAt;
-    } else {
-      document.getElementById('stat-total').textContent = '—';
-      document.getElementById('stat-pending').textContent = '—';
-      document.getElementById('stat-rate').textContent = '—';
     }
     const banner = document.getElementById('geocoding-banner');
     if (s.loading && s.loadProgress) {
       banner.style.display = 'block';
-      document.getElementById('geocoding-text').textContent = s.loadProgress;
-    } else {
-      banner.style.display = 'none';
-    }
+      document.getElementById('geocoding-text').textContent = '⏳ ' + s.loadProgress;
+    } else { banner.style.display = 'none'; }
   } catch(e) {}
 }
 
@@ -388,7 +398,7 @@ function renderAC() {
   if (!acResults.length) { closeAC(); return; }
   list.style.display = 'block'; acIdx = -1;
   list.innerHTML = acResults.map((r,i) =>
-    `<div class="ac-item" data-i="${i}" onmousedown="selectAC(${i})"><div style="font-weight:500">${r.main}</div><div style="font-size:11px;color:var(--text3)">Denver, CO</div></div>`
+    `<div class="ac-item" onmousedown="selectAC(${i})"><div style="font-weight:500">${r.main}</div><div style="font-size:11px;color:var(--text3)">Denver, CO</div></div>`
   ).join('');
 }
 function selectAC(i) {
@@ -404,98 +414,169 @@ function closeAC() {
 }
 function onKeydown(e) {
   const list = document.getElementById('autocomplete-list');
-  if (list.style.display === 'none') return;
+  if (list.style.display === 'none') { if(e.key==='Enter') { closeAC(); handleSearch(); } return; }
   const items = list.querySelectorAll('.ac-item');
-  if (e.key === 'ArrowDown') { e.preventDefault(); acIdx = Math.min(acIdx+1,items.length-1); items.forEach((el,i)=>el.classList.toggle('sel',i===acIdx)); }
-  else if (e.key === 'ArrowUp') { e.preventDefault(); acIdx = Math.max(acIdx-1,-1); items.forEach((el,i)=>el.classList.toggle('sel',i===acIdx)); }
-  else if (e.key === 'Enter' && acIdx >= 0) { e.preventDefault(); selectAC(acIdx); }
-  else if (e.key === 'Escape') closeAC();
+  if (e.key==='ArrowDown'){e.preventDefault();acIdx=Math.min(acIdx+1,items.length-1);items.forEach((el,i)=>el.classList.toggle('sel',i===acIdx));}
+  else if(e.key==='ArrowUp'){e.preventDefault();acIdx=Math.max(acIdx-1,-1);items.forEach((el,i)=>el.classList.toggle('sel',i===acIdx));}
+  else if(e.key==='Enter'&&acIdx>=0){e.preventDefault();selectAC(acIdx);}
+  else if(e.key==='Escape')closeAC();
 }
-function onFocus() { if (acResults.length) renderAC(); }
-function onBlur() { setTimeout(closeAC, 150); }
+function onFocus(){ if(acResults.length) renderAC(); }
+function onBlur(){ setTimeout(closeAC,150); }
 
 // ── FILTERS ──────────────────────────────────────────────────────
 function toggleParty(p) {
-  if (partyFilters.has(p)) { if (partyFilters.size === 1) return; partyFilters.delete(p); }
-  else partyFilters.add(p);
-  document.querySelectorAll('.chip[data-party]').forEach(c => c.classList.toggle('active', partyFilters.has(c.dataset.party)));
-  if (lastOrigin) doSearch(lastOrigin);
+  if(partyFilters.has(p)){if(partyFilters.size===1)return;partyFilters.delete(p);}else partyFilters.add(p);
+  document.querySelectorAll('.chip[data-party]').forEach(c=>c.classList.toggle('active',partyFilters.has(c.dataset.party)));
+  if(lastOrigin)doSearch(lastOrigin);
 }
 function toggleAccess(a) {
-  if (accessFilters.has(a)) { if (accessFilters.size === 1) return; accessFilters.delete(a); }
-  else accessFilters.add(a);
-  document.querySelectorAll('.chip[data-access]').forEach(c => c.classList.toggle('active', accessFilters.has(c.dataset.access)));
-  if (lastOrigin) doSearch(lastOrigin);
+  if(accessFilters.has(a)){if(accessFilters.size===1)return;accessFilters.delete(a);}else accessFilters.add(a);
+  document.querySelectorAll('.chip[data-access]').forEach(c=>c.classList.toggle('active',accessFilters.has(c.dataset.access)));
+  if(lastOrigin)doSearch(lastOrigin);
+}
+function toggleAge(a) {
+  if(ageFilters.has(a)){if(ageFilters.size===1)return;ageFilters.delete(a);}else ageFilters.add(a);
+  document.querySelectorAll('.chip[data-age]').forEach(c=>c.classList.toggle('active',ageFilters.has(c.dataset.age)));
+  if(lastOrigin)doSearch(lastOrigin);
 }
 function setCount(n) {
   resultCount = n;
-  document.querySelectorAll('.count-chip').forEach(c => c.classList.toggle('active', parseInt(c.dataset.count) === n));
-  if (lastOrigin) doSearch(lastOrigin);
+  document.querySelectorAll('.count-chip').forEach(c=>c.classList.toggle('active',parseInt(c.dataset.count)===n));
+  if(lastOrigin)doSearch(lastOrigin);
 }
 
 // ── SEARCH ───────────────────────────────────────────────────────
 async function handleSearch() {
   closeAC();
   const addr = document.getElementById('addr-input').value.trim();
-  if (!addr) { alert('Please enter a Denver address.'); return; }
+  if(!addr){alert('Please enter a Denver address.');return;}
   const btn = document.getElementById('search-btn');
-  btn.textContent = 'Finding…'; btn.disabled = true;
+  btn.textContent='Finding…';btn.disabled=true;
   try {
     let origin = lastOrigin;
-    if (!origin) {
-      const r = await fetch('/api/geocode?address=' + encodeURIComponent(addr));
-      if (!r.ok) { alert('Could not find that address in Denver. Try adding the street type, e.g. "552 S Pennsylvania St".'); btn.textContent = 'Search'; btn.disabled = false; return; }
+    if(!origin){
+      const r = await fetch('/api/geocode?address='+encodeURIComponent(addr));
+      if(!r.ok){alert('Could not find that address in Denver. Try adding the street type, e.g. "552 S Pennsylvania St".');btn.textContent='Search';btn.disabled=false;return;}
       origin = await r.json();
       lastOrigin = origin;
     }
     await doSearch(origin);
-  } finally {
-    btn.textContent = 'Search'; btn.disabled = false;
-    document.getElementById('addr-input').blur();
-  }
+  } finally { btn.textContent='Search';btn.disabled=false;document.getElementById('addr-input').blur(); }
 }
 
 async function doSearch(origin) {
   const partyParam = [...partyFilters].join(',');
   const accessParam = [...accessFilters].join(',');
-  const url = `/api/search?lat=${origin.lat}&lng=${origin.lng}&party=${partyParam}&access=${accessParam}&limit=${resultCount}`;
+  // Include age filter and extra results to filter client-side
+  const url = `/api/search?lat=${origin.lat}&lng=${origin.lng}&party=${partyParam}&access=${accessParam}&limit=${resultCount*2}`;
   try {
     const r = await fetch(url);
     const data = await r.json();
-    lastResults = data.results || [];
-    // Sort for efficient walking route (nearest neighbor from origin)
-    lastResults = optimizeRoute(lastResults, origin);
-    document.getElementById('empty-state').style.display = 'none';
+    let results = data.results || [];
+
+    // Client-side age filter based on YOB
+    if(ageFilters.size === 1) {
+      const wantUnder = ageFilters.has('under45');
+      results = results.filter(hh => {
+        const matchVoters = hh.voters.filter(v => {
+          if(!v.yob) return true; // no DOB data, include
+          const age = CURRENT_YEAR - v.yob;
+          return wantUnder ? age < 45 : age >= 45;
+        });
+        hh.voters = matchVoters;
+        return matchVoters.length > 0;
+      });
+    }
+
+    results = results.slice(0, resultCount);
+
+    // Optimize walk order by street block
+    lastResults = optimizeWalkOrder(results, origin);
+    document.getElementById('empty-state').style.display='none';
     document.getElementById('tab-bar').classList.add('visible');
     renderAll(lastResults, origin);
     switchTab('map');
-  } catch(e) { alert('Search failed. Please try again.'); }
+  } catch(e){ alert('Search failed. Please try again.'); }
 }
 
-// ── ROUTE OPTIMIZATION ───────────────────────────────────────────
-function optimizeRoute(results, origin) {
-  if (results.length === 0) return results;
-  // Nearest neighbor algorithm starting from origin
-  const remaining = [...results];
-  const ordered = [];
+// ── WALK ORDER OPTIMIZATION ───────────────────────────────────────
+// Groups addresses by street block, then sorts blocks by proximity
+// and alternates sides of the street for efficient canvassing
+function optimizeWalkOrder(results, origin) {
+  if(results.length === 0) return results;
+
+  // Step 1: Group by street block (100-block increments)
+  const blocks = new Map();
+  results.forEach(hh => {
+    const numMatch = hh.buildingAddress.match(/^(\d+)/);
+    const houseNum = numMatch ? parseInt(numMatch[1]) : 0;
+    const blockNum = Math.floor(houseNum / 100) * 100;
+    const streetName = hh.buildingAddress.replace(/^\d+\s*/, '').trim().toUpperCase();
+    const blockKey = `${blockNum}-${streetName}`;
+    if(!blocks.has(blockKey)) blocks.set(blockKey, { key: blockKey, streetName, blockNum, houses: [], lat: 0, lng: 0 });
+    blocks.get(blockKey).houses.push(hh);
+  });
+
+  // Step 2: Compute block centroid
+  blocks.forEach(block => {
+    block.lat = block.houses.reduce((s,h)=>s+h.lat,0)/block.houses.length;
+    block.lng = block.houses.reduce((s,h)=>s+h.lng,0)/block.houses.length;
+  });
+
+  // Step 3: Sort blocks by nearest neighbor from origin
+  const blockList = Array.from(blocks.values());
+  const orderedBlocks = [];
+  const remaining = [...blockList];
   let current = { lat: origin.lat, lng: origin.lng };
-  while (remaining.length > 0) {
-    let nearest = null, nearestIdx = -1, nearestDist = Infinity;
-    for (let i = 0; i < remaining.length; i++) {
+
+  while(remaining.length > 0) {
+    let nearestIdx = 0, nearestDist = Infinity;
+    for(let i=0;i<remaining.length;i++) {
       const d = haversine(current.lat, current.lng, remaining[i].lat, remaining[i].lng);
-      if (d < nearestDist) { nearestDist = d; nearest = remaining[i]; nearestIdx = i; }
+      if(d < nearestDist) { nearestDist = d; nearestIdx = i; }
     }
-    ordered.push(nearest);
-    current = { lat: nearest.lat, lng: nearest.lng };
-    remaining.splice(nearestIdx, 1);
+    const block = remaining.splice(nearestIdx, 1)[0];
+    orderedBlocks.push(block);
+    current = { lat: block.lat, lng: block.lng };
   }
+
+  // Step 4: Within each block, sort by house number
+  // Even numbers one side, odd numbers other side
+  // Walk up even side then back down odd side (or vice versa)
+  const ordered = [];
+  orderedBlocks.forEach(block => {
+    const evens = block.houses.filter(h => {
+      const n = parseInt(h.buildingAddress.match(/^(\d+)/)?.[1] || 0);
+      return n % 2 === 0;
+    }).sort((a,b) => {
+      const na = parseInt(a.buildingAddress.match(/^(\d+)/)?.[1]||0);
+      const nb = parseInt(b.buildingAddress.match(/^(\d+)/)?.[1]||0);
+      return na - nb;
+    });
+    const odds = block.houses.filter(h => {
+      const n = parseInt(h.buildingAddress.match(/^(\d+)/)?.[1] || 0);
+      return n % 2 !== 0;
+    }).sort((a,b) => {
+      const na = parseInt(a.buildingAddress.match(/^(\d+)/)?.[1]||0);
+      const nb = parseInt(b.buildingAddress.match(/^(\d+)/)?.[1]||0);
+      return nb - na; // reverse order so you walk back down the other side
+    });
+    // Attach block label to first house in each group
+    const blockHouses = [...evens, ...odds];
+    if(blockHouses.length > 0) {
+      blockHouses[0]._blockLabel = `${block.blockNum} block of ${block.streetName}`;
+    }
+    ordered.push(...blockHouses);
+  });
+
   return ordered;
 }
 
 // ── RENDER ───────────────────────────────────────────────────────
 function renderAll(results, origin) {
   filteredResults = results;
-  renderMap(results, origin || lastOrigin);
+  renderMap(results, origin||lastOrigin);
   renderList(results);
   closeRoster();
 }
@@ -503,121 +584,110 @@ function renderAll(results, origin) {
 // ── MAP ──────────────────────────────────────────────────────────
 function makeIcon(hh, highlight) {
   const color = hh.apt ? '#f97316' : '#6c63ff';
-  const glow = hh.apt ? 'rgba(249,115,22,0.4)' : 'rgba(108,99,255,0.4)';
-  const count = hh.voters.length;
-  const sz = highlight ? 18 : count > 1 ? 15 : 11;
-  const label = count > 1 ? String(count) : '';
-  const shadow = highlight ? `drop-shadow(0 0 6px ${glow})` : '';
+  const sz = highlight ? 18 : hh.voters.length > 1 ? 15 : 11;
+  const label = hh.voters.length > 1 ? String(hh.voters.length) : '';
   return L.divIcon({
-    html: `<svg xmlns='http://www.w3.org/2000/svg' width='${sz*2}' height='${sz*2}' style='filter:${shadow}'><circle cx='${sz}' cy='${sz}' r='${sz-1}' fill='${color}' stroke='rgba(255,255,255,0.3)' stroke-width='1.5'/>${label?`<text x='${sz}' y='${sz+4}' text-anchor='middle' font-size='${sz<=12?9:11}' font-family='-apple-system,sans-serif' font-weight='bold' fill='white'>${label}</text>`:''}</svg>`,
-    className:'', iconSize:[sz*2,sz*2], iconAnchor:[sz,sz]
+    html:`<svg xmlns='http://www.w3.org/2000/svg' width='${sz*2}' height='${sz*2}'><circle cx='${sz}' cy='${sz}' r='${sz-1}' fill='${color}' stroke='rgba(255,255,255,0.4)' stroke-width='1.5'/>${label?`<text x='${sz}' y='${sz+4}' text-anchor='middle' font-size='${sz<=12?9:11}' font-family='-apple-system,sans-serif' font-weight='bold' fill='white'>${label}</text>`:''}</svg>`,
+    className:'',iconSize:[sz*2,sz*2],iconAnchor:[sz,sz]
   });
 }
-function makeOriginIcon() {
-  return L.divIcon({
-    html:`<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28'><circle cx='14' cy='14' r='10' fill='#22c55e' stroke='rgba(255,255,255,0.5)' stroke-width='2'/><circle cx='14' cy='14' r='4' fill='white'/></svg>`,
-    className:'', iconSize:[28,28], iconAnchor:[14,14]
-  });
+function makeOriginIcon(){
+  return L.divIcon({html:`<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28'><circle cx='14' cy='14' r='10' fill='#22c55e' stroke='rgba(255,255,255,0.5)' stroke-width='2'/><circle cx='14' cy='14' r='4' fill='white'/></svg>`,className:'',iconSize:[28,28],iconAnchor:[14,14]});
 }
 
 function renderMap(results, origin) {
-  if (!mapInstance) {
-    mapInstance = L.map('map', { zoomControl:true, center:[39.7392,-104.9903], zoom:13, tap:true });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom:19,
-      className:'map-tiles'
-    }).addTo(mapInstance);
+  if(!mapInstance){
+    mapInstance = L.map('map',{zoomControl:true,center:[39.7392,-104.9903],zoom:13,tap:true});
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',maxZoom:19}).addTo(mapInstance);
   }
-  markers.forEach(m=>mapInstance.removeLayer(m)); markers=[];
-  if (originMarker) mapInstance.removeLayer(originMarker);
-  if (origin) originMarker = L.marker([origin.lat,origin.lng],{icon:makeOriginIcon(),zIndexOffset:1000}).addTo(mapInstance);
-  results.forEach((hh,i) => {
-    const m = L.marker([hh.lat,hh.lng],{icon:makeIcon(hh,false)}).addTo(mapInstance);
+  markers.forEach(m=>mapInstance.removeLayer(m));markers=[];
+  if(originMarker)mapInstance.removeLayer(originMarker);
+  if(origin)originMarker=L.marker([origin.lat,origin.lng],{icon:makeOriginIcon(),zIndexOffset:1000}).addTo(mapInstance);
+  results.forEach((hh,i)=>{
+    const m=L.marker([hh.lat,hh.lng],{icon:makeIcon(hh,false)}).addTo(mapInstance);
     m.on('click',()=>showRoster(hh,i));
     markers.push(m);
   });
-  if (origin && results.length) {
-    const pts = results.map(h=>[h.lat,h.lng]);
-    const b = L.latLngBounds(pts); b.extend([origin.lat,origin.lng]);
+  if(origin&&results.length){
+    const pts=results.map(h=>[h.lat,h.lng]);
+    const b=L.latLngBounds(pts);b.extend([origin.lat,origin.lng]);
     mapInstance.fitBounds(b,{padding:[40,40]});
-  } else if (origin) { mapInstance.setView([origin.lat,origin.lng],14); }
+  } else if(origin){mapInstance.setView([origin.lat,origin.lng],14);}
 }
 
 // ── ROSTER ───────────────────────────────────────────────────────
 function showRoster(hh, idx) {
   markers.forEach((m,i)=>m.setIcon(makeIcon(filteredResults[i],i===idx)));
-  rosterState = { hh, shown: Math.min(PAGE, hh.voters.length) };
+  rosterState={hh,shown:Math.min(PAGE,hh.voters.length)};
   renderRoster();
   document.getElementById('roster-panel').classList.add('visible');
   setTimeout(()=>mapInstance&&mapInstance.invalidateSize(),60);
 }
-
-function closeRoster() {
+function closeRoster(){
   document.getElementById('roster-panel').classList.remove('visible');
-  document.getElementById('roster-content').innerHTML = '<div class="roster-empty">Tap a pin to see who lives there</div>';
-  markers.forEach((m,i)=>{ if(filteredResults[i]) m.setIcon(makeIcon(filteredResults[i],false)); });
-  rosterState = { hh: null, shown: 0 };
+  document.getElementById('roster-content').innerHTML='<div class="roster-empty">Tap a pin to see who lives there</div>';
+  markers.forEach((m,i)=>{if(filteredResults[i])m.setIcon(makeIcon(filteredResults[i],false));});
+  rosterState={hh:null,shown:0};
   setTimeout(()=>mapInstance&&mapInstance.invalidateSize(),60);
 }
-
-function renderRoster() {
-  const {hh, shown} = rosterState; if (!hh) return;
-  const ab = hh.apt ? `<span class="badge apt">Apartment</span>` : `<span class="badge home">House</span>`;
-  const pb = [...new Set(hh.voters.map(v=>v.party))].map(p=>`<span class="badge ${pClass(p)}">${pLabel(p)}</span>`).join(' ');
-  const rows = hh.voters.slice(0,shown).map(v=>
+function renderRoster(){
+  const{hh,shown}=rosterState;if(!hh)return;
+  const ab=hh.apt?`<span class="badge apt">Apartment</span>`:`<span class="badge home">House</span>`;
+  const pb=[...new Set(hh.voters.map(v=>v.party))].map(p=>`<span class="badge ${pClass(p)}">${pLabel(p)}</span>`).join(' ');
+  const rows=hh.voters.slice(0,shown).map(v=>
     `<div class="roster-row"><div class="roster-left"><div class="roster-name">${v.name}</div>${v.unit?`<div class="roster-unit">Unit ${v.unit}</div>`:''}</div><div class="roster-right"><div class="roster-party">${pLabel(v.party)}</div><div class="not-returned">Not returned</div></div></div>`
   ).join('');
-  const rem = hh.voters.length - shown;
-  const more = rem > 0 ? `<button class="more-btn" onclick="loadMore()">Show ${Math.min(rem,PAGE)} more (${rem} remaining)</button>` : '';
-  document.getElementById('roster-content').innerHTML =
-    `<div class="roster-header"><div class="roster-header-left"><div class="roster-addr">${hh.buildingAddress}</div><div class="roster-meta">${hh.city}, ${hh.state} ${hh.zip} · ${dStr(hh.dist)} away · ${hh.voters.length} voter${hh.voters.length!==1?'s':''}</div><div class="roster-badges">${ab} ${pb}</div></div><button class="roster-close" onclick="closeRoster()">✕</button></div><div class="roster-list">${rows}</div>${more}`;
-  document.getElementById('roster-panel').scrollTop = 0;
+  const rem=hh.voters.length-shown;
+  const more=rem>0?`<button class="more-btn" onclick="loadMore()">Show ${Math.min(rem,PAGE)} more (${rem} remaining)</button>`:'';
+  document.getElementById('roster-content').innerHTML=
+    `<div class="roster-header"><div class="roster-header-left"><div class="roster-addr">${hh.buildingAddress}</div><div class="roster-meta">${hh.city}, ${hh.state} ${hh.zip} · ${dStr(hh.dist)} away · ${hh.voters.length} voter${hh.voters.length!==1?'s':''}</div><div class="roster-badges">${ab} ${pb}</div></div><button class="roster-close" onclick="closeRoster()">✕</button></div><div class="roster-voter-list">${rows}</div>${more}`;
+  document.getElementById('roster-panel').scrollTop=0;
 }
+function loadMore(){rosterState.shown=Math.min(rosterState.shown+PAGE,rosterState.hh.voters.length);renderRoster();}
 
-function loadMore() { rosterState.shown = Math.min(rosterState.shown+PAGE, rosterState.hh.voters.length); renderRoster(); }
-
-// ── LIST (WALK ORDER) ─────────────────────────────────────────────
+// ── LIST (WALK ORDER WITH BLOCK DIVIDERS) ─────────────────────────
 function renderList(results) {
-  document.getElementById('list-count').textContent = `${results.length} address${results.length!==1?'es':''}`;
-  const ul = document.getElementById('household-list');
-  if (!results.length) {
-    ul.innerHTML = `<div style="padding:3rem 2rem;text-align:center;color:var(--text3);font-size:14px;">⏳ No cached addresses near you yet — geocoding is still running. Try again in a few minutes.</div>`;
+  document.getElementById('list-count').textContent=`${results.length} address${results.length!==1?'es':''}`;
+  const ul=document.getElementById('household-list');
+  if(!results.length){
+    ul.innerHTML=`<div style="padding:3rem 2rem;text-align:center;color:var(--text3);font-size:14px;">⏳ No cached addresses near you yet — geocoding is still running. Try again in a few minutes.</div>`;
     return;
   }
-  ul.innerHTML = results.map((hh,i) => {
-    const ab = hh.apt ? `<span class="badge apt">Apt</span>` : `<span class="badge home">House</span>`;
-    const pb = [...new Set(hh.voters.map(v=>v.party))].map(p=>`<span class="badge ${pClass(p)}">${pLabel(p)}</span>`).join(' ');
-    const show = hh.voters.slice(0,4);
-    const more = hh.voters.length > 4 ? `<div class="list-more-note">+ ${hh.voters.length-4} more — tap to see all</div>` : '';
-    const vrows = show.map(v=>`<div class="voter-row"><span class="voter-name">${v.name}${v.unit?` <span class="voter-unit">Apt ${v.unit}</span>`:''}</span><span class="voter-party">${pLabel(v.party)}</span><span class="voter-status">Not returned</span></div>`).join('');
-    return `<div class="hh-card" onclick="focusMarker(${i})">
+  let html='';
+  let stopNum=0;
+  results.forEach((hh,i)=>{
+    stopNum++;
+    if(hh._blockLabel){
+      html+=`<div class="block-divider">📍 ${hh._blockLabel}</div>`;
+    }
+    const ab=hh.apt?`<span class="badge apt">Apt</span>`:`<span class="badge home">House</span>`;
+    const pb=[...new Set(hh.voters.map(v=>v.party))].map(p=>`<span class="badge ${pClass(p)}">${pLabel(p)}</span>`).join(' ');
+    const show=hh.voters.slice(0,5);
+    const more=hh.voters.length>5?`<div class="list-more-note">+ ${hh.voters.length-5} more — tap to see all</div>`:'';
+    const vrows=show.map(v=>`<div class="voter-row"><span class="voter-name">${v.name}${v.unit?` <span class="voter-unit">Apt ${v.unit}</span>`:''}</span><span class="voter-party">${pLabel(v.party)}</span><span class="voter-status">Not returned</span></div>`).join('');
+    html+=`<div class="hh-card" onclick="focusMarker(${i})">
       <div class="hh-top">
-        <span class="hh-rank">${i+1}</span>
-        <div class="hh-addr-block">
-          <div class="hh-street">${hh.buildingAddress}</div>
-          <div class="hh-city">${hh.city}, ${hh.state} ${hh.zip}</div>
-          <div class="hh-badges">${ab}${pb}</div>
-        </div>
+        <span class="hh-rank">${stopNum}</span>
+        <div class="hh-addr-block"><div class="hh-street">${hh.buildingAddress}</div><div class="hh-city">${hh.city}, ${hh.state} ${hh.zip}</div><div class="hh-badges">${ab}${pb}</div></div>
         <span class="hh-dist">${dStr(hh.dist)}</span>
       </div>
       <div class="hh-voters">${vrows}${more}</div>
     </div>`;
-  }).join('');
+  });
+  ul.innerHTML=html;
 }
 
-function focusMarker(i) {
-  if (!mapInstance||!markers[i]) return;
+function focusMarker(i){
+  if(!mapInstance||!markers[i])return;
   switchTab('map');
-  setTimeout(()=>{ mapInstance.invalidateSize(); mapInstance.setView(markers[i].getLatLng(),17); showRoster(filteredResults[i],i); },80);
+  setTimeout(()=>{mapInstance.invalidateSize();mapInstance.setView(markers[i].getLatLng(),17);showRoster(filteredResults[i],i);},80);
 }
-
-function switchTab(t) {
+function switchTab(t){
   document.getElementById('tab-map').classList.toggle('active',t==='map');
   document.getElementById('tab-list').classList.toggle('active',t==='list');
   document.getElementById('map-view').classList.toggle('visible',t==='map');
   document.getElementById('list-view').classList.toggle('visible',t==='list');
-  if (t==='map'&&mapInstance) setTimeout(()=>mapInstance.invalidateSize(),60);
+  if(t==='map'&&mapInstance)setTimeout(()=>mapInstance.invalidateSize(),60);
 }
 
 // ── UTILS ────────────────────────────────────────────────────────
