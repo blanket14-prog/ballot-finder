@@ -366,6 +366,15 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
 </div>
 
 <script>
+// ── URL PREFIX (for multi-campaign routing) ──────────────────────
+const PATH_PREFIX = (() => {
+  const p = window.location.pathname;
+  if (p.startsWith('/melat')) return '/melat';
+  if (p.startsWith('/phil')) return '/phil';
+  return '';
+})();
+function apiUrl(path) { return PATH_PREFIX + path; }
+
 // ── THEME ─────────────────────────────────────────────────────────
 const DLAT=39.7392,DLNG=-104.9903;
 function getSunTimes(d){
@@ -481,7 +490,7 @@ async function init(){
 
 async function loadConfig(){
   try{
-    const c=await(await fetch('/api/config')).json();
+    const c=await(await fetch(apiUrl('/api/config'))).json();
     if(c.logoUrl){
       const img=document.getElementById('campaign-logo');
       img.src=c.logoUrl;
@@ -499,7 +508,7 @@ async function loadConfig(){
 
 async function checkStatus(){
   try{
-    const s=await(await fetch('/api/status')).json();
+    const s=await(await fetch(apiUrl('/api/status'))).json();
     if(s.hasData){
       document.getElementById('stat-total').textContent=s.total.toLocaleString();
       // pending and rate reflect DEM+UAF only (server returns all, label clarified)
@@ -558,7 +567,7 @@ function onInput(){
   acTimer=setTimeout(()=>fetchAC(v.trim()),300);
 }
 async function fetchAC(q){
-  try{acResults=await(await fetch('/api/autocomplete?q='+encodeURIComponent(q))).json();renderAC();}
+  try{acResults=await(await fetch(apiUrl('/api/autocomplete?q=')+encodeURIComponent(q))).json();renderAC();}
   catch(e){closeAC();}
 }
 function renderAC(){
@@ -597,7 +606,7 @@ async function handleSearch(){
   try{
     let origin=lastOrigin;
     if(!origin){
-      const r=await fetch('/api/geocode?address='+encodeURIComponent(addr));
+      const r=await fetch(apiUrl('/api/geocode?address=')+encodeURIComponent(addr));
       if(!r.ok){alert('Could not find that address in Denver. Try adding the street type, e.g. "552 S Pennsylvania St".');return;}
       origin=await r.json();lastOrigin=origin;
     }
@@ -606,7 +615,7 @@ async function handleSearch(){
 }
 
 async function doSearch(origin){
-  const url=`/api/search?lat=${origin.lat}&lng=${origin.lng}&party=${[...partyFilters].join(',')}&access=${[...accessFilters].join(',')}&limit=${resultCount}`;
+  const url=apiUrl(`/api/search?lat=${origin.lat}&lng=${origin.lng}&party=${[...partyFilters].join(',')}&access=${[...accessFilters].join(',')}&limit=${resultCount}`);
   try{
     const results=(await(await fetch(url)).json()).results||[];
     lastResults=optimizeWalkOrder(results,origin);
