@@ -192,20 +192,19 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
 .db-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:1px;}
 .db-addr{font-size:12px;color:var(--text3);}
 
-/* ── NAVIGATION ARROWS ── */
-#nav-bar{display:none;flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);padding:8px 12px;gap:8px;align-items:center;justify-content:space-between;}
-#nav-bar.visible{display:flex;}
-.nav-stop-info{flex:1;min-width:0;text-align:center;}
-.nav-stop-addr{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.nav-stop-meta{font-size:11px;color:var(--text3);margin-top:1px;}
-.nav-arrows{display:flex;gap:6px;flex-shrink:0;}
-.nav-btn{width:44px;height:44px;border-radius:12px;background:var(--accent);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s;-webkit-tap-highlight-color:transparent;}
-.nav-btn:active{opacity:.7;}
-.nav-btn:disabled{opacity:.25;cursor:not-allowed;}
-.nav-btn.secondary{background:var(--surface3);color:var(--text2);}
-.nav-progress{font-size:11px;color:var(--text3);text-align:center;padding:2px 0;}
+/* ── NAVIGATION COMPASS ── */
 
 @keyframes pulse{0%{transform:scale(1.3);opacity:0.35}70%{transform:scale(2.2);opacity:0}100%{transform:scale(2.2);opacity:0}}
+
+/* ── NAVIGATION COMPASS ── */
+#compass{position:absolute;bottom:12px;left:12px;z-index:500;display:none;user-select:none;}
+#compass.visible{display:block;}
+.compass-grid{display:grid;grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px);gap:3px;}
+.c-btn{width:40px;height:40px;border-radius:10px;background:rgba(15,15,19,0.82);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:opacity .1s;}
+.c-btn:active{opacity:.6;}
+.c-btn:disabled{opacity:.2;pointer-events:none;}
+.c-btn.empty{background:none;border:none;pointer-events:none;}
+.c-center{background:rgba(108,99,255,0.85)!important;border-color:rgba(108,99,255,0.5)!important;font-size:12px;font-weight:700;color:#fff;line-height:1.1;text-align:center;}
 </style>
 </head>
 <body>
@@ -292,25 +291,26 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
       <div id="map-wrapper">
         <div id="map"></div>
         <div class="map-hint" id="map-hint"></div>
+        <!-- Compass navigation overlay -->
+        <div id="compass">
+          <div class="compass-grid">
+            <div class="c-btn empty"></div>
+            <button class="c-btn" id="c-n" onclick="navCompass('N')" title="Next stop to North">↑</button>
+            <div class="c-btn empty"></div>
+            <button class="c-btn" id="c-w" onclick="navCompass('W')" title="Next stop to West">←</button>
+            <div class="c-btn c-center" id="c-info">—</div>
+            <button class="c-btn" id="c-e" onclick="navCompass('E')" title="Next stop to East">→</button>
+            <div class="c-btn empty"></div>
+            <button class="c-btn" id="c-s" onclick="navCompass('S')" title="Next stop to South">↓</button>
+            <div class="c-btn empty"></div>
+          </div>
+        </div>
       </div>
       <div id="roster-panel">
         <div id="roster-content"><div class="roster-empty">Tap a pin to see who lives there</div></div>
       </div>
     </div>
-    <div id="nav-bar">
-    <button class="nav-btn secondary" id="nav-prev" onclick="navStep(-1)" title="Previous">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
-    <div class="nav-stop-info">
-      <div class="nav-stop-addr" id="nav-addr">—</div>
-      <div class="nav-stop-meta" id="nav-meta">—</div>
-      <div class="nav-progress" id="nav-progress"></div>
-    </div>
-    <button class="nav-btn" id="nav-next" onclick="navStep(1)" title="Next">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 6 15 12 9 18"/></svg>
-    </button>
-  </div>
-  <div id="list-view">
+    <div id="list-view">
       <div class="list-header">
         <span id="list-count">0 addresses</span>
         <span class="route-badge">🚶 Walk order</span>
@@ -815,56 +815,53 @@ function showRoster(hh,idx){
 
 function updateNavBar(idx){
   const results=filteredResults;
-  if(!results.length) return;
-  const hh=results[idx];
-  document.getElementById('nav-bar').classList.add('visible');
-  document.getElementById('nav-addr').textContent=hh.buildingAddress;
-  // Determine direction to next stop
-  const dirText=getDirectionText(idx);
-  document.getElementById('nav-meta').textContent=
-    `${hh.voters.length} voter${hh.voters.length!==1?'s':''} · ${dStr(hh.dist)} from start`;
-  document.getElementById('nav-progress').textContent=
-    `Stop ${idx+1} of ${results.length}${dirText?' · '+dirText:''}`;
-  document.getElementById('nav-prev').disabled=idx===0;
-  document.getElementById('nav-next').disabled=idx===results.length-1;
-}
-
-function getDirectionText(idx){
-  const results=filteredResults;
-  if(idx>=results.length-1) return '';
+  if(!results.length)return;
+  const compass=document.getElementById('compass');
+  compass.classList.add('visible');
+  // Update center info: stop number
+  document.getElementById('c-info').innerHTML=`<span>${idx+1}</span><span style="font-size:9px;opacity:.7">/${results.length}</span>`;
+  // Find nearest stop in each cardinal direction from current
   const curr=results[idx];
-  const next=results[idx+1];
-  const dLat=next.lat-curr.lat;
-  const dLng=next.lng-curr.lng;
-  const absDLat=Math.abs(dLat);
-  const absDLng=Math.abs(dLng);
-  // Determine primary direction
-  let dir='';
-  if(absDLat>absDLng*0.5&&absDLng>absDLat*0.5){
-    // Diagonal — turning
-    const ns=dLat>0?'North':'South';
-    const ew=dLng>0?'East':'West';
-    dir=`Turn ${ew}, then go ${ns}`;
-  } else if(absDLat>=absDLng){
-    dir=`Head ${dLat>0?'↑ North':'↓ South'}`;
-  } else {
-    dir=`Head ${dLng>0?'→ East':'← West'}`;
-  }
-  const dist=haversine(curr.lat,curr.lng,next.lat,next.lng);
-  return `${dir} ${dStr(dist)}`;
+  const dirs={N:null,S:null,E:null,W:null};
+  const dirsIdx={N:-1,S:-1,E:-1,W:-1};
+  results.forEach((hh,i)=>{
+    if(i===idx)return;
+    const dLat=hh.lat-curr.lat;
+    const dLng=hh.lng-curr.lng;
+    const absDLat=Math.abs(dLat);
+    const absDLng=Math.abs(dLng);
+    // Determine primary direction (must be at least 30% stronger than secondary)
+    let dir=null;
+    if(absDLat>absDLng*0.5){dir=dLat>0?'N':'S';}
+    if(absDLng>absDLat*0.5){dir=dLng>0?'E':'W';}
+    // For diagonal, pick the dominant axis
+    if(absDLat>absDLng){dir=dLat>0?'N':'S';}
+    else{dir=dLng>0?'E':'W';}
+    if(!dir)return;
+    const dist=haversine(curr.lat,curr.lng,hh.lat,hh.lng);
+    if(dirs[dir]===null||dist<dirs[dir]){dirs[dir]=dist;dirsIdx[dir]=i;}
+  });
+  // Update buttons
+  ['N','S','E','W'].forEach(d=>{
+    const map={N:'c-n',S:'c-s',E:'c-e',W:'c-w'};
+    const btn=document.getElementById(map[d]);
+    btn.disabled=dirsIdx[d]===-1;
+    btn._navIdx=dirsIdx[d];
+  });
 }
 
-function navStep(delta){
-  const newIdx=navIdx+delta;
-  if(newIdx<0||newIdx>=filteredResults.length) return;
+function navCompass(dir){
+  const map={N:'c-n',S:'c-s',E:'c-e',W:'c-w'};
+  const btn=document.getElementById(map[dir]);
+  if(btn.disabled||btn._navIdx===-1)return;
+  const newIdx=btn._navIdx;
   const hh=filteredResults[newIdx];
   showRoster(hh,newIdx);
-  // Pan map to new location
-  if(mapInstance) mapInstance.panTo([hh.lat,hh.lng],{animate:true,duration:0.5});
+  if(mapInstance)mapInstance.panTo([hh.lat,hh.lng],{animate:true,duration:0.4});
 }
 function closeRoster(){
   document.getElementById('roster-panel').classList.remove('visible');
-  document.getElementById('nav-bar').classList.remove('visible');
+  document.getElementById('compass').classList.remove('visible');
   document.getElementById('roster-content').innerHTML='<div class="roster-empty">Tap a pin to see who lives there</div>';
   markers.forEach((m,i)=>{if(filteredResults[i])m.setIcon(makeIcon(filteredResults[i],false));});
   rosterState={hh:null,shown:0};
