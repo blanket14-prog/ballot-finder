@@ -747,11 +747,9 @@ function renderMap(results,origin){
     });
     mapInstance.invalidateSize();
     if(origin&&results.length){
-      // Zoom to show roughly the closest half of results (tighter view)
-      const half = results.slice(0, Math.max(1, Math.ceil(results.length / 2)));
-      const b = L.latLngBounds(half.map(h=>[h.lat,h.lng]));
+      const b = L.latLngBounds(results.map(h=>[h.lat,h.lng]));
       b.extend([origin.lat,origin.lng]);
-      mapInstance.fitBounds(b,{padding:[44,44],maxZoom:15,animate:false});
+      mapInstance.fitBounds(b,{padding:[36,36],maxZoom:17,animate:false});
     }else if(origin){
       mapInstance.setView([origin.lat,origin.lng],15);
     }
@@ -783,10 +781,9 @@ function closeRoster(){
       mapInstance.invalidateSize();
       // Re-fit to half results after closing roster
       if(filteredResults.length && lastOrigin){
-        const half = filteredResults.slice(0, Math.max(1, Math.ceil(filteredResults.length/2)));
-        const b = L.latLngBounds(half.map(h=>[h.lat,h.lng]));
+        const b = L.latLngBounds(filteredResults.map(h=>[h.lat,h.lng]));
         b.extend([lastOrigin.lat,lastOrigin.lng]);
-        mapInstance.fitBounds(b,{padding:[44,44],maxZoom:15});
+        mapInstance.fitBounds(b,{padding:[36,36],maxZoom:17});
       }
     }
   },100);
