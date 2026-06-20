@@ -795,46 +795,42 @@ function showRoster(hh,idx){
   },80);
 }
 
-// Store compass nav targets in module-level object (survives DOM rebuilds)
-const compassTargets={N:-1,S:-1,E:-1,W:-1};
+// Compass navigation — exact implementation verified in preview
+const compassTargets = {N:-1, S:-1, E:-1, W:-1};
 
-function updateNavBar(idx){
-  const results=filteredResults;
-  if(!results.length)return;
-  const curr=results[idx];
-  // Reset
-  Object.keys(compassTargets).forEach(d=>compassTargets[d]=-1);
-  const dirsDist={N:Infinity,S:Infinity,E:Infinity,W:Infinity};
+function updateNavBar(idx) {
+  Object.keys(compassTargets).forEach(d => compassTargets[d] = -1);
+  const dirsDist = {N:Infinity, S:Infinity, E:Infinity, W:Infinity};
+  const curr = filteredResults[idx];
+  if(!curr) return;
 
-  results.forEach((hh,i)=>{
-    if(i===idx)return;
-    const dLat=hh.lat-curr.lat;
-    const dLng=hh.lng-curr.lng;
-    const bearing=(Math.atan2(dLng,dLat)*180/Math.PI+360)%360;
+  filteredResults.forEach((hh, i) => {
+    if (i === idx) return;
+    const dLat = hh.lat - curr.lat;
+    const dLng = hh.lng - curr.lng;
+    const bearing = (Math.atan2(dLng, dLat) * 180 / Math.PI + 360) % 360;
     let dir;
-    if(bearing>=315||bearing<45) dir='N';
-    else if(bearing>=45&&bearing<135) dir='E';
-    else if(bearing>=135&&bearing<225) dir='S';
-    else dir='W';
-    const dist=haversine(curr.lat,curr.lng,hh.lat,hh.lng);
-    if(dist<dirsDist[dir]){dirsDist[dir]=dist;compassTargets[dir]=i;}
+    if (bearing >= 315 || bearing < 45) dir = 'N';
+    else if (bearing >= 45 && bearing < 135) dir = 'E';
+    else if (bearing >= 135 && bearing < 225) dir = 'S';
+    else dir = 'W';
+    const dist = haversine(curr.lat, curr.lng, hh.lat, hh.lng);
+    if (dist < dirsDist[dir]) { dirsDist[dir] = dist; compassTargets[dir] = i; }
   });
 
-  // Update button disabled state
-  const btnMap={N:'c-n',S:'c-s',E:'c-e',W:'c-w'};
-  Object.keys(btnMap).forEach(d=>{
-    const btn=document.getElementById(btnMap[d]);
-    if(btn) btn.disabled=compassTargets[d]===-1;
+  ['N','S','E','W'].forEach(d => {
+    const btn = document.getElementById('c-' + d.toLowerCase());
+    if (btn) btn.disabled = compassTargets[d] === -1;
   });
 }
 
-function navCompass(dir){
-  const newIdx=compassTargets[dir];
-  if(newIdx===-1||newIdx===undefined)return;
-  const hh=filteredResults[newIdx];
-  if(!hh)return;
-  showRoster(hh,newIdx);
-  if(mapInstance)mapInstance.panTo([hh.lat,hh.lng],{animate:true,duration:0.4});
+function navCompass(dir) {
+  const newIdx = compassTargets[dir];
+  if (newIdx === -1 || newIdx === undefined) return;
+  const hh = filteredResults[newIdx];
+  if (!hh) return;
+  showRoster(hh, newIdx);
+  if (mapInstance) mapInstance.panTo([hh.lat, hh.lng], {animate:true, duration:0.4});
 }
 function closeRoster(){
   document.getElementById('roster-panel').classList.remove('visible');
