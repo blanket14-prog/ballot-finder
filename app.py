@@ -6,6 +6,9 @@ app = Flask(__name__, static_folder='static')
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
 
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'changeme')
+CAMPAIGN_NAME = os.environ.get('CAMPAIGN_NAME', 'Ballot Finder')
+CAMPAIGN_LOGO = os.environ.get('CAMPAIGN_LOGO', '')  # 'melat', 'phil', or ''
+CAMPAIGN_COLOR = os.environ.get('CAMPAIGN_COLOR', '#6c63ff')
 DATA_DIR = os.environ.get('DATA_DIR', '/opt/render/project/src/data')
 GEOCACHE_FILE = os.path.join(DATA_DIR, 'geocache.json')
 SAVED_DATA_FILE = os.path.join(DATA_DIR, 'current_data.txt')
@@ -194,6 +197,15 @@ def haversine(la1, ln1, la2, ln2):
 @app.route('/')
 def index():
     return send_from_directory('static', 'index.html')
+
+@app.route('/api/config')
+def api_config():
+    logo_url = f'/static/logo-{CAMPAIGN_LOGO}.png' if CAMPAIGN_LOGO else ''
+    return jsonify({
+        'campaignName': CAMPAIGN_NAME,
+        'logoUrl': logo_url,
+        'accentColor': CAMPAIGN_COLOR,
+    })
 
 @app.route('/static/manifest.json')
 def manifest():
