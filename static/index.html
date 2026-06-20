@@ -31,8 +31,8 @@
   --chip-bg:transparent;--chip-border:rgba(255,255,255,0.18);--chip-text:#a09cc0;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;}
-#app{display:flex;flex-direction:column;height:100%;max-width:600px;margin:0 auto;background:var(--bg);}
+html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;touch-action:none;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;}
+#app{display:flex;flex-direction:column;height:100%;max-width:600px;margin:0 auto;background:var(--bg);overflow:hidden;}
 #top-bar{padding:4px 12px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;min-height:56px;}
 #top-logo{display:flex;align-items:center;white-space:nowrap;flex-shrink:0;height:44px;}
 #campaign-name{font-size:15px;font-weight:700;letter-spacing:-.3px;background:linear-gradient(135deg,var(--text) 0%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
@@ -197,10 +197,10 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
 @keyframes pulse{0%{transform:scale(1.3);opacity:0.35}70%{transform:scale(2.2);opacity:0}100%{transform:scale(2.2);opacity:0}}
 
 /* ── NAVIGATION ARROWS ── */
-.nav-arrows-row{display:flex;gap:2px;align-items:center;flex-shrink:0;margin:0 8px;}
-.nav-arr{background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;padding:4px 6px;line-height:1;-webkit-tap-highlight-color:transparent;transition:color .1s,opacity .1s;}
-.nav-arr:active{color:var(--accent);}
-.nav-arr:disabled{opacity:0.2;pointer-events:none;}
+.nav-arrows-row{display:flex;gap:0;align-items:center;flex-shrink:0;}
+.nav-arr{background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;line-height:1;-webkit-tap-highlight-color:transparent;transition:opacity .1s;border-radius:8px;}
+.nav-arr:active{background:var(--surface3);}
+.nav-arr:disabled{opacity:0.18;pointer-events:none;}
 </style>
 </head>
 <body>
@@ -796,48 +796,44 @@ function showRoster(hh,idx){
   },80);
 }
 
+// Store compass nav targets in module-level object (survives DOM rebuilds)
+const compassTargets={N:-1,S:-1,E:-1,W:-1};
+
 function updateNavBar(idx){
   const results=filteredResults;
   if(!results.length)return;
-  // arrows are always visible in roster header — no show/hide needed
-
   const curr=results[idx];
-  // For each direction button, find the closest stop in that bearing
-  // N = lat increases, S = lat decreases, E = lng increases, W = lng decreases
-  const dirsIdx={N:-1,S:-1,E:-1,W:-1};
+  // Reset
+  Object.keys(compassTargets).forEach(d=>compassTargets[d]=-1);
   const dirsDist={N:Infinity,S:Infinity,E:Infinity,W:Infinity};
 
   results.forEach((hh,i)=>{
     if(i===idx)return;
     const dLat=hh.lat-curr.lat;
     const dLng=hh.lng-curr.lng;
-    // Bearing angle in degrees (0=N, 90=E, 180=S, 270=W)
     const bearing=(Math.atan2(dLng,dLat)*180/Math.PI+360)%360;
-    // Assign to closest cardinal (45-degree sectors)
     let dir;
     if(bearing>=315||bearing<45) dir='N';
     else if(bearing>=45&&bearing<135) dir='E';
     else if(bearing>=135&&bearing<225) dir='S';
     else dir='W';
     const dist=haversine(curr.lat,curr.lng,hh.lat,hh.lng);
-    if(dist<dirsDist[dir]){dirsDist[dir]=dist;dirsIdx[dir]=i;}
+    if(dist<dirsDist[dir]){dirsDist[dir]=dist;compassTargets[dir]=i;}
   });
 
+  // Update button disabled state
   const btnMap={N:'c-n',S:'c-s',E:'c-e',W:'c-w'};
   Object.keys(btnMap).forEach(d=>{
     const btn=document.getElementById(btnMap[d]);
-    btn.disabled=dirsIdx[d]===-1;
-    btn._navIdx=dirsIdx[d];
-    btn.style.opacity=dirsIdx[d]===-1?'0.2':'1';
+    if(btn) btn.disabled=compassTargets[d]===-1;
   });
 }
 
 function navCompass(dir){
-  const btnMap={N:'c-n',S:'c-s',E:'c-e',W:'c-w'};
-  const btn=document.getElementById(btnMap[dir]);
-  if(!btn||btn.disabled||btn._navIdx===-1)return;
-  const newIdx=btn._navIdx;
+  const newIdx=compassTargets[dir];
+  if(newIdx===-1||newIdx===undefined)return;
   const hh=filteredResults[newIdx];
+  if(!hh)return;
   showRoster(hh,newIdx);
   if(mapInstance)mapInstance.panTo([hh.lat,hh.lng],{animate:true,duration:0.4});
 }
@@ -875,10 +871,10 @@ function renderRoster(){
         <div class="roster-badges">${ab}</div>
       </div>
       <div class="nav-arrows-row">
-        <button class="nav-arr" id="c-n" onclick="navCompass('N')">&#8963;</button>
-        <button class="nav-arr" id="c-s" onclick="navCompass('S')">&#8964;</button>
-        <button class="nav-arr" id="c-w" onclick="navCompass('W')">&#8249;</button>
-        <button class="nav-arr" id="c-e" onclick="navCompass('E')">&#8250;</button>
+        <button class="nav-arr" id="c-n" onclick="navCompass('N')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg></button>
+        <button class="nav-arr" id="c-s" onclick="navCompass('S')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <button class="nav-arr" id="c-w" onclick="navCompass('W')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <button class="nav-arr" id="c-e" onclick="navCompass('E')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>
       <button class="roster-close" onclick="closeRoster()">✕</button>
     </div>${rows}${rem>0?`<button class="more-btn" onclick="loadMore()">+${Math.min(rem,PAGE)} more</button>`:''}`;
