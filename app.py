@@ -36,7 +36,6 @@ CAMPAIGNS = {
 # Each campaign has completely independent data
 states = {}
 for cid, cfg in CAMPAIGNS.items():
-    os.makedirs(cfg['data_dir'], exist_ok=True)
     states[cid] = {
         'voters': [], 'total': 0, 'returned': 0,
         'filename': '', 'loaded_at': '',
@@ -385,6 +384,11 @@ def service_worker():
 
 # ── STARTUP ───────────────────────────────────────────────────────
 def startup_campaign(cid):
+    # Create data directory if it doesn't exist (persistent disk may not have subdir yet)
+    try:
+        os.makedirs(CAMPAIGNS[cid]['data_dir'], exist_ok=True)
+    except Exception as e:
+        print(f"[{cid}] Could not create data dir: {e}")
     load_geocache(cid)
     saved = data_file(cid, 'current_data.txt')
     meta = data_file(cid, 'meta.json')
