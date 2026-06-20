@@ -33,13 +33,14 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;}
 #app{display:flex;flex-direction:column;height:100%;max-width:600px;margin:0 auto;background:var(--bg);}
-#top-bar{padding:11px 14px 9px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border);}
-#top-bar h1{font-size:18px;font-weight:700;letter-spacing:-.3px;background:linear-gradient(135deg,var(--text) 0%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-#stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:8px 12px;flex-shrink:0;}
-.stat{background:var(--surface);border-radius:9px;padding:7px 10px;border:1px solid var(--border);}
-.stat-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;}
-.stat-value{font-size:17px;font-weight:700;color:var(--text);}
-.stat-value.warn{color:#fb923c;}
+#top-bar{padding:8px 12px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+#top-logo{font-size:15px;font-weight:700;letter-spacing:-.3px;background:linear-gradient(135deg,var(--text) 0%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;white-space:nowrap;flex-shrink:0;}
+#top-stats{display:flex;align-items:center;gap:0;flex:1;background:var(--surface);border-radius:9px;border:1px solid var(--border);overflow:hidden;}
+.top-stat{flex:1;padding:5px 8px;text-align:center;}
+.top-stat-label{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px;white-space:nowrap;}
+.top-stat-value{font-size:14px;font-weight:700;color:var(--text);}
+.top-stat-value.warn{color:#fb923c;}
+.top-stat-divider{width:1px;background:var(--border);align-self:stretch;flex-shrink:0;}
 #geocoding-banner{margin:0 12px 3px;padding:5px 12px;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.2);border-radius:8px;font-size:11px;color:var(--accent);display:none;text-align:center;flex-shrink:0;}
 
 /* SEARCH */
@@ -191,11 +192,15 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
 </head>
 <body>
 <div id="app">
-  <div id="top-bar"><h1>📋 Ballot Finder</h1></div>
-  <div id="stats-row">
-    <div class="stat"><div class="stat-label">Total voters</div><div class="stat-value" id="stat-total">—</div></div>
-    <div class="stat"><div class="stat-label">Not returned</div><div class="stat-value warn" id="stat-pending">—</div></div>
-    <div class="stat"><div class="stat-label">Return rate</div><div class="stat-value" id="stat-rate">—</div></div>
+  <div id="top-bar">
+    <div id="top-logo">📋 Ballot Finder</div>
+    <div id="top-stats">
+      <div class="top-stat"><div class="top-stat-label">Voters</div><div class="top-stat-value" id="stat-total">—</div></div>
+      <div class="top-stat-divider"></div>
+      <div class="top-stat"><div class="top-stat-label">Not returned</div><div class="top-stat-value warn" id="stat-pending">—</div></div>
+      <div class="top-stat-divider"></div>
+      <div class="top-stat"><div class="top-stat-label">Return rate</div><div class="top-stat-value" id="stat-rate">—</div></div>
+    </div>
   </div>
   <div id="geocoding-banner"><span id="geocoding-text"></span></div>
   <div id="search-bar">
@@ -209,7 +214,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         <div id="autocomplete-list"></div>
       </div>
       <button id="filter-toggle" onclick="toggleFilters()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
         <span class="filter-dot"></span>
       </button>
       <button id="search-btn" onclick="handleSearch()">Search</button>
@@ -236,7 +241,6 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
       <div class="chips">
         <span class="count-chip" data-count="10" onclick="setCount(10)">10</span>
         <span class="count-chip active" data-count="30" onclick="setCount(30)">30</span>
-        <span class="count-chip" data-count="20" onclick="setCount(20)">20</span>
         <span class="count-chip" data-count="50" onclick="setCount(50)">50</span>
       </div>
     </div>
@@ -295,7 +299,6 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         Drop boxes
       </a>
     </div>
-    <div class="footer-note">Voter data is public record under C.R.S. 1-2-227 · Denver Elections Division</div>
   </div>
 </div>
 
@@ -319,6 +322,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         <div class="modal-section-title">What this data does NOT include</div>
         <ul><li>How anyone voted</li><li>Social Security or driver's license numbers</li><li>Email addresses or signatures</li></ul>
       </div>
+      <p style="font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:10px;margin-top:4px;">Voter data is public record under C.R.S. 1-2-227 · Denver Elections Division</p>
     </div>
   </div>
 </div>
@@ -476,6 +480,7 @@ async function checkStatus(){
     const s=await(await fetch('/api/status')).json();
     if(s.hasData){
       document.getElementById('stat-total').textContent=s.total.toLocaleString();
+      // pending and rate reflect DEM+UAF only (server returns all, label clarified)
       document.getElementById('stat-pending').textContent=s.pending.toLocaleString();
       document.getElementById('stat-rate').textContent=s.returnRate+'%';
       document.getElementById('modal-filename').textContent=s.filename;
