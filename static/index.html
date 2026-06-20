@@ -197,7 +197,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
 @keyframes pulse{0%{transform:scale(1.3);opacity:0.35}70%{transform:scale(2.2);opacity:0}100%{transform:scale(2.2);opacity:0}}
 
 /* ── NAVIGATION COMPASS ── */
-#compass{position:absolute;bottom:12px;left:12px;z-index:500;display:none;user-select:none;}
+#compass{position:absolute;bottom:44px;right:12px;z-index:500;display:none;user-select:none;}
 #compass.visible{display:block;}
 .compass-grid{display:grid;grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px);gap:3px;}
 .c-btn{width:40px;height:40px;border-radius:10px;background:rgba(15,15,19,0.82);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:opacity .1s;}
@@ -816,44 +816,44 @@ function showRoster(hh,idx){
 function updateNavBar(idx){
   const results=filteredResults;
   if(!results.length)return;
-  const compass=document.getElementById('compass');
-  compass.classList.add('visible');
-  // Update center info: stop number
-  document.getElementById('c-info').innerHTML=`<span>${idx+1}</span><span style="font-size:9px;opacity:.7">/${results.length}</span>`;
-  // Find nearest stop in each cardinal direction from current
+  document.getElementById('compass').classList.add('visible');
+  document.getElementById('c-info').innerHTML=`<span style="font-size:13px;font-weight:700">${idx+1}</span><span style="font-size:9px;opacity:.6">/${results.length}</span>`;
+
   const curr=results[idx];
-  const dirs={N:null,S:null,E:null,W:null};
+  // For each direction button, find the closest stop in that bearing
+  // N = lat increases, S = lat decreases, E = lng increases, W = lng decreases
   const dirsIdx={N:-1,S:-1,E:-1,W:-1};
+  const dirsDist={N:Infinity,S:Infinity,E:Infinity,W:Infinity};
+
   results.forEach((hh,i)=>{
     if(i===idx)return;
     const dLat=hh.lat-curr.lat;
     const dLng=hh.lng-curr.lng;
-    const absDLat=Math.abs(dLat);
-    const absDLng=Math.abs(dLng);
-    // Determine primary direction (must be at least 30% stronger than secondary)
-    let dir=null;
-    if(absDLat>absDLng*0.5){dir=dLat>0?'N':'S';}
-    if(absDLng>absDLat*0.5){dir=dLng>0?'E':'W';}
-    // For diagonal, pick the dominant axis
-    if(absDLat>absDLng){dir=dLat>0?'N':'S';}
-    else{dir=dLng>0?'E':'W';}
-    if(!dir)return;
+    // Bearing angle in degrees (0=N, 90=E, 180=S, 270=W)
+    const bearing=(Math.atan2(dLng,dLat)*180/Math.PI+360)%360;
+    // Assign to closest cardinal (45-degree sectors)
+    let dir;
+    if(bearing>=315||bearing<45) dir='N';
+    else if(bearing>=45&&bearing<135) dir='E';
+    else if(bearing>=135&&bearing<225) dir='S';
+    else dir='W';
     const dist=haversine(curr.lat,curr.lng,hh.lat,hh.lng);
-    if(dirs[dir]===null||dist<dirs[dir]){dirs[dir]=dist;dirsIdx[dir]=i;}
+    if(dist<dirsDist[dir]){dirsDist[dir]=dist;dirsIdx[dir]=i;}
   });
-  // Update buttons
-  ['N','S','E','W'].forEach(d=>{
-    const map={N:'c-n',S:'c-s',E:'c-e',W:'c-w'};
-    const btn=document.getElementById(map[d]);
+
+  const btnMap={N:'c-n',S:'c-s',E:'c-e',W:'c-w'};
+  Object.keys(btnMap).forEach(d=>{
+    const btn=document.getElementById(btnMap[d]);
     btn.disabled=dirsIdx[d]===-1;
     btn._navIdx=dirsIdx[d];
+    btn.style.opacity=dirsIdx[d]===-1?'0.2':'1';
   });
 }
 
 function navCompass(dir){
-  const map={N:'c-n',S:'c-s',E:'c-e',W:'c-w'};
-  const btn=document.getElementById(map[dir]);
-  if(btn.disabled||btn._navIdx===-1)return;
+  const btnMap={N:'c-n',S:'c-s',E:'c-e',W:'c-w'};
+  const btn=document.getElementById(btnMap[dir]);
+  if(!btn||btn.disabled||btn._navIdx===-1)return;
   const newIdx=btn._navIdx;
   const hh=filteredResults[newIdx];
   showRoster(hh,newIdx);
