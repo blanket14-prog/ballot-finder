@@ -209,9 +209,14 @@ def service_worker():
 
 @app.route('/api/status')
 def api_status():
+    # Count only DEM + UAF for the top stats (what most volunteers care about)
+    dem_uaf = [v for v in state['voters'] if v.get('party') in ('DEM', 'UAF')]
+    total_dem_uaf_sent = state['total'] - sum(1 for v in state['voters'] if v.get('party') == 'REP')
+    pending_dem_uaf = len(dem_uaf)
+    returned_dem_uaf = state['returned']  # approximate — returned voters not in memory
     rate = round(state['returned'] / state['total'] * 100) if state['total'] > 0 else 0
     return jsonify({
-        'total': state['total'], 'pending': len(state['voters']),
+        'total': state['total'], 'pending': pending_dem_uaf,
         'returned': state['returned'], 'returnRate': rate,
         'filename': state['filename'], 'loadedAt': state['loaded_at'],
         'loading': state['loading'], 'loadProgress': state['load_progress'],
