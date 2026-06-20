@@ -787,7 +787,6 @@ function showRoster(hh,idx){
   rosterState={hh,shown:Math.min(PAGE,hh.voters.length)};
   renderRoster();
   document.getElementById('roster-panel').classList.add('visible');
-  updateNavBar(idx);
   setTimeout(()=>{
     if(mapInstance){
       mapInstance.invalidateSize();
@@ -863,6 +862,7 @@ function renderRoster(){
       <div class="roster-vright"><div class="roster-vparty">${pLabel(v.party)}</div><div class="not-returned">Not returned</div></div>
     </div>`).join('');
   const rem=hh.voters.length-shown;
+  const currentNavIdx = navIdx;  // capture before DOM write
   document.getElementById('roster-content').innerHTML=
     `<div class="roster-header">
       <div style="flex:1;min-width:0">
@@ -878,6 +878,8 @@ function renderRoster(){
       </div>
       <button class="roster-close" onclick="closeRoster()">✕</button>
     </div>${rows}${rem>0?`<button class="more-btn" onclick="loadMore()">+${Math.min(rem,PAGE)} more</button>`:''}`;
+  // Now DOM is set — update arrow states
+  setTimeout(()=>updateNavBar(currentNavIdx), 0);
 }
 function loadMore(){rosterState.shown=Math.min(rosterState.shown+PAGE,rosterState.hh.voters.length);renderRoster();}
 
