@@ -191,6 +191,21 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
 .db-info{}
 .db-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:1px;}
 .db-addr{font-size:12px;color:var(--text3);}
+
+/* ── NAVIGATION ARROWS ── */
+#nav-bar{display:none;flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);padding:8px 12px;gap:8px;align-items:center;justify-content:space-between;}
+#nav-bar.visible{display:flex;}
+.nav-stop-info{flex:1;min-width:0;text-align:center;}
+.nav-stop-addr{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nav-stop-meta{font-size:11px;color:var(--text3);margin-top:1px;}
+.nav-arrows{display:flex;gap:6px;flex-shrink:0;}
+.nav-btn{width:44px;height:44px;border-radius:12px;background:var(--accent);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s;-webkit-tap-highlight-color:transparent;}
+.nav-btn:active{opacity:.7;}
+.nav-btn:disabled{opacity:.25;cursor:not-allowed;}
+.nav-btn.secondary{background:var(--surface3);color:var(--text2);}
+.nav-progress{font-size:11px;color:var(--text3);text-align:center;padding:2px 0;}
+
+@keyframes pulse{0%{transform:scale(1.3);opacity:0.35}70%{transform:scale(2.2);opacity:0}100%{transform:scale(2.2);opacity:0}}
 </style>
 </head>
 <body>
@@ -282,7 +297,20 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         <div id="roster-content"><div class="roster-empty">Tap a pin to see who lives there</div></div>
       </div>
     </div>
-    <div id="list-view">
+    <div id="nav-bar">
+    <button class="nav-btn secondary" id="nav-prev" onclick="navStep(-1)" title="Previous">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="nav-stop-info">
+      <div class="nav-stop-addr" id="nav-addr">—</div>
+      <div class="nav-stop-meta" id="nav-meta">—</div>
+      <div class="nav-progress" id="nav-progress"></div>
+    </div>
+    <button class="nav-btn" id="nav-next" onclick="navStep(1)" title="Next">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 6 15 12 9 18"/></svg>
+    </button>
+  </div>
+  <div id="list-view">
       <div class="list-header">
         <span id="list-count">0 addresses</span>
         <span class="route-badge">🚶 Walk order</span>
@@ -479,6 +507,7 @@ let mapInstance=null,markers=[],originMarker=null,dropboxMarkers=[],lastOrigin=n
 let rosterState={hh:null,shown:0};
 let acResults=[],acIdx=-1,acTimer=null;
 let filtersOpen=false,pinModeActive=false;
+let navIdx=0; // current navigation index in filteredResults
 const PAGE=10;
 
 // ── INIT ──────────────────────────────────────────────────────────
@@ -713,7 +742,22 @@ function ensureMap(){
 
 function makeIcon(hh,highlight){
   const color=hh.apt?'#f97316':'#6c63ff';
-  const sz=highlight?18:hh.voters.length>1?15:11;
+  if(highlight){
+    // Large pulsing highlighted pin
+    const sz=24;
+    const lbl=hh.voters.length>1?String(hh.voters.length):'';
+    return L.divIcon({
+      html:`<div style="position:relative;width:${sz*2}px;height:${sz*2}px">
+        <div style="position:absolute;inset:0;border-radius:50%;background:${color};opacity:0.25;animation:pulse 1.5s ease-out infinite;transform:scale(1.5)"></div>
+        <svg xmlns='http://www.w3.org/2000/svg' width='${sz*2}' height='${sz*2}' style="position:relative;z-index:1">
+          <circle cx='${sz}' cy='${sz}' r='${sz-2}' fill='${color}' stroke='white' stroke-width='3'/>
+          ${lbl?`<text x='${sz}' y='${sz+5}' text-anchor='middle' font-size='13' font-family='-apple-system,sans-serif' font-weight='bold' fill='white'>${lbl}</text>`:`<circle cx='${sz}' cy='${sz}' r='6' fill='white'/>`}
+        </svg>
+      </div>`,
+      className:'',iconSize:[sz*2,sz*2],iconAnchor:[sz,sz]
+    });
+  }
+  const sz=hh.voters.length>1?15:11;
   const lbl=hh.voters.length>1?String(hh.voters.length):'';
   return L.divIcon({
     html:`<svg xmlns='http://www.w3.org/2000/svg' width='${sz*2}' height='${sz*2}'><circle cx='${sz}' cy='${sz}' r='${sz-1}' fill='${color}' stroke='rgba(255,255,255,0.4)' stroke-width='1.5'/>${lbl?`<text x='${sz}' y='${sz+4}' text-anchor='middle' font-size='${sz<=12?9:11}' font-family='-apple-system,sans-serif' font-weight='bold' fill='white'>${lbl}</text>`:''}</svg>`,
@@ -755,21 +799,72 @@ function renderMap(results,origin){
 
 // ── ROSTER ────────────────────────────────────────────────────────
 function showRoster(hh,idx){
+  navIdx=idx;
   markers.forEach((m,i)=>m.setIcon(makeIcon(filteredResults[i],i===idx)));
   rosterState={hh,shown:Math.min(PAGE,hh.voters.length)};
   renderRoster();
   document.getElementById('roster-panel').classList.add('visible');
-  // Recenter map on the selected house
+  updateNavBar(idx);
   setTimeout(()=>{
     if(mapInstance){
       mapInstance.invalidateSize();
-      // Pan so the house is visible above the roster panel
       mapInstance.panTo([hh.lat,hh.lng],{animate:true});
     }
   },80);
 }
+
+function updateNavBar(idx){
+  const results=filteredResults;
+  if(!results.length) return;
+  const hh=results[idx];
+  document.getElementById('nav-bar').classList.add('visible');
+  document.getElementById('nav-addr').textContent=hh.buildingAddress;
+  // Determine direction to next stop
+  const dirText=getDirectionText(idx);
+  document.getElementById('nav-meta').textContent=
+    `${hh.voters.length} voter${hh.voters.length!==1?'s':''} · ${dStr(hh.dist)} from start`;
+  document.getElementById('nav-progress').textContent=
+    `Stop ${idx+1} of ${results.length}${dirText?' · '+dirText:''}`;
+  document.getElementById('nav-prev').disabled=idx===0;
+  document.getElementById('nav-next').disabled=idx===results.length-1;
+}
+
+function getDirectionText(idx){
+  const results=filteredResults;
+  if(idx>=results.length-1) return '';
+  const curr=results[idx];
+  const next=results[idx+1];
+  const dLat=next.lat-curr.lat;
+  const dLng=next.lng-curr.lng;
+  const absDLat=Math.abs(dLat);
+  const absDLng=Math.abs(dLng);
+  // Determine primary direction
+  let dir='';
+  if(absDLat>absDLng*0.5&&absDLng>absDLat*0.5){
+    // Diagonal — turning
+    const ns=dLat>0?'North':'South';
+    const ew=dLng>0?'East':'West';
+    dir=`Turn ${ew}, then go ${ns}`;
+  } else if(absDLat>=absDLng){
+    dir=`Head ${dLat>0?'↑ North':'↓ South'}`;
+  } else {
+    dir=`Head ${dLng>0?'→ East':'← West'}`;
+  }
+  const dist=haversine(curr.lat,curr.lng,next.lat,next.lng);
+  return `${dir} ${dStr(dist)}`;
+}
+
+function navStep(delta){
+  const newIdx=navIdx+delta;
+  if(newIdx<0||newIdx>=filteredResults.length) return;
+  const hh=filteredResults[newIdx];
+  showRoster(hh,newIdx);
+  // Pan map to new location
+  if(mapInstance) mapInstance.panTo([hh.lat,hh.lng],{animate:true,duration:0.5});
+}
 function closeRoster(){
   document.getElementById('roster-panel').classList.remove('visible');
+  document.getElementById('nav-bar').classList.remove('visible');
   document.getElementById('roster-content').innerHTML='<div class="roster-empty">Tap a pin to see who lives there</div>';
   markers.forEach((m,i)=>{if(filteredResults[i])m.setIcon(makeIcon(filteredResults[i],false));});
   rosterState={hh:null,shown:0};
