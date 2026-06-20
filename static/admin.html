@@ -120,7 +120,13 @@ let geocacheTotal = 0;
 
 async function loadStatus() {
   try {
-    const r = await fetch('/api/status');
+    const prefix = (() => {
+        const p = window.location.pathname;
+        if (p.startsWith('/melat')) return '/melat';
+        if (p.startsWith('/phil')) return '/phil';
+        return '';
+      })();
+      const r = await fetch(prefix + '/api/status');
     const s = await r.json();
 
     if(s.hasData) {
@@ -236,7 +242,13 @@ async function upload() {
 function uploadWithProgress(formData, onProgress) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/admin');
+    const adminPath = (() => {
+        const p = window.location.pathname;
+        if (p.startsWith('/melat')) return '/melat/admin';
+        if (p.startsWith('/phil')) return '/phil/admin';
+        return '/admin';
+      })();
+      xhr.open('POST', adminPath);
     xhr.upload.onprogress = e => { if(e.lengthComputable) onProgress(e.loaded, e.total); };
     xhr.onload = () => { if(xhr.status >= 200 && xhr.status < 300) resolve(xhr.responseText); else reject(new Error('Server error ' + xhr.status)); };
     xhr.onerror = () => reject(new Error('Network error'));
