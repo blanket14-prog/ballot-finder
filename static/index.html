@@ -747,11 +747,13 @@ function renderMap(results,origin){
     });
     mapInstance.invalidateSize();
     if(origin&&results.length){
-      const b = L.latLngBounds(results.map(h=>[h.lat,h.lng]));
+      // Zoom to fit just the closest 8 results for a tight initial view
+      const nearby = results.slice(0, Math.min(8, results.length));
+      const b = L.latLngBounds(nearby.map(h=>[h.lat,h.lng]));
       b.extend([origin.lat,origin.lng]);
-      mapInstance.fitBounds(b,{padding:[36,36],maxZoom:17,animate:false});
+      mapInstance.fitBounds(b,{padding:[48,48],maxZoom:17,minZoom:14,animate:false});
     }else if(origin){
-      mapInstance.setView([origin.lat,origin.lng],15);
+      mapInstance.setView([origin.lat,origin.lng],16);
     }
   });
 }
@@ -781,9 +783,10 @@ function closeRoster(){
       mapInstance.invalidateSize();
       // Re-fit to half results after closing roster
       if(filteredResults.length && lastOrigin){
-        const b = L.latLngBounds(filteredResults.map(h=>[h.lat,h.lng]));
+        const nearby = filteredResults.slice(0, Math.min(8, filteredResults.length));
+        const b = L.latLngBounds(nearby.map(h=>[h.lat,h.lng]));
         b.extend([lastOrigin.lat,lastOrigin.lng]);
-        mapInstance.fitBounds(b,{padding:[36,36],maxZoom:17});
+        mapInstance.fitBounds(b,{padding:[48,48],maxZoom:17,minZoom:14});
       }
     }
   },100);
