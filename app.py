@@ -197,10 +197,12 @@ def make_routes(prefix, cid):
     """Register all routes for a given campaign prefix."""
     url_prefix = f'/{prefix}' if prefix != 'default' else ''
 
-    @app.route(f'{url_prefix}/', endpoint=f'index_{cid}')
-    @app.route(f'{url_prefix}', endpoint=f'index2_{cid}')
-    def index():
-        return send_from_directory('static', 'index.html')
+    index_routes = [f'{url_prefix}/']
+    if url_prefix:  # only add bare prefix route for non-default campaigns
+        index_routes.append(f'{url_prefix}')
+    for route in index_routes:
+        app.add_url_rule(route, endpoint=f'index_{cid}_{route}',
+                        view_func=lambda: send_from_directory('static', 'index.html'))
 
     @app.route(f'{url_prefix}/api/config', endpoint=f'config_{cid}')
     def api_config():
