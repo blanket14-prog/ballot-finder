@@ -870,9 +870,9 @@ function renderRoster(){
   document.getElementById('roster-content').innerHTML=
     `<div class="roster-header">
       <div style="flex:1;min-width:0">
-        <div class="roster-addr">\${hh.buildingAddress}</div>
-        <div class="roster-meta">\${hh.city}, CO \${hh.zip} · \${dStr(hh.dist)} · \${hh.voters.length} voter\${hh.voters.length!==1?'s':''}</div>
-        <div class="roster-badges">\${ab}</div>
+        <div class="roster-addr">${hh.buildingAddress}</div>
+        <div class="roster-meta">${hh.city}, CO ${hh.zip} · ${dStr(hh.dist)} · ${hh.voters.length} voter${hh.voters.length!==1?'s':''}</div>
+        <div class="roster-badges">${ab}</div>
       </div>
       <div class="nav-arrows-row">
         <button class="nav-arr" id="c-n" onclick="navCompass('N')">&#8963;</button>
