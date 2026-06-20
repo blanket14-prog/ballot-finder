@@ -8,27 +8,31 @@ app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'changeme')
 
 # ── CAMPAIGN CONFIGS ──────────────────────────────────────────────
+BASE_DATA_DIR = '/opt/render/project/src/data'
+SHARED_DATA_FILE = os.path.join(BASE_DATA_DIR, 'current_data.txt')
+SHARED_META_FILE = os.path.join(BASE_DATA_DIR, 'meta.json')
+
 CAMPAIGNS = {
     'default': {
         'name': 'Ballot Finder',
         'logo': '',
         'color': '#6c63ff',
         'password': os.environ.get('ADMIN_PASSWORD', 'changeme'),
-        'data_dir': '/opt/render/project/src/data',
+        'data_dir': BASE_DATA_DIR,  # owns the shared data file
     },
     'melat': {
         'name': 'Melat Kiros for Congress',
         'logo': 'melat',
         'color': '#1a5fa8',
         'password': os.environ.get('MELAT_PASSWORD', 'changeme'),
-        'data_dir': '/opt/render/project/src/data/melat',
+        'data_dir': os.path.join(BASE_DATA_DIR, 'melat'),  # own geocache only
     },
     'phil': {
         'name': 'Phil Weiser for Governor',
         'logo': 'phil',
         'color': '#1a5fa8',
         'password': os.environ.get('PHIL_PASSWORD', 'changeme'),
-        'data_dir': '/opt/render/project/src/data/phil',
+        'data_dir': os.path.join(BASE_DATA_DIR, 'phil'),  # own geocache only
     },
 }
 
@@ -49,6 +53,10 @@ def get_campaign(path_prefix):
     return 'default'
 
 def data_file(cid, name):
+    # Voter data files are shared across all campaigns
+    if name in ('current_data.txt', 'meta.json'):
+        return os.path.join(BASE_DATA_DIR, name)
+    # Geocache is per-campaign
     return os.path.join(CAMPAIGNS[cid]['data_dir'], name)
 
 # ── GEOCACHE ──────────────────────────────────────────────────────
