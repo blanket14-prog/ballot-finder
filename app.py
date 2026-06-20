@@ -53,11 +53,8 @@ def get_campaign(path_prefix):
     return 'default'
 
 def data_file(cid, name):
-    # Voter data files are shared across all campaigns
-    if name in ('current_data.txt', 'meta.json'):
-        return os.path.join(BASE_DATA_DIR, name)
-    # Geocache is per-campaign
-    return os.path.join(CAMPAIGNS[cid]['data_dir'], name)
+    # All files shared from base data dir — same voter data, same geocache
+    return os.path.join(BASE_DATA_DIR, name)
 
 # ── GEOCACHE ──────────────────────────────────────────────────────
 def load_geocache(cid):
