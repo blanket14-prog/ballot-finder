@@ -288,7 +288,21 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         <div class="map-hint" id="map-hint"></div>
 
       </div>
-      <div id="roster-panel">
+      <div id="nav-arrow-bar" style="display:none;flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);padding:6px 14px;justify-content:center;gap:24px;align-items:center;">
+    <button id="arr-n" style="background:none;border:none;color:var(--text);width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;" onclick="doNav('N')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
+    </button>
+    <button id="arr-s" style="background:none;border:none;color:var(--text);width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;" onclick="doNav('S')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <button id="arr-w" style="background:none;border:none;color:var(--text);width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;" onclick="doNav('W')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <button id="arr-e" style="background:none;border:none;color:var(--text);width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;" onclick="doNav('E')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+  <div id="roster-panel">
         <div id="roster-content"><div class="roster-empty">Tap a pin to see who lives there</div></div>
       </div>
     </div>
@@ -798,20 +812,7 @@ function showRoster(hh,idx){
 const compassTargets = {N:-1, S:-1, E:-1, W:-1};
 let currentNavIdx = -1;
 
-// Event delegation on roster-panel — catches clicks even on dynamic innerHTML
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('roster-panel').addEventListener('click', e => {
-    const btn = e.target.closest('button[data-dir]');
-    if (!btn) return;
-    const dir = btn.dataset.dir;
-    const newIdx = compassTargets[dir];
-    if (newIdx === -1) return;
-    const hh = filteredResults[newIdx];
-    if (!hh) return;
-    showRoster(hh, newIdx);
-    if (mapInstance) mapInstance.panTo([hh.lat, hh.lng], {animate:true});
-  });
-});
+
 
 function updateCompass(idx) {
   currentNavIdx = idx;
@@ -841,6 +842,7 @@ function updateCompass(idx) {
 }
 
 function closeRoster(){
+  document.getElementById('nav-arrow-bar').style.display = 'none';
   document.getElementById('roster-panel').classList.remove('visible');
   // arrows live in roster header, hidden with it
   document.getElementById('roster-content').innerHTML='<div class="roster-empty">Tap a pin to see who lives there</div>';
@@ -872,12 +874,6 @@ function renderRoster(){
         <div class="roster-addr">${hh.buildingAddress}</div>
         <div class="roster-meta">${hh.city}, CO ${hh.zip} · ${dStr(hh.dist)} · ${hh.voters.length} voter${hh.voters.length!==1?'s':''}</div>
         <div class="roster-badges">${ab}</div>
-      </div>
-      <div class="nav-arrows">
-        <button data-dir="N" title="North"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg></button>
-        <button data-dir="S" title="South"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></button>
-        <button data-dir="W" title="West"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-        <button data-dir="E" title="East"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>
       <button class="roster-close" onclick="closeRoster()">✕</button>
     </div>${rows}${rem>0?`<button class="more-btn" onclick="loadMore()">+${Math.min(rem,PAGE)} more</button>`:''}`;
