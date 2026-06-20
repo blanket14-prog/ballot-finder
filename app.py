@@ -14,7 +14,7 @@ CAMPAIGNS = {
         'logo': '',
         'color': '#6c63ff',
         'password': os.environ.get('ADMIN_PASSWORD', 'changeme'),
-        'data_dir': '/opt/render/project/src/data/default',
+        'data_dir': '/opt/render/project/src/data',
     },
     'melat': {
         'name': 'Melat Kiros for Congress',
