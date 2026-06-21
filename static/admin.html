@@ -84,6 +84,20 @@ button.upload-btn:disabled{opacity:.4;cursor:not-allowed;}
 </div>
 
 <div class="card">
+  <div class="section-title">App Theme</div>
+  <p style="font-size:13px;color:#6b6890;margin-bottom:14px;">Choose the background color for this campaign's app. Use Light for logos with white backgrounds.</p>
+  <div style="display:flex;gap:10px;margin-bottom:14px;">
+    <button id="theme-dark-btn" onclick="setTheme('dark')" style="flex:1;padding:10px;border-radius:10px;border:2px solid #6c63ff;background:#0f0f13;color:#f1f0ff;font-size:14px;font-weight:600;cursor:pointer;">🌙 Dark</button>
+    <button id="theme-light-btn" onclick="setTheme('light')" style="flex:1;padding:10px;border-radius:10px;border:2px solid rgba(255,255,255,0.15);background:#22222f;color:#a09cc0;font-size:14px;font-weight:600;cursor:pointer;">☀️ Light</button>
+  </div>
+  <div>
+    <label>Admin password (to save theme)</label>
+    <input type="password" id="theme-password" placeholder="Enter admin password"/>
+  </div>
+  <div id="theme-msg" style="font-size:13px;margin-top:8px;color:#22c55e;display:none;"></div>
+</div>
+
+<div class="card">
   <div class="section-title">Upload New Data</div>
 
   <div>
@@ -260,6 +274,67 @@ function uploadWithProgress(formData, onProgress) {
 
 loadStatus();
 setInterval(loadStatus, 5000);
+
+// ── THEME TOGGLE ──────────────────────────────────────────────────
+async function loadCurrentTheme() {
+  try {
+    const prefix = (() => {
+      const p = window.location.pathname;
+      if (p.startsWith('/melat')) return '/melat';
+      if (p.startsWith('/phil')) return '/phil';
+      if (p.startsWith('/denverdems')) return '/denverdems';
+      return '';
+    })();
+    const r = await fetch(prefix + '/api/config');
+    const c = await r.json();
+    updateThemeButtons(c.theme || 'dark');
+  } catch(e) {}
+}
+
+function updateThemeButtons(theme) {
+  const darkBtn = document.getElementById('theme-dark-btn');
+  const lightBtn = document.getElementById('theme-light-btn');
+  if (!darkBtn || !lightBtn) return;
+  if (theme === 'dark') {
+    darkBtn.style.borderColor = '#6c63ff'; darkBtn.style.color = '#f1f0ff';
+    lightBtn.style.borderColor = 'rgba(255,255,255,0.15)'; lightBtn.style.color = '#a09cc0';
+  } else {
+    lightBtn.style.borderColor = '#6c63ff'; lightBtn.style.color = '#f1f0ff';
+    darkBtn.style.borderColor = 'rgba(255,255,255,0.15)'; darkBtn.style.color = '#a09cc0';
+  }
+}
+
+async function setTheme(theme) {
+  const pw = document.getElementById('theme-password').value.trim();
+  if (!pw) { showThemeMsg('Enter your admin password first', 'error'); return; }
+  const prefix = (() => {
+    const p = window.location.pathname;
+    if (p.startsWith('/melat')) return '/melat';
+    if (p.startsWith('/phil')) return '/phil';
+    if (p.startsWith('/denverdems')) return '/denverdems';
+    return '';
+  })();
+  try {
+    const r = await fetch(prefix + '/api/set-theme', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({password: pw, theme: theme})
+    });
+    const data = await r.json();
+    if (data.success) { updateThemeButtons(theme); showThemeMsg('Theme set to ' + theme, 'success'); }
+    else showThemeMsg(data.error || 'Error', 'error');
+  } catch(e) { showThemeMsg('Network error', 'error'); }
+}
+
+function showThemeMsg(msg, type) {
+  const el = document.getElementById('theme-msg');
+  el.textContent = msg;
+  el.style.color = type === 'error' ? '#ef5350' : '#22c55e';
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3000);
+}
+
+loadCurrentTheme();
 </script>
 </body>
 </html>
