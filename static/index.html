@@ -381,6 +381,7 @@ const PATH_PREFIX = (() => {
   const p = window.location.pathname;
   if (p.startsWith('/melat')) return '/melat';
   if (p.startsWith('/phil')) return '/phil';
+  if (p.startsWith('/denverdems')) return '/denverdems';
   return '';
 })();
 function apiUrl(path) { return PATH_PREFIX + path; }
