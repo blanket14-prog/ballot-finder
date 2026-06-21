@@ -396,6 +396,7 @@ def make_routes(prefix, cid):
         if theme not in ('dark', 'light'):
             return jsonify({'error': 'Invalid theme'}), 400
         CAMPAIGNS[cid]['theme'] = theme
+        save_theme(cid, theme)
         return jsonify({'success': True, 'theme': theme})
 
     @app.route(f'{url_prefix}/api/start-geocoding', methods=['POST'], endpoint=f'startgeo_{cid}')
@@ -424,12 +425,33 @@ def service_worker():
     return Response(js, mimetype='application/javascript', headers={'Service-Worker-Allowed': '/'})
 
 # ── STARTUP ───────────────────────────────────────────────────────
+def theme_file(cid):
+    return os.path.join(BASE_DATA_DIR, f'theme_{cid}.json')
+
+def load_theme(cid):
+    try:
+        tf = theme_file(cid)
+        if os.path.exists(tf):
+            with open(tf) as f:
+                data = json.load(f)
+                CAMPAIGNS[cid]['theme'] = data.get('theme', 'dark')
+                print(f"[{cid}] Loaded theme: {CAMPAIGNS[cid]['theme']}")
+    except Exception as e:
+        print(f"[{cid}] Theme load error: {e}")
+
+def save_theme(cid, theme):
+    try:
+        with open(theme_file(cid), 'w') as f:
+            json.dump({'theme': theme}, f)
+    except Exception as e:
+        print(f"[{cid}] Theme save error: {e}")
+
 def startup_campaign(cid):
-    # Create data directory if it doesn't exist (persistent disk may not have subdir yet)
     try:
         os.makedirs(CAMPAIGNS[cid]['data_dir'], exist_ok=True)
     except Exception as e:
         print(f"[{cid}] Could not create data dir: {e}")
+    load_theme(cid)
     load_geocache(cid)
     saved = data_file(cid, 'current_data.txt')
     meta = data_file(cid, 'meta.json')
