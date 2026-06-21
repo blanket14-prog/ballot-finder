@@ -102,15 +102,16 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
 .pin-hint{font-size:12px;color:var(--accent);opacity:.8;}
 
 /* MAP */
-#map-view{display:none;flex-direction:column;flex:1;overflow:hidden;}
+#map-view{display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0;}
 #map-view.visible{display:flex;}
+#map-view.with-roster{flex:0 0 45vh;}
 #map-wrapper{position:relative;flex:1;min-height:0;}
 #map{width:100%;height:100%;}
 .map-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.65);color:#fff;font-size:11px;padding:5px 14px;border-radius:20px;pointer-events:none;z-index:500;white-space:nowrap;opacity:0;transition:opacity .3s;}
 .map-hint.show{opacity:1;}
 
 /* ROSTER */
-#roster-panel{flex-shrink:0;max-height:44vh;overflow-y:auto;background:var(--surface);border-top:2px solid var(--accent);display:none;}
+#roster-panel{flex-shrink:0;max-height:45vh;overflow-y:auto;background:var(--surface);border-top:2px solid var(--accent);display:none;}
 #roster-panel.visible{display:block;}
 .roster-header{padding:10px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:10;display:flex;align-items:flex-start;justify-content:space-between;}
 .roster-addr{font-size:15px;font-weight:700;color:var(--text);}
@@ -286,11 +287,10 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
       <div id="map-wrapper">
         <div id="map"></div>
         <div class="map-hint" id="map-hint"></div>
-
       </div>
-  <div id="roster-panel">
+    </div>
+    <div id="roster-panel">
         <div id="roster-content"><div class="roster-empty">Tap a pin to see who lives there</div></div>
-      </div>
     </div>
     <div id="list-view">
       <div class="list-header">
@@ -329,7 +329,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         Drop boxes
       </a>
     </div>
-    <div style="font-size:10px;color:var(--text3);margin-top:4px;text-align:right;">v1.4.1</div>
+    <div style="font-size:10px;color:var(--text3);margin-top:4px;text-align:right;">v1.4.2</div>
   </div>
 </div>
 
@@ -799,6 +799,7 @@ function showRoster(hh,idx){
   rosterState={hh,shown:Math.min(PAGE,hh.voters.length)};
   renderRoster();
   document.getElementById('roster-panel').classList.add('visible');
+  document.getElementById('map-view').classList.add('with-roster');
   updateCompass(idx);
   setTimeout(()=>{
     if(mapInstance){
@@ -851,6 +852,7 @@ function doNav(dir) {
 function closeRoster(){
   document.getElementById('nav-arrow-bar').style.display = 'none';
   document.getElementById('roster-panel').classList.remove('visible');
+  document.getElementById('map-view').classList.remove('with-roster');
   // arrows live in roster header, hidden with it
   document.getElementById('roster-content').innerHTML='<div class="roster-empty">Tap a pin to see who lives there</div>';
   markers.forEach((m,i)=>{if(filteredResults[i])m.setIcon(makeIcon(filteredResults[i],false));});
