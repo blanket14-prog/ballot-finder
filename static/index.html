@@ -31,19 +31,15 @@
   --chip-bg:transparent;--chip-border:rgba(255,255,255,0.18);--chip-text:#a09cc0;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;touch-action:none;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;}
-#app{display:flex;flex-direction:column;height:100%;max-width:600px;margin:0 auto;background:var(--bg);overflow:hidden;}
-#top-bar{padding:4px 12px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;min-height:56px;}
-#top-logo{display:flex;align-items:center;white-space:nowrap;flex-shrink:0;height:44px;}
-#campaign-name{font-size:15px;font-weight:700;letter-spacing:-.3px;background:linear-gradient(135deg,var(--text) 0%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-#campaign-logo{max-height:44px;max-width:180px;width:auto;object-fit:contain;}
-#top-stats{display:flex;align-items:center;gap:0;flex:1;background:var(--surface);border-radius:9px;border:1px solid var(--border);overflow:hidden;height:44px;}
-
-.top-stat{flex:1;padding:4px 8px;text-align:center;}
-.top-stat-label{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px;white-space:nowrap;}
-.top-stat-value{font-size:14px;font-weight:700;color:var(--text);}
-.top-stat-value.warn{color:#fb923c;}
-.top-stat-divider{width:1px;background:var(--border);align-self:stretch;flex-shrink:0;}
+html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;}
+#app{display:flex;flex-direction:column;height:100%;max-width:600px;margin:0 auto;background:var(--bg);}
+#top-bar{padding:11px 14px 9px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border);}
+#top-bar h1{font-size:18px;font-weight:700;letter-spacing:-.3px;background:linear-gradient(135deg,var(--text) 0%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+#stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:8px 12px;flex-shrink:0;}
+.stat{background:var(--surface);border-radius:9px;padding:7px 10px;border:1px solid var(--border);}
+.stat-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;}
+.stat-value{font-size:17px;font-weight:700;color:var(--text);}
+.stat-value.warn{color:#fb923c;}
 #geocoding-banner{margin:0 12px 3px;padding:5px 12px;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.2);border-radius:8px;font-size:11px;color:var(--accent);display:none;text-align:center;flex-shrink:0;}
 
 /* SEARCH */
@@ -191,27 +187,15 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
 .db-info{}
 .db-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:1px;}
 .db-addr{font-size:12px;color:var(--text3);}
-
-/* ── NAVIGATION COMPASS ── */
-
-@keyframes pulse{0%{transform:scale(1.3);opacity:0.35}70%{transform:scale(2.2);opacity:0}100%{transform:scale(2.2);opacity:0}}
-
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="top-bar">
-    <div id="top-logo">
-      <img id="campaign-logo" src="" alt="" style="height:32px;display:none;"/>
-      <span id="campaign-name">📋 Ballot Finder</span>
-    </div>
-    <div id="top-stats">
-      <div class="top-stat"><div class="top-stat-label">Voters</div><div class="top-stat-value" id="stat-total">—</div></div>
-      <div class="top-stat-divider"></div>
-      <div class="top-stat"><div class="top-stat-label">Not returned</div><div class="top-stat-value warn" id="stat-pending">—</div></div>
-      <div class="top-stat-divider"></div>
-      <div class="top-stat"><div class="top-stat-label">Return rate</div><div class="top-stat-value" id="stat-rate">—</div></div>
-    </div>
+  <div id="top-bar"><h1>📋 Ballot Finder</h1></div>
+  <div id="stats-row">
+    <div class="stat"><div class="stat-label">Total voters</div><div class="stat-value" id="stat-total">—</div></div>
+    <div class="stat"><div class="stat-label">Not returned</div><div class="stat-value warn" id="stat-pending">—</div></div>
+    <div class="stat"><div class="stat-label">Return rate</div><div class="stat-value" id="stat-rate">—</div></div>
   </div>
   <div id="geocoding-banner"><span id="geocoding-text"></span></div>
   <div id="search-bar">
@@ -225,7 +209,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         <div id="autocomplete-list"></div>
       </div>
       <button id="filter-toggle" onclick="toggleFilters()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
         <span class="filter-dot"></span>
       </button>
       <button id="search-btn" onclick="handleSearch()">Search</button>
@@ -252,6 +236,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
       <div class="chips">
         <span class="count-chip" data-count="10" onclick="setCount(10)">10</span>
         <span class="count-chip active" data-count="30" onclick="setCount(30)">30</span>
+        <span class="count-chip" data-count="20" onclick="setCount(20)">20</span>
         <span class="count-chip" data-count="50" onclick="setCount(50)">50</span>
       </div>
     </div>
@@ -282,33 +267,10 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
       <div id="map-wrapper">
         <div id="map"></div>
         <div class="map-hint" id="map-hint"></div>
-
       </div>
       <div id="roster-panel">
-      <div id="roster-static-header" style="display:none;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:flex-start;justify-content:space-between;position:sticky;top:0;z-index:2;">
-        <div style="flex:1;min-width:0;">
-          <div class="roster-addr" id="sh-addr"></div>
-          <div class="roster-meta" id="sh-meta"></div>
-          <div id="sh-badge"></div>
-        </div>
-        <div style="display:flex;align-items:center;flex-shrink:0;">
-          <button id="arr-n" onclick="doNav('N')" style="background:none;border:none;color:var(--text);width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
-          </button>
-          <button id="arr-s" onclick="doNav('S')" style="background:none;border:none;color:var(--text);width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <button id="arr-w" onclick="doNav('W')" style="background:none;border:none;color:var(--text);width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
-          <button id="arr-e" onclick="doNav('E')" style="background:none;border:none;color:var(--text);width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-          <button onclick="closeRoster()" style="width:28px;height:28px;border-radius:50%;background:var(--surface3);border:none;color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:6px;">✕</button>
-        </div>
+        <div id="roster-content"><div class="roster-empty">Tap a pin to see who lives there</div></div>
       </div>
-      <div id="roster-content"></div>
-    </div>
     </div>
     <div id="list-view">
       <div class="list-header">
@@ -333,7 +295,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         Drop boxes
       </a>
     </div>
-      <div style="font-size:10px;color:var(--text3);margin-top:4px;text-align:right;">v1.6.0</div>
+    <div class="footer-note">Voter data is public record under C.R.S. 1-2-227 · Denver Elections Division</div>
   </div>
 </div>
 
@@ -357,7 +319,6 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         <div class="modal-section-title">What this data does NOT include</div>
         <ul><li>How anyone voted</li><li>Social Security or driver's license numbers</li><li>Email addresses or signatures</li></ul>
       </div>
-      <p style="font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:10px;margin-top:4px;">Voter data is public record under C.R.S. 1-2-227 · Denver Elections Division</p>
     </div>
   </div>
 </div>
@@ -396,15 +357,6 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
 </div>
 
 <script>
-// ── URL PREFIX (for multi-campaign routing) ──────────────────────
-const PATH_PREFIX = (() => {
-  const p = window.location.pathname;
-  if (p.startsWith('/melat')) return '/melat';
-  if (p.startsWith('/phil')) return '/phil';
-  return '';
-})();
-function apiUrl(path) { return PATH_PREFIX + path; }
-
 // ── THEME ─────────────────────────────────────────────────────────
 const DLAT=39.7392,DLNG=-104.9903;
 function getSunTimes(d){
@@ -511,73 +463,19 @@ let filtersOpen=false,pinModeActive=false;
 const PAGE=10;
 
 // ── INIT ──────────────────────────────────────────────────────────
-// ── COMPASS (static buttons, never rebuilt) ──────────────────────
-const compassTargets = {N:-1, S:-1, E:-1, W:-1};
-
-function updateCompass(idx) {
-  compassTargets.N = compassTargets.S = compassTargets.E = compassTargets.W = -1;
-  const dirsDist = {N:Infinity, S:Infinity, E:Infinity, W:Infinity};
-  const curr = filteredResults[idx];
-  if (!curr) return;
-  filteredResults.forEach((hh, i) => {
-    if (i === idx) return;
-    const dLat = hh.lat - curr.lat;
-    const dLng = hh.lng - curr.lng;
-    const bearing = (Math.atan2(dLng, dLat) * 180 / Math.PI + 360) % 360;
-    let dir;
-    if (bearing >= 315 || bearing < 45) dir = 'N';
-    else if (bearing >= 45 && bearing < 135) dir = 'E';
-    else if (bearing >= 135 && bearing < 225) dir = 'S';
-    else dir = 'W';
-    const dist = haversine(curr.lat, curr.lng, hh.lat, hh.lng);
-    if (dist < dirsDist[dir]) { dirsDist[dir] = dist; compassTargets[dir] = i; }
-  });
-  document.getElementById('arr-n').style.opacity = compassTargets.N === -1 ? '0.2' : '1';
-  document.getElementById('arr-s').style.opacity = compassTargets.S === -1 ? '0.2' : '1';
-  document.getElementById('arr-w').style.opacity = compassTargets.W === -1 ? '0.2' : '1';
-  document.getElementById('arr-e').style.opacity = compassTargets.E === -1 ? '0.2' : '1';
-}
-
-function doNav(dir) {
-  const idx = compassTargets[dir];
-  if (idx === -1) return;
-  const hh = filteredResults[idx];
-  if (!hh) return;
-  showRoster(hh, idx);
-  if (mapInstance) mapInstance.panTo([hh.lat, hh.lng], {animate:true});
-}
-
 async function init(){
   populateDropboxModal();
-  await loadConfig();
   await checkStatus();
   setInterval(checkStatus,20000);
-}
-
-async function loadConfig(){
-  try{
-    const c=await(await fetch(apiUrl('/api/config'))).json();
-    if(c.logoUrl){
-      const img=document.getElementById('campaign-logo');
-      img.src=c.logoUrl;
-      img.style.display='block';
-      document.getElementById('campaign-name').style.display='none';
-    } else if(c.campaignName&&c.campaignName!=='Ballot Finder'){
-      document.getElementById('campaign-name').textContent='📋 '+c.campaignName;
-    }
-    if(c.accentColor&&c.accentColor!=='#6c63ff'){
-      document.documentElement.style.setProperty('--accent',c.accentColor);
-    }
-    if(c.campaignName){document.title=c.campaignName+' — Ballot Finder';}
-  }catch(e){}
+  // Ensure map is initialized even before first search
+  // by showing empty state map
 }
 
 async function checkStatus(){
   try{
-    const s=await(await fetch(apiUrl('/api/status'))).json();
+    const s=await(await fetch('/api/status')).json();
     if(s.hasData){
       document.getElementById('stat-total').textContent=s.total.toLocaleString();
-      // pending and rate reflect DEM+UAF only (server returns all, label clarified)
       document.getElementById('stat-pending').textContent=s.pending.toLocaleString();
       document.getElementById('stat-rate').textContent=s.returnRate+'%';
       document.getElementById('modal-filename').textContent=s.filename;
@@ -633,7 +531,7 @@ function onInput(){
   acTimer=setTimeout(()=>fetchAC(v.trim()),300);
 }
 async function fetchAC(q){
-  try{acResults=await(await fetch(apiUrl('/api/autocomplete?q=')+encodeURIComponent(q))).json();renderAC();}
+  try{acResults=await(await fetch('/api/autocomplete?q='+encodeURIComponent(q))).json();renderAC();}
   catch(e){closeAC();}
 }
 function renderAC(){
@@ -672,7 +570,7 @@ async function handleSearch(){
   try{
     let origin=lastOrigin;
     if(!origin){
-      const r=await fetch(apiUrl('/api/geocode?address=')+encodeURIComponent(addr));
+      const r=await fetch('/api/geocode?address='+encodeURIComponent(addr));
       if(!r.ok){alert('Could not find that address in Denver. Try adding the street type, e.g. "552 S Pennsylvania St".');return;}
       origin=await r.json();lastOrigin=origin;
     }
@@ -681,7 +579,7 @@ async function handleSearch(){
 }
 
 async function doSearch(origin){
-  const url=apiUrl(`/api/search?lat=${origin.lat}&lng=${origin.lng}&party=${[...partyFilters].join(',')}&access=${[...accessFilters].join(',')}&limit=${resultCount}`);
+  const url=`/api/search?lat=${origin.lat}&lng=${origin.lng}&party=${[...partyFilters].join(',')}&access=${[...accessFilters].join(',')}&limit=${resultCount}`;
   try{
     const results=(await(await fetch(url)).json()).results||[];
     lastResults=optimizeWalkOrder(results,origin);
@@ -778,22 +676,7 @@ function ensureMap(){
 
 function makeIcon(hh,highlight){
   const color=hh.apt?'#f97316':'#6c63ff';
-  if(highlight){
-    // Large pulsing highlighted pin
-    const sz=24;
-    const lbl=hh.voters.length>1?String(hh.voters.length):'';
-    return L.divIcon({
-      html:`<div style="position:relative;width:${sz*2}px;height:${sz*2}px">
-        <div style="position:absolute;inset:0;border-radius:50%;background:${color};opacity:0.25;animation:pulse 1.5s ease-out infinite;transform:scale(1.5)"></div>
-        <svg xmlns='http://www.w3.org/2000/svg' width='${sz*2}' height='${sz*2}' style="position:relative;z-index:1">
-          <circle cx='${sz}' cy='${sz}' r='${sz-2}' fill='${color}' stroke='white' stroke-width='3'/>
-          ${lbl?`<text x='${sz}' y='${sz+5}' text-anchor='middle' font-size='13' font-family='-apple-system,sans-serif' font-weight='bold' fill='white'>${lbl}</text>`:`<circle cx='${sz}' cy='${sz}' r='6' fill='white'/>`}
-        </svg>
-      </div>`,
-      className:'',iconSize:[sz*2,sz*2],iconAnchor:[sz,sz]
-    });
-  }
-  const sz=hh.voters.length>1?15:11;
+  const sz=highlight?18:hh.voters.length>1?15:11;
   const lbl=hh.voters.length>1?String(hh.voters.length):'';
   return L.divIcon({
     html:`<svg xmlns='http://www.w3.org/2000/svg' width='${sz*2}' height='${sz*2}'><circle cx='${sz}' cy='${sz}' r='${sz-1}' fill='${color}' stroke='rgba(255,255,255,0.4)' stroke-width='1.5'/>${lbl?`<text x='${sz}' y='${sz+4}' text-anchor='middle' font-size='${sz<=12?9:11}' font-family='-apple-system,sans-serif' font-weight='bold' fill='white'>${lbl}</text>`:''}</svg>`,
@@ -827,8 +710,14 @@ function renderMap(results,origin){
       markers.push(m);
     });
     mapInstance.invalidateSize();
-    if(origin){
-      mapInstance.setView([origin.lat,origin.lng],16,{animate:false});
+    if(origin&&results.length){
+      // Zoom to show roughly the closest half of results (tighter view)
+      const half = results.slice(0, Math.max(1, Math.ceil(results.length / 2)));
+      const b = L.latLngBounds(half.map(h=>[h.lat,h.lng]));
+      b.extend([origin.lat,origin.lng]);
+      mapInstance.fitBounds(b,{padding:[44,44],maxZoom:15,animate:false});
+    }else if(origin){
+      mapInstance.setView([origin.lat,origin.lng],15);
     }
   });
 }
@@ -837,26 +726,19 @@ function renderMap(results,origin){
 function showRoster(hh,idx){
   markers.forEach((m,i)=>m.setIcon(makeIcon(filteredResults[i],i===idx)));
   rosterState={hh,shown:Math.min(PAGE,hh.voters.length)};
-  // Populate static header (never rebuilt, so arrows always work)
-  document.getElementById('sh-addr').textContent = hh.buildingAddress;
-  document.getElementById('sh-meta').textContent = `${hh.city}, CO ${hh.zip} · ${dStr(hh.dist)} · ${hh.voters.length} voter${hh.voters.length!==1?'s':''}`;
-  document.getElementById('sh-badge').innerHTML = hh.apt ? '<span class="badge apt">Apartment</span>' : '<span class="badge home">House</span>';
-  document.getElementById('roster-static-header').style.display = 'flex';
-  updateCompass(idx);
   renderRoster();
   document.getElementById('roster-panel').classList.add('visible');
+  // Recenter map on the selected house
   setTimeout(()=>{
     if(mapInstance){
       mapInstance.invalidateSize();
+      // Pan so the house is visible above the roster panel
       mapInstance.panTo([hh.lat,hh.lng],{animate:true});
     }
   },80);
 }
-
-
 function closeRoster(){
   document.getElementById('roster-panel').classList.remove('visible');
-  // arrows live in roster header, hidden with it
   document.getElementById('roster-content').innerHTML='<div class="roster-empty">Tap a pin to see who lives there</div>';
   markers.forEach((m,i)=>{if(filteredResults[i])m.setIcon(makeIcon(filteredResults[i],false));});
   rosterState={hh:null,shown:0};
@@ -864,8 +746,11 @@ function closeRoster(){
     if(mapInstance){
       mapInstance.invalidateSize();
       // Re-fit to half results after closing roster
-      if(lastOrigin){
-        mapInstance.setView([lastOrigin.lat,lastOrigin.lng],16);
+      if(filteredResults.length && lastOrigin){
+        const half = filteredResults.slice(0, Math.max(1, Math.ceil(filteredResults.length/2)));
+        const b = L.latLngBounds(half.map(h=>[h.lat,h.lng]));
+        b.extend([lastOrigin.lat,lastOrigin.lng]);
+        mapInstance.fitBounds(b,{padding:[44,44],maxZoom:15});
       }
     }
   },100);
@@ -881,7 +766,7 @@ function renderRoster(){
     </div>`).join('');
   const rem=hh.voters.length-shown;
   document.getElementById('roster-content').innerHTML=
-    `${rows}${rem>0?`<button class="more-btn" onclick="loadMore()">+${Math.min(rem,PAGE)} more</button>`:''}`;
+    `<div class="roster-header"><div><div class="roster-addr">${hh.buildingAddress}</div><div class="roster-meta">${hh.city}, CO ${hh.zip} · ${dStr(hh.dist)} · ${hh.voters.length} voter${hh.voters.length!==1?'s':''}</div><div class="roster-badges">${ab}</div></div><button class="roster-close" onclick="closeRoster()">✕</button></div>${rows}${rem>0?`<button class="more-btn" onclick="loadMore()">+${Math.min(rem,PAGE)} more</button>`:''}`;
 }
 function loadMore(){rosterState.shown=Math.min(rosterState.shown+PAGE,rosterState.hh.voters.length);renderRoster();}
 
