@@ -104,14 +104,16 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
 
 /* CONTENT */
 #content{flex:1;overflow:hidden;display:flex;flex-direction:column;}
-#empty-state{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:2rem;text-align:center;color:var(--text3);}
+#empty-state{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:2rem;text-align:center;color:var(--text);z-index:10;pointer-events:none;}
+#empty-state.visible{display:flex;}
+#empty-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px 28px;max-width:280px;box-shadow:var(--shadow);pointer-events:all;}
 .empty-icon{font-size:42px;opacity:.4;}
 #empty-state p{font-size:14px;line-height:1.6;max-width:260px;}
 .pin-hint{font-size:12px;color:var(--accent);opacity:.8;}
 
 /* MAP */
-#map-view{display:none;flex-direction:column;flex:1;overflow:hidden;}
-#map-view.visible{display:flex;}
+#map-view{display:flex;flex-direction:column;flex:1;overflow:hidden;position:relative;}
+#map-view.with-roster{flex:0 0 45vh;}
 #map-wrapper{position:relative;flex:1;min-height:0;}
 #map{width:100%;height:100%;}
 .map-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.65);color:#fff;font-size:11px;padding:5px 14px;border-radius:20px;pointer-events:none;z-index:500;white-space:nowrap;opacity:0;transition:opacity .3s;}
@@ -277,15 +279,18 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
     </button>
   </div>
   <div id="content">
-    <div id="empty-state">
-      <div class="empty-icon">🗺️</div>
-      <p>Enter your address to find nearby voters who haven't returned their ballot.</p>
-      <div class="pin-hint">Or use the 📍 button on the map to drop a pin</div>
-    </div>
+    <!-- empty state overlays the map -->
     <div id="map-view">
       <div id="map-wrapper">
         <div id="map"></div>
         <div class="map-hint" id="map-hint"></div>
+        <div id="empty-state" class="visible">
+          <div id="empty-card">
+            <div class="empty-icon" style="font-size:36px;margin-bottom:8px;">🗺️</div>
+            <p style="font-size:14px;line-height:1.5;color:var(--text2);margin-bottom:12px;">Enter your address to find nearby voters who haven't returned their ballot.</p>
+            <div style="font-size:12px;color:var(--accent);">Or tap 📍 on the map to drop a pin</div>
+          </div>
+        </div>
       </div>
       <div id="roster-panel">
         <div id="roster-content"><div class="roster-empty">Tap a pin to see who lives there</div></div>
@@ -314,6 +319,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         Drop boxes
       </a>
     </div>
+    <div style="font-size:10px;color:var(--text3);text-align:right;margin-top:3px;">v2.0</div>
   </div>
 </div>
 
@@ -511,6 +517,8 @@ async function init(){
   await loadConfig();
   await checkStatus();
   setInterval(checkStatus,20000);
+  // Initialize map immediately so it shows behind the empty state
+  requestAnimationFrame(()=>ensureMap());
 }
 
 async function loadConfig(){
@@ -742,9 +750,10 @@ function ensureMap(){
 
 function makeIcon(hh,highlight){
   const color=hh.apt?'#f97316':'#6c63ff';
+  const voterCount=hh.voters.length;
   if(highlight){
     const sz=26;
-    const lbl=hh.voters.length>1?String(hh.voters.length):'';
+    const lbl=voterCount>1?String(voterCount):'';
     return L.divIcon({
       html:`<div style="position:relative;width:${sz*2}px;height:${sz*2}px">` +
         `<div style="position:absolute;inset:0;border-radius:50%;background:${color};animation:navpulse 1.4s ease-out infinite;"></div>` +
@@ -753,14 +762,19 @@ function makeIcon(hh,highlight){
         (lbl?`<text x='${sz}' y='${sz+5}' text-anchor='middle' font-size='13' font-family='-apple-system,sans-serif' font-weight='bold' fill='white'>${lbl}</text>`:
              `<circle cx='${sz}' cy='${sz}' r='7' fill='white'/>`) +
         `</svg></div>`,
-      className:'',iconSize:[sz*2,sz*2],iconAnchor:[sz,sz]
+      className:'',iconSize:[sz*2,sz*2],iconAnchor:[sz,sz],
+      zIndexOffset:1000
     });
   }
-  const sz=hh.voters.length>1?15:11;
-  const lbl=hh.voters.length>1?String(hh.voters.length):'';
+  // Size based on voter count — consistent sizes to avoid overlap confusion
+  const sz=voterCount>=5?17:voterCount>=3?15:voterCount>=2?13:10;
+  const lbl=voterCount>1?String(voterCount):'';
+  // zIndexOffset: more voters = higher z so bigger pins stay on top
+  const zOff=voterCount*10;
   return L.divIcon({
-    html:`<svg xmlns='http://www.w3.org/2000/svg' width='${sz*2}' height='${sz*2}'><circle cx='${sz}' cy='${sz}' r='${sz-1}' fill='${color}' stroke='rgba(255,255,255,0.4)' stroke-width='1.5'/>${lbl?`<text x='${sz}' y='${sz+4}' text-anchor='middle' font-size='${sz<=12?9:11}' font-family='-apple-system,sans-serif' font-weight='bold' fill='white'>${lbl}</text>`:''}</svg>`,
-    className:'',iconSize:[sz*2,sz*2],iconAnchor:[sz,sz]
+    html:`<svg xmlns='http://www.w3.org/2000/svg' width='${sz*2}' height='${sz*2}'><circle cx='${sz}' cy='${sz}' r='${sz-1}' fill='${color}' stroke='white' stroke-width='1.5'/>${lbl?`<text x='${sz}' y='${sz+4}' text-anchor='middle' font-size='${sz<=12?9:11}' font-family='-apple-system,sans-serif' font-weight='bold' fill='white'>${lbl}</text>`:''}</svg>`,
+    className:'',iconSize:[sz*2,sz*2],iconAnchor:[sz,sz],
+    zIndexOffset:zOff
   });
 }
 function makeOriginIcon(){
@@ -876,6 +890,9 @@ function focusMarker(i){
 
 function renderAll(results,origin){
   filteredResults=results;
+  // Hide empty state overlay once we have results
+  const es=document.getElementById('empty-state');
+  if(es) es.classList.remove('visible');
   renderMap(results,origin||lastOrigin);
   renderList(results);
   closeRoster();
