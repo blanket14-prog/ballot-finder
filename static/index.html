@@ -118,6 +118,11 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
 #map{width:100%;height:100%;}
 .map-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.65);color:#fff;font-size:11px;padding:5px 14px;border-radius:20px;pointer-events:none;z-index:500;white-space:nowrap;opacity:0;transition:opacity .3s;}
 .map-hint.show{opacity:1;}
+#search-loading{position:absolute;inset:0;background:rgba(0,0,0,0.35);z-index:600;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;backdrop-filter:blur(2px);}
+#search-loading.visible{display:flex;}
+.spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner-label{color:#fff;font-size:13px;font-weight:600;}
 
 /* ROSTER */
 #roster-panel{flex-shrink:0;max-height:44vh;overflow-y:auto;background:var(--surface);border-top:2px solid var(--accent);display:none;}
@@ -219,7 +224,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
       <div class="top-stat"><div class="top-stat-label">Return rate</div><div class="top-stat-value" id="stat-rate">—</div></div>
     </div>
   </div>
-  <div id="geocoding-banner"><span id="geocoding-text"></span></div>
+  <div id="geocoding-banner" style="display:none!important;"><span id="geocoding-text"></span></div>
   <div id="search-bar">
     <div class="search-row">
       <div class="input-wrap" style="position:relative">
@@ -263,7 +268,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
     </div>
   </div>
   <div id="dropbox-bar">
-    <span>📦</span>
+    <span style="font-size:16px;">🗳️</span>
     <span id="dropbox-text">Nearest drop box: <strong id="nearest-dropbox">—</strong></span>
     <a id="dropbox-all-link" onclick="openModal('dropbox-modal')" style="margin-left:auto;color:var(--drop);font-weight:600;cursor:pointer;font-size:11px;">See all →</a>
   </div>
@@ -284,6 +289,10 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
       <div id="map-wrapper">
         <div id="map"></div>
         <div class="map-hint" id="map-hint"></div>
+        <div id="search-loading">
+          <div class="spinner"></div>
+          <div class="spinner-label">Finding voters…</div>
+        </div>
         <div id="empty-state" class="visible">
           <div id="empty-card">
             <div class="empty-icon" style="font-size:36px;margin-bottom:8px;">🗺️</div>
@@ -371,7 +380,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <button class="modal-close" onclick="closeModal('dropbox-modal')">✕</button>
-    <div class="modal-title">📦 24-Hour Ballot Drop Boxes</div>
+    <div class="modal-title">🗳️ 24-Hour Ballot Drop Boxes</div>
     <div class="modal-body">
       <p>Open 24/7 through <strong>June 30, 2026 at 7:00 PM</strong>. You can drop a Denver ballot in any Denver County drop box.</p>
       <div class="modal-section" style="margin-top:12px;">
@@ -654,6 +663,8 @@ async function handleSearch(){
 
 async function doSearch(origin){
   const url=apiUrl(`/api/search?lat=${origin.lat}&lng=${origin.lng}&party=${[...partyFilters].join(',')}&access=${[...accessFilters].join(',')}&limit=${resultCount}`);
+  const loader=document.getElementById('search-loading');
+  if(loader) loader.classList.add('visible');
   try{
     const results=(await(await fetch(url)).json()).results||[];
     lastResults=optimizeWalkOrder(results,origin);
@@ -664,6 +675,7 @@ async function doSearch(origin){
     switchTab('map');
     updateNearestDropbox(origin);
   }catch(e){console.error(e);alert('Search failed. Please try again.');}
+  finally{if(loader) loader.classList.remove('visible');}
 }
 
 // ── WALK ORDER ────────────────────────────────────────────────────
@@ -723,8 +735,9 @@ function handleMapClick(e){
 function ensureMap(){
   if(mapInstance)return;
   mapInstance=L.map('map',{zoomControl:true,center:[DLAT,DLNG],zoom:13,tap:true,tapTolerance:20});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',maxZoom:19
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+    attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',
+    maxZoom:19,subdomains:'abcd'
   }).addTo(mapInstance);
   mapInstance.on('click',handleMapClick);
   // Pin drop control
@@ -739,8 +752,16 @@ function ensureMap(){
   // Add drop box markers
   DROP_BOXES.forEach(db=>{
     const icon=L.divIcon({
-      html:`<div style="font-size:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.4))">📦</div>`,
-      className:'',iconSize:[24,24],iconAnchor:[12,12]
+      html:`<div style="width:28px;height:28px;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.35))">
+        <svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="6" width="24" height="20" rx="2" fill="#1565c0"/>
+          <rect x="2" y="6" width="24" height="5" rx="2" fill="#0d47a1"/>
+          <rect x="9" y="10" width="10" height="2" rx="1" fill="white"/>
+          <path d="M11 16 L14 19 L17 16" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="14" y1="14" x2="14" y2="19" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>`,
+      className:'',iconSize:[28,28],iconAnchor:[14,14]
     });
     const m=L.marker([db.lat,db.lng],{icon,zIndexOffset:-100}).addTo(mapInstance);
     m.bindPopup(`<strong>${db.name}</strong><br/>${db.address}<br/><em style="font-size:11px">24-hr ballot drop box</em>`);
