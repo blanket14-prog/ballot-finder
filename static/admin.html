@@ -138,6 +138,7 @@ async function loadStatus() {
         const p = window.location.pathname;
         if (p.startsWith('/melat')) return '/melat';
         if (p.startsWith('/phil')) return '/phil';
+        if (p.startsWith('/denverdems')) return '/denverdems';
         return '';
       })();
       const r = await fetch(prefix + '/api/status');
@@ -260,6 +261,7 @@ function uploadWithProgress(formData, onProgress) {
         const p = window.location.pathname;
         if (p.startsWith('/melat')) return '/melat/admin';
         if (p.startsWith('/phil')) return '/phil/admin';
+        if (p.startsWith('/denverdems')) return '/denverdems/admin';
         return '/admin';
       })();
       xhr.open('POST', adminPath);
@@ -282,6 +284,7 @@ async function loadCurrentTheme() {
       const p = window.location.pathname;
       if (p.startsWith('/melat')) return '/melat';
       if (p.startsWith('/phil')) return '/phil';
+      if (p.startsWith('/denverdems')) return '/denverdems';
       if (p.startsWith('/denverdems')) return '/denverdems';
       return '';
     })();
@@ -311,6 +314,7 @@ async function setTheme(theme) {
     const p = window.location.pathname;
     if (p.startsWith('/melat')) return '/melat';
     if (p.startsWith('/phil')) return '/phil';
+    if (p.startsWith('/denverdems')) return '/denverdems';
     if (p.startsWith('/denverdems')) return '/denverdems';
     return '';
   })();
