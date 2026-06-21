@@ -102,25 +102,20 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
 .pin-hint{font-size:12px;color:var(--accent);opacity:.8;}
 
 /* MAP */
-#map-view{display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0;}
+#map-view{display:none;flex-direction:column;flex:1;overflow:hidden;}
 #map-view.visible{display:flex;}
-#map-view.with-roster{flex:0 0 45vh;}
 #map-wrapper{position:relative;flex:1;min-height:0;}
 #map{width:100%;height:100%;}
 .map-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.65);color:#fff;font-size:11px;padding:5px 14px;border-radius:20px;pointer-events:none;z-index:500;white-space:nowrap;opacity:0;transition:opacity .3s;}
 .map-hint.show{opacity:1;}
 
 /* ROSTER */
-#roster-panel{flex-shrink:0;max-height:45vh;overflow-y:auto;background:var(--surface);border-top:2px solid var(--accent);display:none;}
+#roster-panel{flex-shrink:0;max-height:44vh;overflow-y:auto;background:var(--surface);border-top:2px solid var(--accent);display:none;}
 #roster-panel.visible{display:block;}
 .roster-header{padding:10px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:10;display:flex;align-items:flex-start;justify-content:space-between;}
 .roster-addr{font-size:15px;font-weight:700;color:var(--text);}
 .roster-meta{font-size:11px;color:var(--text3);margin-top:2px;}
 .roster-close{width:28px;height:28px;border-radius:50%;background:var(--surface3);border:none;color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:8px;}
-.nav-arrows{display:flex;gap:0;flex-shrink:0;margin-right:4px;}
-.nav-arrows button{background:none;border:none;color:var(--text);width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:8px;padding:0;}
-.nav-arrows button:active{background:var(--surface3);}
-.nav-arrows button[disabled]{opacity:0.2;}
 .roster-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;}
 .badge{font-size:11px;padding:2px 8px;border-radius:8px;font-weight:600;}
 .badge.apt{background:rgba(249,115,22,0.15);color:#f97316;border:1px solid rgba(249,115,22,0.25);}
@@ -287,32 +282,33 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
       <div id="map-wrapper">
         <div id="map"></div>
         <div class="map-hint" id="map-hint"></div>
+
       </div>
-    </div>
-    <div id="roster-panel">
-      <div id="roster-header-static" style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;background:var(--surface);position:sticky;top:0;z-index:10;">
-        <div style="flex:1;min-width:0">
-          <div class="roster-addr" id="roster-addr-text"></div>
-          <div class="roster-meta" id="roster-meta-text"></div>
-          <div id="roster-badge-area"></div>
+      <div id="roster-panel">
+      <div id="roster-static-header" style="display:none;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:flex-start;justify-content:space-between;position:sticky;top:0;z-index:2;">
+        <div style="flex:1;min-width:0;">
+          <div class="roster-addr" id="sh-addr"></div>
+          <div class="roster-meta" id="sh-meta"></div>
+          <div id="sh-badge"></div>
         </div>
-        <div style="display:flex;align-items:center;gap:0;flex-shrink:0;">
-          <button id="arr-n" onclick="doNav('N')" style="background:none;border:none;color:var(--text);width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;opacity:0.3;">
+        <div style="display:flex;align-items:center;flex-shrink:0;">
+          <button id="arr-n" onclick="doNav('N')" style="background:none;border:none;color:var(--text);width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
           </button>
-          <button id="arr-s" onclick="doNav('S')" style="background:none;border:none;color:var(--text);width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;opacity:0.3;">
+          <button id="arr-s" onclick="doNav('S')" style="background:none;border:none;color:var(--text);width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
-          <button id="arr-w" onclick="doNav('W')" style="background:none;border:none;color:var(--text);width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;opacity:0.3;">
+          <button id="arr-w" onclick="doNav('W')" style="background:none;border:none;color:var(--text);width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <button id="arr-e" onclick="doNav('E')" style="background:none;border:none;color:var(--text);width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;opacity:0.3;">
+          <button id="arr-e" onclick="doNav('E')" style="background:none;border:none;color:var(--text);width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
-          <button class="roster-close" onclick="closeRoster()" style="margin-left:6px;">✕</button>
+          <button onclick="closeRoster()" style="width:28px;height:28px;border-radius:50%;background:var(--surface3);border:none;color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:6px;">✕</button>
         </div>
       </div>
-      <div id="roster-body"></div>
+      <div id="roster-content"></div>
+    </div>
     </div>
     <div id="list-view">
       <div class="list-header">
@@ -337,7 +333,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         Drop boxes
       </a>
     </div>
-    <div style="font-size:10px;color:var(--text3);margin-top:4px;text-align:right;">v1.5.0</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;text-align:right;">v1.6.0</div>
   </div>
 </div>
 
@@ -515,6 +511,42 @@ let filtersOpen=false,pinModeActive=false;
 const PAGE=10;
 
 // ── INIT ──────────────────────────────────────────────────────────
+// ── COMPASS (static buttons, never rebuilt) ──────────────────────
+const compassTargets = {N:-1, S:-1, E:-1, W:-1};
+
+function updateCompass(idx) {
+  compassTargets.N = compassTargets.S = compassTargets.E = compassTargets.W = -1;
+  const dirsDist = {N:Infinity, S:Infinity, E:Infinity, W:Infinity};
+  const curr = filteredResults[idx];
+  if (!curr) return;
+  filteredResults.forEach((hh, i) => {
+    if (i === idx) return;
+    const dLat = hh.lat - curr.lat;
+    const dLng = hh.lng - curr.lng;
+    const bearing = (Math.atan2(dLng, dLat) * 180 / Math.PI + 360) % 360;
+    let dir;
+    if (bearing >= 315 || bearing < 45) dir = 'N';
+    else if (bearing >= 45 && bearing < 135) dir = 'E';
+    else if (bearing >= 135 && bearing < 225) dir = 'S';
+    else dir = 'W';
+    const dist = haversine(curr.lat, curr.lng, hh.lat, hh.lng);
+    if (dist < dirsDist[dir]) { dirsDist[dir] = dist; compassTargets[dir] = i; }
+  });
+  document.getElementById('arr-n').style.opacity = compassTargets.N === -1 ? '0.2' : '1';
+  document.getElementById('arr-s').style.opacity = compassTargets.S === -1 ? '0.2' : '1';
+  document.getElementById('arr-w').style.opacity = compassTargets.W === -1 ? '0.2' : '1';
+  document.getElementById('arr-e').style.opacity = compassTargets.E === -1 ? '0.2' : '1';
+}
+
+function doNav(dir) {
+  const idx = compassTargets[dir];
+  if (idx === -1) return;
+  const hh = filteredResults[idx];
+  if (!hh) return;
+  showRoster(hh, idx);
+  if (mapInstance) mapInstance.panTo([hh.lat, hh.lng], {animate:true});
+}
+
 async function init(){
   populateDropboxModal();
   await loadConfig();
@@ -805,10 +837,14 @@ function renderMap(results,origin){
 function showRoster(hh,idx){
   markers.forEach((m,i)=>m.setIcon(makeIcon(filteredResults[i],i===idx)));
   rosterState={hh,shown:Math.min(PAGE,hh.voters.length)};
+  // Populate static header (never rebuilt, so arrows always work)
+  document.getElementById('sh-addr').textContent = hh.buildingAddress;
+  document.getElementById('sh-meta').textContent = `${hh.city}, CO ${hh.zip} · ${dStr(hh.dist)} · ${hh.voters.length} voter${hh.voters.length!==1?'s':''}`;
+  document.getElementById('sh-badge').innerHTML = hh.apt ? '<span class="badge apt">Apartment</span>' : '<span class="badge home">House</span>';
+  document.getElementById('roster-static-header').style.display = 'flex';
+  updateCompass(idx);
   renderRoster();
   document.getElementById('roster-panel').classList.add('visible');
-  document.getElementById('map-view').classList.add('with-roster');
-  updateCompass(idx);
   setTimeout(()=>{
     if(mapInstance){
       mapInstance.invalidateSize();
@@ -818,48 +854,8 @@ function showRoster(hh,idx){
 }
 
 
-// ── COMPASS NAVIGATION ──────────────────────────────────────────
-const compassTargets = {N:-1, S:-1, E:-1, W:-1};
-
-
-
-function updateCompass(idx) {
-  compassTargets.N = compassTargets.S = compassTargets.E = compassTargets.W = -1;
-  const dirsDist = {N:Infinity, S:Infinity, E:Infinity, W:Infinity};
-  const curr = filteredResults[idx];
-  if (!curr) return;
-  filteredResults.forEach((hh, i) => {
-    if (i === idx) return;
-    const dLat = hh.lat - curr.lat;
-    const dLng = hh.lng - curr.lng;
-    const bearing = (Math.atan2(dLng, dLat) * 180 / Math.PI + 360) % 360;
-    let dir;
-    if (bearing >= 315 || bearing < 45) dir = 'N';
-    else if (bearing >= 45 && bearing < 135) dir = 'E';
-    else if (bearing >= 135 && bearing < 225) dir = 'S';
-    else dir = 'W';
-    const dist = haversine(curr.lat, curr.lng, hh.lat, hh.lng);
-    if (dist < dirsDist[dir]) { dirsDist[dir] = dist; compassTargets[dir] = i; }
-  });
-  document.getElementById('arr-n').style.opacity = compassTargets.N === -1 ? '0.2' : '1';
-  document.getElementById('arr-s').style.opacity = compassTargets.S === -1 ? '0.2' : '1';
-  document.getElementById('arr-w').style.opacity = compassTargets.W === -1 ? '0.2' : '1';
-  document.getElementById('arr-e').style.opacity = compassTargets.E === -1 ? '0.2' : '1';
-}
-
-function doNav(dir) {
-  const idx = compassTargets[dir];
-  if (idx === -1) return;
-  const hh = filteredResults[idx];
-  if (!hh) return;
-  showRoster(hh, idx);
-  if (mapInstance) mapInstance.panTo([hh.lat, hh.lng], {animate:true});
-}
-
 function closeRoster(){
-  document.getElementById('nav-arrow-bar').style.display = 'none';
   document.getElementById('roster-panel').classList.remove('visible');
-  document.getElementById('map-view').classList.remove('with-roster');
   // arrows live in roster header, hidden with it
   document.getElementById('roster-content').innerHTML='<div class="roster-empty">Tap a pin to see who lives there</div>';
   markers.forEach((m,i)=>{if(filteredResults[i])m.setIcon(makeIcon(filteredResults[i],false));});
@@ -885,14 +881,7 @@ function renderRoster(){
     </div>`).join('');
   const rem=hh.voters.length-shown;
   document.getElementById('roster-content').innerHTML=
-    `<div class="roster-header">
-      <div style="flex:1;min-width:0">
-        <div class="roster-addr">${hh.buildingAddress}</div>
-        <div class="roster-meta">${hh.city}, CO ${hh.zip} · ${dStr(hh.dist)} · ${hh.voters.length} voter${hh.voters.length!==1?'s':''}</div>
-        <div class="roster-badges">${ab}</div>
-      </div>
-      <button class="roster-close" onclick="closeRoster()">✕</button>
-    </div>${rows}${rem>0?`<button class="more-btn" onclick="loadMore()">+${Math.min(rem,PAGE)} more</button>`:''}`;
+    `${rows}${rem>0?`<button class="more-btn" onclick="loadMore()">+${Math.min(rem,PAGE)} more</button>`:''}`;
 }
 function loadMore(){rosterState.shown=Math.min(rosterState.shown+PAGE,rosterState.hh.voters.length);renderRoster();}
 
