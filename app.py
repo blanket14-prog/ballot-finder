@@ -222,11 +222,14 @@ def make_routes(prefix, cid):
     @app.route(f'{url_prefix}/api/status', endpoint=f'status_{cid}')
     def api_status():
         st = states[cid]
-        dem_uaf = len([v for v in st['voters'] if v.get('party') in ('DEM','UAF')])
-        rate = round(st['returned'] / st['total'] * 100) if st['total'] > 0 else 0
+        # Count DEM+UAF only for all three stats
+        dem_uaf_pending = len([v for v in st['voters'] if v.get('party') in ('DEM','UAF')])
+        dem_uaf_total = st['total'] - sum(1 for v in st['voters'] if v.get('party') == 'REP')
+        dem_uaf_returned = dem_uaf_total - dem_uaf_pending
+        rate = round(dem_uaf_returned / dem_uaf_total * 100) if dem_uaf_total > 0 else 0
         return jsonify({
-            'total': st['total'], 'pending': dem_uaf,
-            'returned': st['returned'], 'returnRate': rate,
+            'total': dem_uaf_total, 'pending': dem_uaf_pending,
+            'returned': dem_uaf_returned, 'returnRate': rate,
             'filename': st['filename'], 'loadedAt': st['loaded_at'],
             'loading': st['loading'], 'loadProgress': st['load_progress'],
             'hasData': len(st['voters']) > 0,
