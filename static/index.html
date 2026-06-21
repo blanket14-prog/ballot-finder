@@ -292,27 +292,27 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         <div id="roster-content"><div class="roster-empty">Tap a pin to see who lives there</div></div>
       </div>
     </div>
-    <div id="nav-arrow-bar" style="display:none;flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);padding:6px 14px;justify-content:center;gap:24px;align-items:center;">
-    <button id="arr-n" style="background:none;border:none;color:var(--text);width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;" onclick="doNav('N')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
-    </button>
-    <button id="arr-s" style="background:none;border:none;color:var(--text);width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;" onclick="doNav('S')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-    </button>
-    <button id="arr-w" style="background:none;border:none;color:var(--text);width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;" onclick="doNav('W')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
-    <button id="arr-e" style="background:none;border:none;color:var(--text);width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;-webkit-tap-highlight-color:transparent;" onclick="doNav('E')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-    </button>
-  </div>
-  <div id="list-view">
+    <div id="list-view">
       <div class="list-header">
         <span id="list-count">0 addresses</span>
         <span class="route-badge">🚶 Walk order</span>
       </div>
       <div id="household-list"></div>
     </div>
+  </div>
+  <div id="nav-arrow-bar" style="display:none;flex-shrink:0;background:var(--surface);border-top:2px solid var(--accent);padding:8px 14px;justify-content:center;gap:24px;align-items:center;">
+    <button id="arr-n" style="background:none;border:none;color:var(--text);width:44px;height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:10px;-webkit-tap-highlight-color:transparent;" onclick="doNav('N')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
+    </button>
+    <button id="arr-s" style="background:none;border:none;color:var(--text);width:44px;height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:10px;-webkit-tap-highlight-color:transparent;" onclick="doNav('S')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <button id="arr-w" style="background:none;border:none;color:var(--text);width:44px;height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:10px;-webkit-tap-highlight-color:transparent;" onclick="doNav('W')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <button id="arr-e" style="background:none;border:none;color:var(--text);width:44px;height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:10px;-webkit-tap-highlight-color:transparent;" onclick="doNav('E')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
   </div>
   <div id="footer">
     <div class="footer-links">
@@ -329,6 +329,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         Drop boxes
       </a>
     </div>
+    <div style="font-size:10px;color:var(--text3);margin-top:4px;text-align:right;">v1.4.0</div>
   </div>
 </div>
 
