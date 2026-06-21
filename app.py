@@ -178,6 +178,15 @@ def parse_from_disk(cid, filename):
     except Exception as e:
         print(f"[{cid}] Meta save error: {e}")
     print(f"[{cid}] Parsed {total} total, {len(voters)} not returned, {returned} returned")
+    # If default campaign updated, propagate shared data to all other campaigns
+    if cid == 'default':
+        for other_cid in states:
+            if other_cid != 'default':
+                states[other_cid]['voters'] = voters
+                states[other_cid]['total'] = total
+                states[other_cid]['returned'] = returned
+                states[other_cid]['filename'] = filename
+                states[other_cid]['loaded_at'] = states[cid]['loaded_at']
 
 def geocode_all_background(cid):
     st = states[cid]
@@ -450,9 +459,29 @@ def auto_geocode(cid):
         if uncached:
             geocode_all_background(cid)
 
-# Load all campaigns on startup
+# Load voter data ONCE (shared across all campaigns)
+startup_campaign('default')
+shared_voters = states['default']['voters']
+shared_total = states['default']['total']
+shared_returned = states['default']['returned']
+shared_filename = states['default']['filename']
+shared_loaded_at = states['default']['loaded_at']
+
+# Other campaigns share the voter list but have their own geocache
 for cid in CAMPAIGNS:
-    startup_campaign(cid)
+    if cid == 'default':
+        continue
+    try:
+        os.makedirs(CAMPAIGNS[cid]['data_dir'], exist_ok=True)
+    except: pass
+    load_geocache(cid)
+    # Share the voter data from default
+    states[cid]['voters'] = shared_voters
+    states[cid]['total'] = shared_total
+    states[cid]['returned'] = shared_returned
+    states[cid]['filename'] = shared_filename
+    states[cid]['loaded_at'] = shared_loaded_at
+    print(f"[{cid}] Sharing voter data from default: {shared_total:,} voters")
 
 # Start geocoding for any that need it
 def startup_geocoding():
