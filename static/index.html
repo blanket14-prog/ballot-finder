@@ -810,13 +810,11 @@ function showRoster(hh,idx){
 
 // ── COMPASS NAVIGATION ──────────────────────────────────────────
 const compassTargets = {N:-1, S:-1, E:-1, W:-1};
-let currentNavIdx = -1;
 
 
 
 function updateCompass(idx) {
-  currentNavIdx = idx;
-  Object.keys(compassTargets).forEach(d => compassTargets[d] = -1);
+  compassTargets.N = compassTargets.S = compassTargets.E = compassTargets.W = -1;
   const dirsDist = {N:Infinity, S:Infinity, E:Infinity, W:Infinity};
   const curr = filteredResults[idx];
   if (!curr) return;
@@ -833,12 +831,20 @@ function updateCompass(idx) {
     const dist = haversine(curr.lat, curr.lng, hh.lat, hh.lng);
     if (dist < dirsDist[dir]) { dirsDist[dir] = dist; compassTargets[dir] = i; }
   });
-  // Disable buttons with no target — query after innerHTML is set
-  setTimeout(() => {
-    document.querySelectorAll('.nav-arrows button[data-dir]').forEach(btn => {
-      btn.disabled = compassTargets[btn.dataset.dir] === -1;
-    });
-  }, 0);
+  document.getElementById('arr-n').style.opacity = compassTargets.N === -1 ? '0.2' : '1';
+  document.getElementById('arr-s').style.opacity = compassTargets.S === -1 ? '0.2' : '1';
+  document.getElementById('arr-w').style.opacity = compassTargets.W === -1 ? '0.2' : '1';
+  document.getElementById('arr-e').style.opacity = compassTargets.E === -1 ? '0.2' : '1';
+  document.getElementById('nav-arrow-bar').style.display = 'flex';
+}
+
+function doNav(dir) {
+  const idx = compassTargets[dir];
+  if (idx === -1) return;
+  const hh = filteredResults[idx];
+  if (!hh) return;
+  showRoster(hh, idx);
+  if (mapInstance) mapInstance.panTo([hh.lat, hh.lng], {animate:true});
 }
 
 function closeRoster(){
