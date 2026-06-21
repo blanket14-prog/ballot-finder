@@ -18,21 +18,32 @@ CAMPAIGNS = {
         'logo': '',
         'color': '#6c63ff',
         'password': os.environ.get('ADMIN_PASSWORD', 'changeme'),
-        'data_dir': BASE_DATA_DIR,  # owns the shared data file
+        'data_dir': BASE_DATA_DIR,
+        'theme': 'dark',  # dark or light
     },
     'melat': {
         'name': 'Melat Kiros for Congress',
         'logo': 'melat',
         'color': '#1a5fa8',
         'password': os.environ.get('MELAT_PASSWORD', 'changeme'),
-        'data_dir': os.path.join(BASE_DATA_DIR, 'melat'),  # own geocache only
+        'data_dir': os.path.join(BASE_DATA_DIR, 'melat'),
+        'theme': 'dark',
     },
     'phil': {
         'name': 'Phil Weiser for Governor',
         'logo': 'phil',
         'color': '#1a5fa8',
         'password': os.environ.get('PHIL_PASSWORD', 'changeme'),
-        'data_dir': os.path.join(BASE_DATA_DIR, 'phil'),  # own geocache only
+        'data_dir': os.path.join(BASE_DATA_DIR, 'phil'),
+        'theme': 'dark',
+    },
+    'denverdems': {
+        'name': 'Denver Democrats',
+        'logo': 'denverdems',
+        'color': '#1a5fa8',
+        'password': os.environ.get('DENVERDEMS_PASSWORD', 'changeme'),
+        'data_dir': os.path.join(BASE_DATA_DIR, 'denverdems'),
+        'theme': 'dark',
     },
 }
 
@@ -217,6 +228,7 @@ def make_routes(prefix, cid):
             'logoUrl': logo_url,
             'accentColor': cfg['color'],
             'prefix': url_prefix,
+            'theme': cfg.get('theme', 'dark'),
         })
 
     @app.route(f'{url_prefix}/api/status', endpoint=f'status_{cid}')
@@ -366,6 +378,17 @@ def make_routes(prefix, cid):
         threading.Thread(target=do_parse, daemon=True).start()
         return jsonify({'success': True, 'message': 'File received. Parsing in background.', 'filename': filename})
 
+    @app.route(f'{url_prefix}/api/set-theme', methods=['POST'], endpoint=f'settheme_{cid}')
+    def set_theme():
+        password = (request.json or {}).get('password','')
+        if password != CAMPAIGNS[cid]['password']:
+            return jsonify({'error': 'Invalid password'}), 401
+        theme = (request.json or {}).get('theme', 'dark')
+        if theme not in ('dark', 'light'):
+            return jsonify({'error': 'Invalid theme'}), 400
+        CAMPAIGNS[cid]['theme'] = theme
+        return jsonify({'success': True, 'theme': theme})
+
     @app.route(f'{url_prefix}/api/start-geocoding', methods=['POST'], endpoint=f'startgeo_{cid}')
     def start_geocoding():
         password = (request.json or {}).get('password','')
@@ -379,6 +402,7 @@ def make_routes(prefix, cid):
 make_routes('default', 'default')
 make_routes('melat', 'melat')
 make_routes('phil', 'phil')
+make_routes('denverdems', 'denverdems')
 
 # Static files
 @app.route('/static/manifest.json')
