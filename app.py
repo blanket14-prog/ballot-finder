@@ -85,11 +85,32 @@ def save_geocache(cid):
     except Exception as e:
         print(f"[{cid}] Geocache save error: {e}")
 
-def geocode_census(cid, building_addr, city, state_abbr, zip5):
-    key = f"{building_addr},{city},co,{zip5}".lower().replace('  ', ' ')
-    gc = states[cid]['geocache']
-    if key in gc and gc[key] is not None:
-        return gc[key], key
+def geocode_nominatim(building_addr, city, state_abbr, zip5):
+    """Nominatim (OpenStreetMap) geocoder - more accurate parcel-level results."""
+    try:
+        full = f"{building_addr}, {city}, {state_abbr} {zip5}"
+        r = requests.get(
+            'https://nominatim.openstreetmap.org/search',
+            params={
+                'q': full,
+                'format': 'json',
+                'limit': 1,
+                'countrycodes': 'us',
+                'addressdetails': 0,
+            },
+            headers={'User-Agent': 'BallotFinder/2.0 (Denver GOTV tool)'},
+            timeout=8)
+        data = r.json()
+        if data:
+            lat, lng = float(data[0]['lat']), float(data[0]['lon'])
+            if 39.0 <= lat <= 40.5 and -106.0 <= lng <= -104.0:
+                return [lat, lng]
+    except Exception as e:
+        pass
+    return None
+
+def geocode_census_fallback(building_addr, city, state_abbr, zip5):
+    """Census geocoder as fallback - less accurate but reliable."""
     try:
         full = f"{building_addr}, {city}, {state_abbr} {zip5}"
         r = requests.get(
@@ -101,13 +122,27 @@ def geocode_census(cid, building_addr, city, state_abbr, zip5):
             c = matches[0]['coordinates']
             lat, lng = float(c['y']), float(c['x'])
             if 39.0 <= lat <= 40.5 and -106.0 <= lng <= -104.0:
-                result = [lat, lng]
-                gc[key] = result
-                return result, key
+                return [lat, lng]
     except Exception as e:
         pass
-    gc[key] = None
-    return None, key
+    return None
+
+def geocode_census(cid, building_addr, city, state_abbr, zip5):
+    """Geocode with Nominatim first, Census as fallback. Cache result."""
+    key = f"{building_addr},{city},co,{zip5}".lower().replace('  ', ' ')
+    gc = states[cid]['geocache']
+    if key in gc and gc[key] is not None:
+        return gc[key], key
+
+    # Try Nominatim first (more accurate)
+    result = geocode_nominatim(building_addr, city, state_abbr, zip5)
+
+    # Fall back to Census if Nominatim fails
+    if result is None:
+        result = geocode_census_fallback(building_addr, city, state_abbr, zip5)
+
+    gc[key] = result
+    return result, key
 
 # ── CSV PARSING ───────────────────────────────────────────────────
 DATE_RE = re.compile(r'^\d{2}/\d{2}/\d{4}$')
@@ -205,7 +240,7 @@ def geocode_all_background(cid):
         if done % 500 == 0:
             save_geocache(cid)
             print(f"[{cid}] {done}/{total} geocoded")
-        time.sleep(0.05)
+        time.sleep(1.1)  # Nominatim requires max 1 req/sec
     save_geocache(cid)
     st['loading'] = False; st['load_progress'] = ''
     print(f"[{cid}] Geocoding complete.")
@@ -398,6 +433,16 @@ def make_routes(prefix, cid):
         CAMPAIGNS[cid]['theme'] = theme
         save_theme(cid, theme)
         return jsonify({'success': True, 'theme': theme})
+
+    @app.route(f'{url_prefix}/api/clear-geocache', methods=['POST'], endpoint=f'cleargeo_{cid}')
+    def clear_geocache():
+        password = (request.json or {}).get('password','')
+        if password != CAMPAIGNS[cid]['password']:
+            return jsonify({'error': 'Invalid password'}), 401
+        states[cid]['geocache'] = {}
+        save_geocache(cid)
+        print(f"[{cid}] Geocache cleared by admin")
+        return jsonify({'success': True, 'message': 'Geocache cleared. Re-geocoding will use Nominatim.'})
 
     @app.route(f'{url_prefix}/api/start-geocoding', methods=['POST'], endpoint=f'startgeo_{cid}')
     def start_geocoding():
