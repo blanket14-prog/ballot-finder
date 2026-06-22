@@ -98,13 +98,22 @@ button.upload-btn:disabled{opacity:.4;cursor:not-allowed;}
 </div>
 
 <div class="card">
-  <div class="section-title">Geocoding</div>
-  <p style="font-size:13px;color:#6b6890;margin-bottom:14px;">Clear the geocache to re-geocode all addresses using Nominatim (more accurate). This runs automatically after uploading new data and takes several hours.</p>
+  <div class="section-title">Nominatim Geocoding (More Accurate)</div>
+  <p style="font-size:13px;color:#6b6890;margin-bottom:10px;">Build a more accurate geocache using Nominatim in the background. The live app keeps using Census coords until you flip the switch.</p>
+  <div id="nom-status-box" style="background:#22222f;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px;">
+    <div id="nom-status-text" style="color:#6b6890;">Checking status…</div>
+    <div id="nom-progress-bar-wrap" style="display:none;margin-top:8px;background:#0f0f13;border-radius:4px;height:6px;">
+      <div id="nom-progress-bar" style="height:6px;border-radius:4px;background:#6c63ff;width:0%;transition:width .5s;"></div>
+    </div>
+  </div>
   <div>
-    <label>Admin password (to clear cache)</label>
+    <label>Admin password</label>
     <input type="password" id="geocache-password" placeholder="Enter admin password"/>
   </div>
-  <button onclick="clearGeoCache()" style="margin-top:10px;width:100%;padding:11px;border-radius:10px;border:none;background:#ef5350;color:white;font-size:14px;font-weight:600;cursor:pointer;">Clear Geocache &amp; Re-geocode with Nominatim</button>
+  <div style="display:flex;gap:8px;margin-top:10px;">
+    <button id="nom-start-btn" onclick="startNominatim()" style="flex:1;padding:11px;border-radius:10px;border:none;background:#6c63ff;color:white;font-size:13px;font-weight:600;cursor:pointer;">▶ Start Build</button>
+    <button id="nom-flip-btn" onclick="flipToNominatim()" style="flex:1;padding:11px;border-radius:10px;border:none;background:#22222f;color:#6b6890;font-size:13px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,0.1);" disabled>⚡ Flip to Nominatim</button>
+  </div>
   <div id="geocache-msg" style="font-size:13px;margin-top:8px;display:none;"></div>
 </div>
 
@@ -351,36 +360,78 @@ function showThemeMsg(msg, type) {
 
 loadCurrentTheme();
 
-async function clearGeoCache() {
+function getPrefix() {
+  const p = window.location.pathname;
+  if (p.startsWith('/melat')) return '/melat';
+  if (p.startsWith('/phil')) return '/phil';
+  if (p.startsWith('/denverdems')) return '/denverdems';
+  return '';
+}
+
+async function pollNominatimStatus() {
+  try {
+    const r = await fetch(getPrefix() + '/api/nominatim-status');
+    const d = await r.json();
+    const txt = document.getElementById('nom-status-text');
+    const bar = document.getElementById('nom-progress-bar');
+    const barWrap = document.getElementById('nom-progress-bar-wrap');
+    const flipBtn = document.getElementById('nom-flip-btn');
+    if (d.running) {
+      txt.style.color = '#6c63ff';
+      txt.textContent = `Building Nominatim cache: ${d.done.toLocaleString()} / ${d.total.toLocaleString()} (${d.pct}%)`;
+      barWrap.style.display = 'block';
+      bar.style.width = d.pct + '%';
+      flipBtn.disabled = true; flipBtn.style.color = '#6b6890';
+    } else if (d.complete && d.cacheSize > 0) {
+      txt.style.color = '#22c55e';
+      txt.textContent = `✓ Nominatim cache complete: ${d.cacheSize.toLocaleString()} addresses. Ready to flip!`;
+      barWrap.style.display = 'block'; bar.style.width = '100%';
+      flipBtn.disabled = false; flipBtn.style.background = '#22c55e'; flipBtn.style.color = 'white';
+    } else {
+      txt.style.color = '#6b6890';
+      txt.textContent = d.cacheSize > 0 ? `Nominatim cache: ${d.cacheSize.toLocaleString()} addresses cached (paused)` : 'Not started. Click Start Build to begin.';
+    }
+  } catch(e) {}
+}
+
+async function startNominatim() {
   const pw = document.getElementById('geocache-password').value.trim();
   if (!pw) { showGeocacheMsg('Enter your admin password first', 'error'); return; }
-  if (!confirm('This will clear all cached coordinates and re-geocode everything with Nominatim. This takes several hours. Continue?')) return;
-  const prefix = (() => {
-    const p = window.location.pathname;
-    if (p.startsWith('/melat')) return '/melat';
-    if (p.startsWith('/phil')) return '/phil';
-    if (p.startsWith('/denverdems')) return '/denverdems';
-    return '';
-  })();
   try {
-    const r = await fetch(prefix + '/api/clear-geocache', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+    const r = await fetch(getPrefix() + '/api/start-nominatim', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({password: pw})
     });
-    const data = await r.json();
-    if (data.success) showGeocacheMsg('Geocache cleared. Re-geocoding started in background.', 'success');
-    else showGeocacheMsg(data.error || 'Error', 'error');
+    const d = await r.json();
+    if (d.success || d.message) showGeocacheMsg(d.message || 'Started!', 'success');
+    else showGeocacheMsg(d.error || 'Error', 'error');
+  } catch(e) { showGeocacheMsg('Network error', 'error'); }
+}
+
+async function flipToNominatim() {
+  const pw = document.getElementById('geocache-password').value.trim();
+  if (!pw) { showGeocacheMsg('Enter your admin password first', 'error'); return; }
+  if (!confirm('Switch the live app to use Nominatim coordinates?')) return;
+  try {
+    const r = await fetch(getPrefix() + '/api/flip-to-nominatim', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({password: pw})
+    });
+    const d = await r.json();
+    if (d.success) showGeocacheMsg(d.message, 'success');
+    else showGeocacheMsg(d.error || 'Error', 'error');
   } catch(e) { showGeocacheMsg('Network error', 'error'); }
 }
 
 function showGeocacheMsg(msg, type) {
   const el = document.getElementById('geocache-msg');
-  el.textContent = msg;
-  el.style.color = type === 'error' ? '#ef5350' : '#22c55e';
+  el.textContent = msg; el.style.color = type === 'error' ? '#ef5350' : '#22c55e';
   el.style.display = 'block';
   setTimeout(() => el.style.display = 'none', 5000);
 }
+
+pollNominatimStatus();
+setInterval(pollNominatimStatus, 10000);
 </script>
 </body>
 </html>
