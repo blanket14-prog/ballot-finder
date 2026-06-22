@@ -668,7 +668,6 @@ async function doSearch(origin){
   try{
     const results=(await(await fetch(url)).json()).results||[];
     lastResults=optimizeWalkOrder(results,origin);
-    document.getElementById('empty-state').style.display='none';
     document.getElementById('tab-bar').classList.add('visible');
     filteredResults=lastResults;
     renderAll(lastResults,origin);
@@ -735,7 +734,7 @@ function handleMapClick(e){
 function ensureMap(){
   if(mapInstance)return;
   mapInstance=L.map('map',{zoomControl:true,center:[DLAT,DLNG],zoom:13,tap:true,tapTolerance:20});
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
     attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',
     maxZoom:19,subdomains:'abcd'
   }).addTo(mapInstance);
