@@ -104,11 +104,9 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
 
 /* CONTENT */
 #content{flex:1;overflow:hidden;display:flex;flex-direction:column;}
-#empty-state{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:2rem;text-align:center;color:var(--text);z-index:10;pointer-events:none;}
-#empty-state.visible{display:flex;}
-#empty-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px 28px;max-width:280px;box-shadow:var(--shadow);pointer-events:all;}
+
 .empty-icon{font-size:42px;opacity:.4;}
-#empty-state p{font-size:14px;line-height:1.6;max-width:260px;}
+
 .pin-hint{font-size:12px;color:var(--accent);opacity:.8;}
 
 /* MAP */
@@ -293,13 +291,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
           <div class="spinner"></div>
           <div class="spinner-label">Finding voters…</div>
         </div>
-        <div id="empty-state" class="visible">
-          <div id="empty-card">
-            <div class="empty-icon" style="font-size:36px;margin-bottom:8px;">🗺️</div>
-            <p style="font-size:14px;line-height:1.5;color:var(--text2);margin-bottom:12px;">Enter your address to find nearby voters who haven't returned their ballot.</p>
-            <div style="font-size:12px;color:var(--accent);">Or tap 📍 on the map to drop a pin</div>
-          </div>
-        </div>
+
       </div>
       <div id="roster-panel">
         <div id="roster-content"><div class="roster-empty">Tap a pin to see who lives there</div></div>
@@ -910,9 +902,7 @@ function focusMarker(i){
 
 function renderAll(results,origin){
   filteredResults=results;
-  // Hide empty state overlay once we have results
-  const es=document.getElementById('empty-state');
-  if(es) es.classList.remove('visible');
+
   renderMap(results,origin||lastOrigin);
   renderList(results);
   closeRoster();
