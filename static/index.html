@@ -959,7 +959,7 @@ function renderRoster(){
       <div style="flex:1">
         <div class="roster-vname">${v.name}</div>
         ${v.unit?`<div class="roster-vunit">Unit ${v.unit}</div>`:''}
-        ${v.vanid?`<div class="roster-vunit">VAN ID: ${v.vanid} · <a href="https://www.votebuilder.com/ContactPage.aspx?VANID=${v.vanid}" target="_blank" style="color:var(--accent)">Open in VAN</a></div>`:''}
+        ${v.vanid?`<div class="roster-vunit" style="font-family:monospace;color:var(--accent);font-size:11px;letter-spacing:.02em;">VAN ID: ${v.vanid}</div>`:''}
       </div>
       <div class="roster-vright"><div class="roster-vparty">${pLabel(v.party)}</div><div class="not-returned">Not returned</div></div>
     </div>`).join('');
