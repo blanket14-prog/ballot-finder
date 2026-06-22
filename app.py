@@ -19,7 +19,10 @@ CAMPAIGNS = {
         'color': '#6c63ff',
         'password': os.environ.get('ADMIN_PASSWORD', 'changeme'),
         'data_dir': BASE_DATA_DIR,
-        'theme': 'dark',  # dark or light
+        'theme': 'dark',
+        'public_password': '',       # empty = no gate
+        'show_party_filter': True,   # show Dem/UAF/Rep filter
+        'show_candidate_filter': False,  # show candidate/VAN filter
     },
     'melat': {
         'name': 'Melat Kiros for Congress',
@@ -28,6 +31,9 @@ CAMPAIGNS = {
         'password': os.environ.get('MELAT_PASSWORD', 'changeme'),
         'data_dir': os.path.join(BASE_DATA_DIR, 'melat'),
         'theme': 'dark',
+        'public_password': '',
+        'show_party_filter': True,
+        'show_candidate_filter': False,
     },
     'phil': {
         'name': 'Phil Weiser for Governor',
@@ -36,6 +42,9 @@ CAMPAIGNS = {
         'password': os.environ.get('PHIL_PASSWORD', 'changeme'),
         'data_dir': os.path.join(BASE_DATA_DIR, 'phil'),
         'theme': 'dark',
+        'public_password': '',
+        'show_party_filter': True,
+        'show_candidate_filter': False,
     },
     'denverdems': {
         'name': 'Denver Democrats',
@@ -44,6 +53,9 @@ CAMPAIGNS = {
         'password': os.environ.get('DENVERDEMS_PASSWORD', 'changeme'),
         'data_dir': os.path.join(BASE_DATA_DIR, 'denverdems'),
         'theme': 'dark',
+        'public_password': '',
+        'show_party_filter': True,
+        'show_candidate_filter': False,
     },
 }
 
@@ -316,12 +328,18 @@ def make_routes(prefix, cid):
     def api_config():
         cfg = CAMPAIGNS[cid]
         logo_url = f'/static/logo-{cfg["logo"]}.png' if cfg['logo'] else ''
+        has_van = len(van_supporters.get(cid, {})) > 0
         return jsonify({
             'campaignName': cfg['name'],
             'logoUrl': logo_url,
             'accentColor': cfg['color'],
             'prefix': url_prefix,
             'theme': cfg.get('theme', 'dark'),
+            'publicPassword': cfg.get('public_password', ''),
+            'showPartyFilter': cfg.get('show_party_filter', True),
+            'showCandidateFilter': cfg.get('show_candidate_filter', False) and has_van,
+            'candidateName': cfg['name'],
+            'vanCount': len(van_supporters.get(cid, {})),
         })
 
     @app.route(f'{url_prefix}/api/status', endpoint=f'status_{cid}')
@@ -349,10 +367,16 @@ def make_routes(prefix, cid):
         except: return jsonify({'error': 'lat and lng required'}), 400
         party_set = set(request.args.get('party','DEM,UAF').split(','))
         access_set = set(request.args.get('access','accessible,inaccessible').split(','))
+        candidate_only = request.args.get('candidate','') == '1'
         limit = min(int(request.args.get('limit', 30)), 100)
+        # Build VAN geocode key set for fast lookup
+        van_keys = set()
+        if candidate_only and van_supporters.get(cid):
+            van_keys = set(v['geocodeKey'] for v in van_supporters[cid].values())
         buildings = {}
         for v in st['voters']:
             if v['party'] not in party_set: continue
+            if candidate_only and van_keys and v['geocodeKey'] not in van_keys: continue
             k = v['geocodeKey']
             if k not in buildings:
                 coords = st['geocache'].get(k)
@@ -483,6 +507,58 @@ def make_routes(prefix, cid):
         save_theme(cid, theme)
         return jsonify({'success': True, 'theme': theme})
 
+    @app.route(f'{url_prefix}/api/verify-public-password', methods=['POST'], endpoint=f'verifypw_{cid}')
+    def verify_public_password():
+        pw = (request.json or {}).get('password', '')
+        expected = CAMPAIGNS[cid].get('public_password', '')
+        if not expected:
+            return jsonify({'success': True, 'required': False})
+        if pw == expected:
+            return jsonify({'success': True, 'required': True})
+        return jsonify({'success': False, 'required': True, 'error': 'Incorrect password'}), 401
+
+    @app.route(f'{url_prefix}/api/save-settings', methods=['POST'], endpoint=f'savesettings_{cid}')
+    def save_settings_route():
+        password = (request.json or {}).get('password','')
+        if password != CAMPAIGNS[cid]['password']:
+            return jsonify({'error': 'Invalid password'}), 401
+        data = request.json or {}
+        cfg = CAMPAIGNS[cid]
+        if 'public_password' in data:
+            cfg['public_password'] = data['public_password']
+        if 'show_party_filter' in data:
+            cfg['show_party_filter'] = bool(data['show_party_filter'])
+        if 'show_candidate_filter' in data:
+            cfg['show_candidate_filter'] = bool(data['show_candidate_filter'])
+        save_settings(cid)
+        return jsonify({'success': True})
+
+    @app.route(f'{url_prefix}/api/upload-van', methods=['POST'], endpoint=f'uploadvan_{cid}')
+    def upload_van():
+        password = request.form.get('password','')
+        if password != CAMPAIGNS[cid]['password']:
+            return jsonify({'error': 'Invalid password'}), 401
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+        f = request.files['file']
+        supporters = parse_van_xls(f.stream)
+        if not supporters:
+            return jsonify({'error': 'Could not parse VAN file. Make sure it is the standard VAN export.'}), 400
+        van_supporters[cid] = supporters
+        save_van_supporters(cid)
+        print(f"[{cid}] Loaded {len(supporters)} VAN supporters")
+        return jsonify({'success': True, 'count': len(supporters)})
+
+    @app.route(f'{url_prefix}/api/van-status', endpoint=f'vanstatus_{cid}')
+    def van_status():
+        password = request.args.get('password','')
+        if password != CAMPAIGNS[cid]['password']:
+            return jsonify({'error': 'Invalid password'}), 401
+        return jsonify({
+            'count': len(van_supporters.get(cid, {})),
+            'campaignName': CAMPAIGNS[cid]['name'],
+        })
+
     @app.route(f'{url_prefix}/api/clear-geocache', methods=['POST'], endpoint=f'cleargeo_{cid}')
     def clear_geocache():
         password = (request.json or {}).get('password','')
@@ -565,6 +641,109 @@ def service_worker():
 def theme_file(cid):
     return os.path.join(BASE_DATA_DIR, f'theme_{cid}.json')
 
+def settings_file(cid):
+    return os.path.join(BASE_DATA_DIR, f'settings_{cid}.json')
+
+def van_file(cid):
+    return os.path.join(BASE_DATA_DIR, f'van_supporters_{cid}.json')
+
+# Per-campaign VAN supporters: {vanid: {name, address, city, state, zip}}
+van_supporters = {cid: {} for cid in ['default','melat','phil','denverdems']}
+
+def load_van_supporters(cid):
+    vf = van_file(cid)
+    if os.path.exists(vf):
+        try:
+            with open(vf) as f:
+                van_supporters[cid] = json.load(f)
+            print(f"[{cid}] Loaded {len(van_supporters[cid])} VAN supporters")
+        except Exception as e:
+            print(f"[{cid}] VAN load error: {e}")
+
+def save_van_supporters(cid):
+    try:
+        with open(van_file(cid), 'w') as f:
+            json.dump(van_supporters[cid], f)
+    except Exception as e:
+        print(f"[{cid}] VAN save error: {e}")
+
+def load_settings(cid):
+    sf = settings_file(cid)
+    if os.path.exists(sf):
+        try:
+            with open(sf) as f:
+                data = json.load(f)
+            cfg = CAMPAIGNS[cid]
+            cfg['public_password'] = data.get('public_password', '')
+            cfg['show_party_filter'] = data.get('show_party_filter', True)
+            cfg['show_candidate_filter'] = data.get('show_candidate_filter', False)
+            print(f"[{cid}] Loaded settings")
+        except Exception as e:
+            print(f"[{cid}] Settings load error: {e}")
+
+def save_settings(cid):
+    cfg = CAMPAIGNS[cid]
+    try:
+        with open(settings_file(cid), 'w') as f:
+            json.dump({
+                'public_password': cfg.get('public_password', ''),
+                'show_party_filter': cfg.get('show_party_filter', True),
+                'show_candidate_filter': cfg.get('show_candidate_filter', False),
+            }, f)
+    except Exception as e:
+        print(f"[{cid}] Settings save error: {e}")
+
+def parse_van_xls(file_stream):
+    """Parse VAN tab-separated XLS export. Returns dict of {vanid: voter_dict}."""
+    supporters = {}
+    try:
+        content = file_stream.read()
+        # Handle UTF-16 BOM from VAN exports
+        if content[:2] in (b'\xff\xfe', b'\xfe\xff'):
+            text = content.decode('utf-16')
+        else:
+            text = content.decode('utf-8', errors='replace')
+        lines = text.strip().split('\n')
+        if not lines: return supporters
+        # Find header
+        headers = [h.strip().strip('\r') for h in lines[0].split('\t')]
+        # Map column names (VAN uses various names)
+        col = {}
+        for i, h in enumerate(headers):
+            hl = h.lower().replace(' ', '').replace('_', '')
+            col[hl] = i
+        def get_col(row, *names):
+            for n in names:
+                n = n.lower().replace(' ','').replace('_','')
+                if n in col and col[n] < len(row):
+                    return row[col[n]].strip().strip('=').strip('"')
+            return ''
+        for line in lines[1:]:
+            if not line.strip(): continue
+            row = [c.strip('\r') for c in line.split('\t')]
+            vanid = get_col(row, 'VoterFileVANID', 'VANID', 'vanid')
+            if not vanid or not vanid.isdigit(): continue
+            # Use residential address (Address col) not mailing (mAddress)
+            addr = get_col(row, 'Address')
+            city = get_col(row, 'City')
+            state = get_col(row, 'State')
+            zip5 = get_col(row, 'Zip5', 'Zip')
+            first = get_col(row, 'FirstName', 'First')
+            last = get_col(row, 'LastName', 'Last')
+            if not addr or not zip5: continue
+            supporters[vanid] = {
+                'name': f"{first} {last}".strip(),
+                'address': addr,
+                'city': city,
+                'state': state,
+                'zip': zip5,
+                'geocodeKey': f"{addr},{city},co,{zip5}".lower().replace('  ',' '),
+            }
+    except Exception as e:
+        print(f"VAN parse error: {e}")
+        import traceback; traceback.print_exc()
+    return supporters
+
 def load_theme(cid):
     try:
         tf = theme_file(cid)
@@ -589,6 +768,8 @@ def startup_campaign(cid):
     except Exception as e:
         print(f"[{cid}] Could not create data dir: {e}")
     load_theme(cid)
+    load_settings(cid)
+    load_van_supporters(cid)
     load_geocache(cid)
     saved = data_file(cid, 'current_data.txt')
     meta = data_file(cid, 'meta.json')
