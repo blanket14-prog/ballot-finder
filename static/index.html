@@ -914,7 +914,23 @@ function renderMap(results,origin){
       markers.push(m);
     });
     mapInstance.invalidateSize();
-    if(origin){
+    if(origin&&results.length){
+      // If results are spread out (e.g. candidate filter with few supporters),
+      // fit bounds to show all of them. Otherwise zoom to street level.
+      const lats=results.map(h=>h.lat);
+      const lngs=results.map(h=>h.lng);
+      const latSpread=Math.max(...lats)-Math.min(...lats);
+      const lngSpread=Math.max(...lngs)-Math.min(...lngs);
+      if(latSpread>0.02||lngSpread>0.02){
+        // Results are spread across more than ~1 mile - fit bounds
+        const b=L.latLngBounds(results.map(h=>[h.lat,h.lng]));
+        b.extend([origin.lat,origin.lng]);
+        mapInstance.fitBounds(b,{padding:[50,50],maxZoom:16,animate:false});
+      } else {
+        // Results are clustered - use street level zoom
+        mapInstance.setView([origin.lat,origin.lng],16,{animate:false});
+      }
+    } else if(origin){
       mapInstance.setView([origin.lat,origin.lng],16,{animate:false});
     }
   });
