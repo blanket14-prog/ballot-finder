@@ -374,6 +374,11 @@ def make_routes(prefix, cid):
         if candidate_only and van_supporters.get(cid):
             van_keys = set(v['geocodeKey'] for v in van_supporters[cid].values())
         buildings = {}
+        # Build vanid lookup: geocodeKey -> vanid for fast annotation
+        van_geocode_to_id = {}
+        if van_supporters.get(cid):
+            for vid, vsup in van_supporters[cid].items():
+                van_geocode_to_id[vsup['geocodeKey']] = vid
         for v in st['voters']:
             if v['party'] not in party_set: continue
             if candidate_only and van_keys and v['geocodeKey'] not in van_keys: continue
@@ -389,6 +394,7 @@ def make_routes(prefix, cid):
             buildings[k]['voters'].append({
                 'name': v['name'], 'unit': v['unit'],
                 'party': v['party'], 'yob': v.get('yob'),
+                'vanid': van_geocode_to_id.get(k),
             })
         result = list(buildings.values())
         if 'accessible' not in access_set: result = [b for b in result if b['apt']]
@@ -541,7 +547,9 @@ def make_routes(prefix, cid):
         if 'file' not in request.files:
             return jsonify({'error': 'No file provided'}), 400
         f = request.files['file']
-        supporters = parse_van_xls(f.stream)
+        file_bytes = f.read()
+        import io
+        supporters = parse_van_xls(io.BytesIO(file_bytes))
         if not supporters:
             return jsonify({'error': 'Could not parse VAN file. Make sure it is the standard VAN export.'}), 400
         van_supporters[cid] = supporters
@@ -732,6 +740,7 @@ def parse_van_xls(file_stream):
             last = get_col(row, 'LastName', 'Last')
             if not addr or not zip5: continue
             supporters[vanid] = {
+                'vanid': vanid,
                 'name': f"{first} {last}".strip(),
                 'address': addr,
                 'city': city,
