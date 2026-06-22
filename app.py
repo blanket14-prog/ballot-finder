@@ -85,32 +85,89 @@ def save_geocache(cid):
     except Exception as e:
         print(f"[{cid}] Geocache save error: {e}")
 
-def geocode_nominatim(building_addr, city, state_abbr, zip5):
-    """Nominatim (OpenStreetMap) geocoder - more accurate parcel-level results."""
+# ── NOMINATIM BACKGROUND GEOCODER ────────────────────────────────
+# Builds a new geocache using Nominatim without touching the live cache.
+# Admin can flip to it once complete.
+
+nominatim_cache = {}          # built in background
+nominatim_progress = {'done': 0, 'total': 0, 'running': False, 'complete': False}
+NOMINATIM_CACHE_FILE = os.path.join(BASE_DATA_DIR, 'geocache_nominatim.json')
+
+def load_nominatim_cache():
+    global nominatim_cache
+    if os.path.exists(NOMINATIM_CACHE_FILE):
+        try:
+            with open(NOMINATIM_CACHE_FILE) as f:
+                nominatim_cache = json.load(f)
+            print(f"Loaded {len(nominatim_cache):,} Nominatim cached geocodes")
+            # Check if complete
+            if len(nominatim_cache) > 0:
+                nominatim_progress['done'] = len(nominatim_cache)
+                nominatim_progress['complete'] = True
+        except Exception as e:
+            print(f"Nominatim cache load error: {e}")
+
+def save_nominatim_cache():
+    try:
+        with open(NOMINATIM_CACHE_FILE, 'w') as f:
+            json.dump(nominatim_cache, f)
+    except Exception as e:
+        print(f"Nominatim cache save error: {e}")
+
+def geocode_nominatim_single(building_addr, city, state_abbr, zip5):
     try:
         full = f"{building_addr}, {city}, {state_abbr} {zip5}"
         r = requests.get(
             'https://nominatim.openstreetmap.org/search',
-            params={
-                'q': full,
-                'format': 'json',
-                'limit': 1,
-                'countrycodes': 'us',
-                'addressdetails': 0,
-            },
-            headers={'User-Agent': 'BallotFinder/2.0 (Denver GOTV tool)'},
+            params={'q': full, 'format': 'json', 'limit': 1, 'countrycodes': 'us'},
+            headers={'User-Agent': 'BallotFinder/2.0 (Denver GOTV)'},
             timeout=8)
         data = r.json()
         if data:
             lat, lng = float(data[0]['lat']), float(data[0]['lon'])
             if 39.0 <= lat <= 40.5 and -106.0 <= lng <= -104.0:
                 return [lat, lng]
-    except Exception as e:
+    except Exception:
         pass
     return None
 
-def geocode_census_fallback(building_addr, city, state_abbr, zip5):
-    """Census geocoder as fallback - less accurate but reliable."""
+def run_nominatim_build(voters):
+    global nominatim_cache
+    nominatim_progress['running'] = True
+    nominatim_progress['complete'] = False
+
+    # Get unique building keys
+    buildings = {}
+    for v in voters:
+        k = v['geocodeKey']
+        if k not in buildings:
+            buildings[k] = v
+
+    # Skip already done
+    todo = {k: v for k, v in buildings.items() if k not in nominatim_cache}
+    nominatim_progress['total'] = len(buildings)
+    nominatim_progress['done'] = len(buildings) - len(todo)
+    print(f"Nominatim: {len(todo):,} addresses to geocode ({nominatim_progress['done']:,} already done)")
+
+    for key, v in todo.items():
+        result = geocode_nominatim_single(v['buildingAddress'], v['city'], v['state'], v['zip'])
+        if result is None:
+            # Fall back to Census for this address
+            result = geocode_census_original(v['buildingAddress'], v['city'], v['state'], v['zip'])
+        nominatim_cache[key] = result
+        nominatim_progress['done'] += 1
+        if nominatim_progress['done'] % 500 == 0:
+            save_nominatim_cache()
+            pct = round(nominatim_progress['done'] / nominatim_progress['total'] * 100)
+            print(f"Nominatim: {nominatim_progress['done']:,}/{nominatim_progress['total']:,} ({pct}%)")
+        time.sleep(1.1)  # Nominatim rate limit: 1 req/sec
+
+    save_nominatim_cache()
+    nominatim_progress['running'] = False
+    nominatim_progress['complete'] = True
+    print("Nominatim geocoding complete!")
+
+def geocode_census_original(building_addr, city, state_abbr, zip5):
     try:
         full = f"{building_addr}, {city}, {state_abbr} {zip5}"
         r = requests.get(
@@ -123,24 +180,16 @@ def geocode_census_fallback(building_addr, city, state_abbr, zip5):
             lat, lng = float(c['y']), float(c['x'])
             if 39.0 <= lat <= 40.5 and -106.0 <= lng <= -104.0:
                 return [lat, lng]
-    except Exception as e:
+    except Exception:
         pass
     return None
 
 def geocode_census(cid, building_addr, city, state_abbr, zip5):
-    """Geocode with Nominatim first, Census as fallback. Cache result."""
     key = f"{building_addr},{city},co,{zip5}".lower().replace('  ', ' ')
     gc = states[cid]['geocache']
     if key in gc and gc[key] is not None:
         return gc[key], key
-
-    # Try Nominatim first (more accurate)
-    result = geocode_nominatim(building_addr, city, state_abbr, zip5)
-
-    # Fall back to Census if Nominatim fails
-    if result is None:
-        result = geocode_census_fallback(building_addr, city, state_abbr, zip5)
-
+    result = geocode_census_original(building_addr, city, state_abbr, zip5)
     gc[key] = result
     return result, key
 
@@ -240,7 +289,7 @@ def geocode_all_background(cid):
         if done % 500 == 0:
             save_geocache(cid)
             print(f"[{cid}] {done}/{total} geocoded")
-        time.sleep(1.1)  # Nominatim requires max 1 req/sec
+        time.sleep(0.05)
     save_geocache(cid)
     st['loading'] = False; st['load_progress'] = ''
     print(f"[{cid}] Geocoding complete.")
@@ -453,6 +502,49 @@ def make_routes(prefix, cid):
         threading.Thread(target=geocode_all_background, args=(cid,), daemon=True).start()
         return jsonify({'success': True})
 
+    @app.route(f'{url_prefix}/api/nominatim-status', endpoint=f'nomstatus_{cid}')
+    def nominatim_status():
+        p = nominatim_progress
+        total = p['total'] or 1
+        return jsonify({
+            'running': p['running'],
+            'complete': p['complete'],
+            'done': p['done'],
+            'total': p['total'],
+            'pct': round(p['done'] / total * 100),
+            'cacheSize': len(nominatim_cache),
+        })
+
+    @app.route(f'{url_prefix}/api/start-nominatim', methods=['POST'], endpoint=f'startnominatim_{cid}')
+    def start_nominatim():
+        password = (request.json or {}).get('password','')
+        if password != CAMPAIGNS[cid]['password']:
+            return jsonify({'error': 'Invalid password'}), 401
+        if nominatim_progress['running']:
+            return jsonify({'message': 'Already running', 'done': nominatim_progress['done'], 'total': nominatim_progress['total']})
+        voters = states['default']['voters']
+        if not voters:
+            return jsonify({'error': 'No voter data loaded'}), 400
+        threading.Thread(target=run_nominatim_build, args=(voters,), daemon=True).start()
+        return jsonify({'success': True, 'message': f'Started geocoding {len(voters):,} addresses with Nominatim'})
+
+    @app.route(f'{url_prefix}/api/flip-to-nominatim', methods=['POST'], endpoint=f'flipnom_{cid}')
+    def flip_to_nominatim():
+        password = (request.json or {}).get('password','')
+        if password != CAMPAIGNS[cid]['password']:
+            return jsonify({'error': 'Invalid password'}), 401
+        if not nominatim_progress['complete']:
+            return jsonify({'error': 'Nominatim geocoding not complete yet'}), 400
+        # Swap geocaches for all campaigns
+        for c in states:
+            states[c]['geocache'] = dict(nominatim_cache)
+            try:
+                with open(data_file(c, 'geocache.json'), 'w') as f:
+                    json.dump(nominatim_cache, f)
+            except Exception as e:
+                print(f"[{c}] Error saving flipped geocache: {e}")
+        return jsonify({'success': True, 'message': f'Flipped to Nominatim geocache ({len(nominatim_cache):,} addresses)'})
+
 # Register routes for all campaigns
 make_routes('default', 'default')
 make_routes('melat', 'melat')
@@ -553,6 +645,7 @@ for cid in CAMPAIGNS:
 # Start geocoding for any that need it
 def startup_geocoding():
     time.sleep(2)
+    load_nominatim_cache()
     for cid in CAMPAIGNS:
         auto_geocode(cid)
 
