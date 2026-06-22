@@ -98,6 +98,17 @@ button.upload-btn:disabled{opacity:.4;cursor:not-allowed;}
 </div>
 
 <div class="card">
+  <div class="section-title">Geocoding</div>
+  <p style="font-size:13px;color:#6b6890;margin-bottom:14px;">Clear the geocache to re-geocode all addresses using Nominatim (more accurate). This runs automatically after uploading new data and takes several hours.</p>
+  <div>
+    <label>Admin password (to clear cache)</label>
+    <input type="password" id="geocache-password" placeholder="Enter admin password"/>
+  </div>
+  <button onclick="clearGeoCache()" style="margin-top:10px;width:100%;padding:11px;border-radius:10px;border:none;background:#ef5350;color:white;font-size:14px;font-weight:600;cursor:pointer;">Clear Geocache &amp; Re-geocode with Nominatim</button>
+  <div id="geocache-msg" style="font-size:13px;margin-top:8px;display:none;"></div>
+</div>
+
+<div class="card">
   <div class="section-title">Upload New Data</div>
 
   <div>
@@ -339,6 +350,37 @@ function showThemeMsg(msg, type) {
 }
 
 loadCurrentTheme();
+
+async function clearGeoCache() {
+  const pw = document.getElementById('geocache-password').value.trim();
+  if (!pw) { showGeocacheMsg('Enter your admin password first', 'error'); return; }
+  if (!confirm('This will clear all cached coordinates and re-geocode everything with Nominatim. This takes several hours. Continue?')) return;
+  const prefix = (() => {
+    const p = window.location.pathname;
+    if (p.startsWith('/melat')) return '/melat';
+    if (p.startsWith('/phil')) return '/phil';
+    if (p.startsWith('/denverdems')) return '/denverdems';
+    return '';
+  })();
+  try {
+    const r = await fetch(prefix + '/api/clear-geocache', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({password: pw})
+    });
+    const data = await r.json();
+    if (data.success) showGeocacheMsg('Geocache cleared. Re-geocoding started in background.', 'success');
+    else showGeocacheMsg(data.error || 'Error', 'error');
+  } catch(e) { showGeocacheMsg('Network error', 'error'); }
+}
+
+function showGeocacheMsg(msg, type) {
+  const el = document.getElementById('geocache-msg');
+  el.textContent = msg;
+  el.style.color = type === 'error' ? '#ef5350' : '#22c55e';
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 5000);
+}
 </script>
 </body>
 </html>
