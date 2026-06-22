@@ -766,29 +766,30 @@ function makeIcon(hh,highlight){
   const color=hh.apt?'#f97316':'#6c63ff';
   const voterCount=hh.voters.length;
   if(highlight){
-    const sz=26;
+    // Fixed size for highlight — pulse ring is overflow:visible so it doesn't affect anchor
+    const sz=13; // radius, so diameter=26px
     const lbl=voterCount>1?String(voterCount):'';
+    const d=sz*2;
     return L.divIcon({
-      html:`<div style="position:relative;width:${sz*2}px;height:${sz*2}px">` +
-        `<div style="position:absolute;inset:0;border-radius:50%;background:${color};animation:navpulse 1.4s ease-out infinite;"></div>` +
-        `<svg xmlns='http://www.w3.org/2000/svg' style="position:relative;z-index:1" width='${sz*2}' height='${sz*2}'>` +
-        `<circle cx='${sz}' cy='${sz}' r='${sz-2}' fill='${color}' stroke='white' stroke-width='3'/>` +
-        (lbl?`<text x='${sz}' y='${sz+5}' text-anchor='middle' font-size='13' font-family='-apple-system,sans-serif' font-weight='bold' fill='white'>${lbl}</text>`:
-             `<circle cx='${sz}' cy='${sz}' r='7' fill='white'/>`) +
+      html:`<div style="position:relative;width:${d}px;height:${d}px;overflow:visible;">` +
+        `<svg xmlns='http://www.w3.org/2000/svg' width='${d}' height='${d}' style="overflow:visible;position:relative;z-index:1">` +
+        `<circle cx='${sz}' cy='${sz}' r='${sz}' fill='${color}' stroke='white' stroke-width='2.5' style="animation:navpulse 1.4s ease-out infinite;transform-origin:${sz}px ${sz}px"/>` +
+        `<circle cx='${sz}' cy='${sz}' r='${sz}' fill='${color}' stroke='white' stroke-width='2.5'/>` +
+        (lbl?`<text x='${sz}' y='${sz+4}' text-anchor='middle' font-size='11' font-family='-apple-system,sans-serif' font-weight='bold' fill='white'>${lbl}</text>`:
+             `<circle cx='${sz}' cy='${sz}' r='5' fill='white'/>`) +
         `</svg></div>`,
-      className:'',iconSize:[sz*2,sz*2],iconAnchor:[sz,sz],
+      className:'',iconSize:[d,d],iconAnchor:[sz,sz],
       zIndexOffset:1000
     });
   }
-  // Size based on voter count — consistent sizes to avoid overlap confusion
-  const sz=voterCount>=5?17:voterCount>=3?15:voterCount>=2?13:10;
+  // Normal pin — size by voter count
+  const sz=voterCount>=5?14:voterCount>=3?12:voterCount>=2?11:9;
   const lbl=voterCount>1?String(voterCount):'';
-  // zIndexOffset: more voters = higher z so bigger pins stay on top
-  const zOff=voterCount*10;
+  const d=sz*2;
   return L.divIcon({
-    html:`<svg xmlns='http://www.w3.org/2000/svg' width='${sz*2}' height='${sz*2}'><circle cx='${sz}' cy='${sz}' r='${sz-1}' fill='${color}' stroke='white' stroke-width='1.5'/>${lbl?`<text x='${sz}' y='${sz+4}' text-anchor='middle' font-size='${sz<=12?9:11}' font-family='-apple-system,sans-serif' font-weight='bold' fill='white'>${lbl}</text>`:''}</svg>`,
-    className:'',iconSize:[sz*2,sz*2],iconAnchor:[sz,sz],
-    zIndexOffset:zOff
+    html:`<svg xmlns='http://www.w3.org/2000/svg' width='${d}' height='${d}'><circle cx='${sz}' cy='${sz}' r='${sz-1}' fill='${color}' stroke='white' stroke-width='1.5'/>${lbl?`<text x='${sz}' y='${sz+4}' text-anchor='middle' font-size='${sz<=11?8:10}' font-family='-apple-system,sans-serif' font-weight='bold' fill='white'>${lbl}</text>`:''}</svg>`,
+    className:'',iconSize:[d,d],iconAnchor:[sz,sz],
+    zIndexOffset:voterCount*10
   });
 }
 function makeOriginIcon(){
