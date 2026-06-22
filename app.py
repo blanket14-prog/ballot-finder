@@ -380,7 +380,8 @@ def make_routes(prefix, cid):
             for vid, vsup in van_supporters[cid].items():
                 van_geocode_to_id[vsup['geocodeKey']] = vid
         for v in st['voters']:
-            if v['party'] not in party_set: continue
+            # When candidate filter is active, skip party filter entirely
+            if not candidate_only and v['party'] not in party_set: continue
             if candidate_only and van_keys and v['geocodeKey'] not in van_keys: continue
             k = v['geocodeKey']
             if k not in buildings:
@@ -511,6 +512,7 @@ def make_routes(prefix, cid):
             return jsonify({'error': 'Invalid theme'}), 400
         CAMPAIGNS[cid]['theme'] = theme
         save_theme(cid, theme)
+        save_settings(cid)  # also persist in unified settings file
         return jsonify({'success': True, 'theme': theme})
 
     @app.route(f'{url_prefix}/api/verify-public-password', methods=['POST'], endpoint=f'verifypw_{cid}')
@@ -685,6 +687,8 @@ def load_settings(cid):
             cfg['public_password'] = data.get('public_password', '')
             cfg['show_party_filter'] = data.get('show_party_filter', True)
             cfg['show_candidate_filter'] = data.get('show_candidate_filter', False)
+            if 'theme' in data:
+                cfg['theme'] = data['theme']
             print(f"[{cid}] Loaded settings")
         except Exception as e:
             print(f"[{cid}] Settings load error: {e}")
@@ -697,6 +701,7 @@ def save_settings(cid):
                 'public_password': cfg.get('public_password', ''),
                 'show_party_filter': cfg.get('show_party_filter', True),
                 'show_candidate_filter': cfg.get('show_candidate_filter', False),
+                'theme': cfg.get('theme', 'dark'),
             }, f)
     except Exception as e:
         print(f"[{cid}] Settings save error: {e}")
