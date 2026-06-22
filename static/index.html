@@ -223,6 +223,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
   <div id="pw-card">
     <img id="pw-logo" src="" alt=""/>
     <div id="pw-title">Ballot Finder</div>
+    <div id="pw-title-bar" style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:12px;">2026 Primary Ballot Finder</div>
     <div id="pw-subtitle">Enter the access password to continue</div>
     <input id="pw-input" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')submitPw()"/>
     <button id="pw-btn" onclick="submitPw()">Continue</button>
@@ -955,7 +956,11 @@ function renderRoster(){
   const rows=hh.voters.slice(0,shown).map((v,i)=>`
     <div class="roster-voter">
       <span class="roster-vnum">${i+1}</span>
-      <div style="flex:1"><div class="roster-vname">${v.name}</div>${v.unit?`<div class="roster-vunit">Unit ${v.unit}</div>`:''}</div>
+      <div style="flex:1">
+        <div class="roster-vname">${v.name}</div>
+        ${v.unit?`<div class="roster-vunit">Unit ${v.unit}</div>`:''}
+        ${v.vanid?`<div class="roster-vunit">VAN ID: ${v.vanid} · <a href="https://www.votebuilder.com/ContactPage.aspx?VANID=${v.vanid}" target="_blank" style="color:var(--accent)">Open in VAN</a></div>`:''}
+      </div>
       <div class="roster-vright"><div class="roster-vparty">${pLabel(v.party)}</div><div class="not-returned">Not returned</div></div>
     </div>`).join('');
   const rem=hh.voters.length-shown;
@@ -979,7 +984,11 @@ function renderList(results){
     const vrows=show.map((v,vi)=>`
       <div class="voter-row">
         <span class="voter-num">${vi+1}</span>
-        <div class="voter-info"><div class="voter-name">${v.name}</div>${v.unit?`<div class="voter-unit">Unit ${v.unit}</div>`:''}</div>
+        <div class="voter-info">
+          <div class="voter-name">${v.name}</div>
+          ${v.unit?`<div class="voter-unit">Unit ${v.unit}</div>`:''}
+          ${v.vanid?`<div class="voter-unit" style="color:var(--text3)">VAN: ${v.vanid}</div>`:''}
+        </div>
         <div class="voter-right"><div class="voter-party">${pLabel(v.party)}</div><div class="voter-status">Not returned</div></div>
       </div>`).join('');
     const more=hh.voters.length>6?`<div class="list-more">+${hh.voters.length-6} more — tap to see all</div>`:'';
