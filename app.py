@@ -15,15 +15,17 @@ SHARED_META_FILE = os.path.join(BASE_DATA_DIR, 'meta.json')
 
 CAMPAIGNS = {
     'default': {
-        'name': 'Ballot Finder',
+        'name': 'Denver Ballot Finder',
         'logo': '',
         'color': '#6c63ff',
         'password': os.environ.get('ADMIN_PASSWORD', 'changeme'),
         'data_dir': BASE_DATA_DIR,
         'theme': 'dark',
-        'public_password': '',       # empty = no gate
-        'show_party_filter': True,   # show Dem/UAF/Rep filter
-        'show_candidate_filter': False,  # show candidate/VAN filter
+        'public_password': '',
+        'show_party_filter': True,
+        'show_candidate_filter': False,
+        'show_rep_filter': True,     # show Republican filter (neutral public page)
+        'all_voters_stats': True,    # show all voters in stats (not just DEM+UAF)
     },
     'melat': {
         'name': 'Melat Kiros for Congress',
@@ -35,6 +37,8 @@ CAMPAIGNS = {
         'public_password': '',
         'show_party_filter': True,
         'show_candidate_filter': False,
+        'show_rep_filter': False,
+        'all_voters_stats': False,
     },
     'phil': {
         'name': 'Phil Weiser for Governor',
@@ -46,6 +50,8 @@ CAMPAIGNS = {
         'public_password': '',
         'show_party_filter': True,
         'show_candidate_filter': False,
+        'show_rep_filter': False,
+        'all_voters_stats': False,
     },
     'denverdems': {
         'name': 'Denver Democrats',
@@ -57,6 +63,8 @@ CAMPAIGNS = {
         'public_password': '',
         'show_party_filter': True,
         'show_candidate_filter': False,
+        'show_rep_filter': False,
+        'all_voters_stats': False,
     },
 }
 
@@ -355,7 +363,9 @@ def make_routes(prefix, cid):
             'theme': cfg.get('theme', 'dark'),
             'publicPassword': cfg.get('public_password', ''),
             'showPartyFilter': cfg.get('show_party_filter', True),
+            'showRepFilter': cfg.get('show_rep_filter', False),
             'showCandidateFilter': cfg.get('show_candidate_filter', False) and has_van,
+            'allVotersStats': cfg.get('all_voters_stats', False),
             'candidateName': cfg['name'],
             'vanCount': len(van_supporters.get(cid, {})),
         })
@@ -363,14 +373,22 @@ def make_routes(prefix, cid):
     @app.route(f'{url_prefix}/api/status', endpoint=f'status_{cid}')
     def api_status():
         st = states[cid]
-        # Count DEM+UAF only for all three stats
-        dem_uaf_pending = len([v for v in st['voters'] if v.get('party') in ('DEM','UAF')])
-        dem_uaf_total = st['total'] - sum(1 for v in st['voters'] if v.get('party') == 'REP')
-        dem_uaf_returned = dem_uaf_total - dem_uaf_pending
-        rate = round(dem_uaf_returned / dem_uaf_total * 100) if dem_uaf_total > 0 else 0
+        cfg = CAMPAIGNS[cid]
+        if cfg.get('all_voters_stats', False):
+            # Show all voters (neutral public page)
+            total = st['total']
+            pending = len([v for v in st['voters'] if v.get('party') in ('DEM','UAF','REP','OTH','GRN','LBR')])
+            returned = total - pending
+            rate = round(returned / total * 100) if total > 0 else 0
+        else:
+            # Show DEM+UAF only
+            pending = len([v for v in st['voters'] if v.get('party') in ('DEM','UAF')])
+            total = st['total'] - sum(1 for v in st['voters'] if v.get('party') == 'REP')
+            returned = total - pending
+            rate = round(returned / total * 100) if total > 0 else 0
         return jsonify({
-            'total': dem_uaf_total, 'pending': dem_uaf_pending,
-            'returned': dem_uaf_returned, 'returnRate': rate,
+            'total': total, 'pending': pending,
+            'returned': returned, 'returnRate': rate,
             'filename': st['filename'], 'loadedAt': st['loaded_at'],
             'loading': st['loading'], 'loadProgress': st['load_progress'],
             'hasData': len(st['voters']) > 0,
@@ -592,6 +610,13 @@ def make_routes(prefix, cid):
         save_theme(cid, theme)
         save_settings(cid)  # also persist in unified settings file
         return jsonify({'success': True, 'theme': theme})
+
+    @app.route(f'{url_prefix}/api/verify-admin-password', methods=['POST'], endpoint=f'verifyadmin_{cid}')
+    def verify_admin_password():
+        pw = (request.json or {}).get('password', '')
+        if pw == CAMPAIGNS[cid]['password']:
+            return jsonify({'success': True})
+        return jsonify({'success': False}), 401
 
     @app.route(f'{url_prefix}/api/verify-public-password', methods=['POST'], endpoint=f'verifypw_{cid}')
     def verify_public_password():
