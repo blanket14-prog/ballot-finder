@@ -348,7 +348,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="12" height="8" rx="1"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>
         Drop boxes
       </a>
-      <span style="font-size:10px;color:var(--text3);">v2.6</span>
+      <span style="font-size:10px;color:var(--text3);">v2.7</span>
     </div>
   </div>
 </div>
@@ -975,7 +975,7 @@ function renderRoster(){
       <div style="flex:1">
         <div class="roster-vname">${v.name}</div>
         ${v.unit?`<div class="roster-vunit">Unit ${v.unit}</div>`:''}
-        ${v.vanid?`<div class="roster-vunit" style="font-family:monospace;color:var(--accent);font-size:11px;letter-spacing:.02em;">VAN ID: ${v.vanid}</div>`:''}
+
       </div>
       <div class="roster-vright"><div class="roster-vparty">${pLabel(v.party)}</div><div class="not-returned">Not returned</div></div>
     </div>`).join('');
@@ -1003,7 +1003,7 @@ function renderList(results){
         <div class="voter-info">
           <div class="voter-name">${v.name}</div>
           ${v.unit?`<div class="voter-unit">Unit ${v.unit}</div>`:''}
-          ${v.vanid?`<div class="voter-unit" style="color:var(--text3)">VAN: ${v.vanid}</div>`:''}
+
         </div>
         <div class="voter-right"><div class="voter-party">${pLabel(v.party)}</div><div class="voter-status">Not returned</div></div>
       </div>`).join('');
