@@ -126,8 +126,19 @@ def load_nominatim_cache():
 
 def save_nominatim_cache():
     try:
+        # Safety: never overwrite with fewer entries than currently on disk
+        if os.path.exists(NOMINATIM_CACHE_FILE):
+            try:
+                with open(NOMINATIM_CACHE_FILE) as f:
+                    existing = json.load(f)
+                if len(existing) > len(nominatim_cache):
+                    # Merge: keep existing entries, add new ones
+                    existing.update(nominatim_cache)
+                    nominatim_cache.update(existing)
+            except: pass
         with open(NOMINATIM_CACHE_FILE, 'w') as f:
             json.dump(nominatim_cache, f)
+        print(f"Nominatim cache saved: {len(nominatim_cache):,} entries")
     except Exception as e:
         print(f"Nominatim cache save error: {e}")
 
@@ -182,7 +193,7 @@ def run_nominatim_build(voters):
     save_nominatim_cache()
     nominatim_progress['running'] = False
     nominatim_progress['complete'] = True
-    print("Nominatim geocoding complete!")
+    print(f"Nominatim geocoding complete! {len(nominatim_cache):,} addresses cached.")
 
 def geocode_census_original(building_addr, city, state_abbr, zip5):
     try:
@@ -879,13 +890,15 @@ shared_returned = states['default']['returned']
 shared_filename = states['default']['filename']
 shared_loaded_at = states['default']['loaded_at']
 
-# Other campaigns share the voter list but have their own geocache
+# Other campaigns share the voter list but have their own settings/geocache
 for cid in CAMPAIGNS:
     if cid == 'default':
         continue
     try:
         os.makedirs(CAMPAIGNS[cid]['data_dir'], exist_ok=True)
     except: pass
+    load_settings(cid)        # theme, public_password, filter toggles
+    load_van_supporters(cid)  # VAN supporter list
     load_geocache(cid)
     # Share the voter data from default
     states[cid]['voters'] = shared_voters
