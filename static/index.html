@@ -632,6 +632,12 @@ function renderFilterUI(){
   // Show/hide candidate filter row
   const candRow=document.getElementById('candidate-filter-row');
   if(candRow) candRow.style.display=showCandidateFilter?'flex':'none';
+  // If candidate filter hidden by admin, deactivate it
+  if(!showCandidateFilter){
+    candidateFilterActive=false;
+    const chip=document.getElementById('candidate-chip');
+    if(chip) chip.classList.remove('active');
+  }
   // Update chip label
   const candChip=document.getElementById('candidate-chip');
   if(candChip) candChip.textContent=candidateName+' Supporters';
@@ -751,7 +757,9 @@ async function handleSearch(){
 }
 
 async function doSearch(origin){
-  const url=apiUrl(`/api/search?lat=${origin.lat}&lng=${origin.lng}&party=${[...partyFilters].join(',')}&access=${[...accessFilters].join(',')}&limit=${resultCount}&candidate=${candidateFilterActive?'1':'0'}`);
+  // When party filter is hidden by admin, send ALL so server knows not to filter by party
+  const partyParam = showPartyFilter ? [...partyFilters].join(',') : 'ALL';
+  const url=apiUrl(`/api/search?lat=${origin.lat}&lng=${origin.lng}&party=${partyParam}&access=${[...accessFilters].join(',')}&limit=${resultCount}&candidate=${candidateFilterActive?'1':'0'}`);
   const loader=document.getElementById('search-loading');
   if(loader) loader.classList.add('visible');
   try{
@@ -915,21 +923,10 @@ function renderMap(results,origin){
     });
     mapInstance.invalidateSize();
     if(origin&&results.length){
-      // If results are spread out (e.g. candidate filter with few supporters),
-      // fit bounds to show all of them. Otherwise zoom to street level.
-      const lats=results.map(h=>h.lat);
-      const lngs=results.map(h=>h.lng);
-      const latSpread=Math.max(...lats)-Math.min(...lats);
-      const lngSpread=Math.max(...lngs)-Math.min(...lngs);
-      if(latSpread>0.02||lngSpread>0.02){
-        // Results are spread across more than ~1 mile - fit bounds
-        const b=L.latLngBounds(results.map(h=>[h.lat,h.lng]));
-        b.extend([origin.lat,origin.lng]);
-        mapInstance.fitBounds(b,{padding:[50,50],maxZoom:16,animate:false});
-      } else {
-        // Results are clustered - use street level zoom
-        mapInstance.setView([origin.lat,origin.lng],16,{animate:false});
-      }
+      // Always fit bounds to show ALL results - no maxZoom cap
+      const b=L.latLngBounds(results.map(h=>[h.lat,h.lng]));
+      b.extend([origin.lat,origin.lng]);
+      mapInstance.fitBounds(b,{padding:[50,50],animate:false});
     } else if(origin){
       mapInstance.setView([origin.lat,origin.lng],16,{animate:false});
     }
