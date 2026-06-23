@@ -270,6 +270,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         <span class="chip active" data-party="DEM" onclick="toggleParty('DEM')">Democrat</span>
         <span class="chip active" data-party="UAF" onclick="toggleParty('UAF')">Unaffiliated</span>
         <span class="chip" data-party="REP" onclick="toggleParty('REP')">Republican</span>
+        <span class="chip" id="oth-chip" data-party="OTH" onclick="toggleParty('OTH')" style="display:none;">Other</span>
       </div>
     </div>
     <div class="filter-row">
@@ -348,7 +349,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="12" height="8" rx="1"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>
         Drop boxes
       </a>
-      <span style="font-size:10px;color:var(--text3);">v2.7</span>
+      <span style="font-size:10px;color:var(--text3);">v2.8</span>
     </div>
   </div>
 </div>
@@ -536,8 +537,10 @@ let accessFilters=new Set(['accessible','inaccessible']);
 let resultCount=30;
 let candidateFilterActive=false;
 let showPartyFilter=true;
+let showRepFilter=false;
 let showCandidateFilter=false;
 let candidateName='Candidate';
+let allVotersStats=false;
 let lastResults=[],filteredResults=[];
 let mapInstance=null,markers=[],originMarker=null,dropboxMarkers=[],lastOrigin=null;
 let rosterState={hh:null,shown:0};
@@ -563,11 +566,12 @@ async function loadConfig(){
       img.src=c.logoUrl;
       img.style.display='block';
       document.getElementById('campaign-name').style.display='none';
-      // Also set logo on password gate
       const pwLogo=document.getElementById('pw-logo');
       pwLogo.src=c.logoUrl; pwLogo.style.display='block';
-    } else if(c.campaignName&&c.campaignName!=='Ballot Finder'){
-      document.getElementById('campaign-name').textContent='📋 '+c.campaignName;
+    } else {
+      const nameEl=document.getElementById('campaign-name');
+      nameEl.textContent=c.campaignName||'Ballot Finder';
+      nameEl.style.display='block';
     }
     if(c.accentColor&&c.accentColor!=='#6c63ff'){
       document.documentElement.style.setProperty('--accent',c.accentColor);
@@ -583,7 +587,14 @@ async function loadConfig(){
     }
     // Filter visibility
     showPartyFilter=c.showPartyFilter!==false;
+    showRepFilter=c.showRepFilter===true;
     showCandidateFilter=c.showCandidateFilter===true;
+    allVotersStats=c.allVotersStats===true;
+    // Update stat header label
+    const statLabel=document.querySelector('.top-stat-label');
+    if(statLabel) statLabel.textContent=allVotersStats?'Voters':'Dem & UAF';
+    // If REP filter enabled, add REP to active party filters by default
+    if(showRepFilter) partyFilters.add('REP');
     renderFilterUI();
     // Password gate
     if(c.publicPassword){
@@ -626,6 +637,9 @@ async function submitPw(){
 }
 
 function renderFilterUI(){
+  // Show/hide REP chip
+  const repChip=document.querySelector('.chip[data-party="REP"]');
+  if(repChip) repChip.style.display=showRepFilter?'':'none';
   // Show/hide party filter row
   const partyRow=document.querySelector('.filter-row:nth-child(1)');
   if(partyRow) partyRow.style.display=showPartyFilter?'flex':'none';
