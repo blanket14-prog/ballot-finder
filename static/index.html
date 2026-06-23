@@ -348,7 +348,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="12" height="8" rx="1"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>
         Drop boxes
       </a>
-      <span style="font-size:10px;color:var(--text3);">v2.5</span>
+      <span style="font-size:10px;color:var(--text3);">v2.6</span>
     </div>
   </div>
 </div>
@@ -632,14 +632,17 @@ function renderFilterUI(){
   // Show/hide candidate filter row
   const candRow=document.getElementById('candidate-filter-row');
   if(candRow) candRow.style.display=showCandidateFilter?'flex':'none';
-  // If candidate filter hidden by admin, deactivate it
-  if(!showCandidateFilter){
+  const candChip=document.getElementById('candidate-chip');
+  if(showCandidateFilter){
+    // Auto-activate candidate filter when admin has enabled it
+    candidateFilterActive=true;
+    if(candChip) candChip.classList.add('active');
+  } else {
+    // If candidate filter hidden by admin, deactivate it
     candidateFilterActive=false;
-    const chip=document.getElementById('candidate-chip');
-    if(chip) chip.classList.remove('active');
+    if(candChip) candChip.classList.remove('active');
   }
   // Update chip label
-  const candChip=document.getElementById('candidate-chip');
   if(candChip) candChip.textContent=candidateName+' Supporters';
 }
 
