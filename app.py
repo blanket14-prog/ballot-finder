@@ -395,14 +395,22 @@ def make_routes(prefix, cid):
         if not cfg.get('show_candidate_filter', False):
             # Candidate filter off in admin = never filter by candidate
             candidate_only = False
-        # Build VAN geocode key set for fast lookup
-        van_keys = set()
-        van_geocoded = {}  # geocodeKey -> coords for VAN supporters
+        # Build VAN lookup: geocodeKey -> {normalized_name -> vanid}
+        van_key_names = {}  # geocodeKey -> set of normalized names
+        van_geocoded = {}
         if candidate_only and van_supporters.get(cid):
-            van_keys = set(v['geocodeKey'] for v in van_supporters[cid].values())
-            # Pre-check which VAN supporters have geocache entries
             geocache = st['geocache']
-            missing = [v for v in van_supporters[cid].values() if v['geocodeKey'] not in geocache or not geocache[v['geocodeKey']]]
+            for vid, vsup in van_supporters[cid].items():
+                k = vsup['geocodeKey']
+                if k not in van_key_names:
+                    van_key_names[k] = {}
+                # Normalize name for matching
+                norm = vsup['name'].upper().strip()
+                van_key_names[k][norm] = vid
+            van_keys = set(van_key_names.keys())
+            # Geocode any missing supporters
+            missing = [v for v in van_supporters[cid].values()
+                      if v['geocodeKey'] not in geocache or not geocache[v['geocodeKey']]]
             if missing:
                 print(f"[{cid}] {len(missing)} VAN supporters missing from geocache — geocoding now")
                 for vsup in missing:
@@ -410,9 +418,9 @@ def make_routes(prefix, cid):
                     if coords:
                         geocache[vsup['geocodeKey']] = coords
                         van_geocoded[vsup['geocodeKey']] = coords
-                        print(f"[{cid}] Geocoded VAN supporter: {vsup['address']} -> {coords}")
+                        print(f"[{cid}] Geocoded: {vsup['address']} -> {coords}")
                     else:
-                        print(f"[{cid}] Could not geocode VAN supporter: {vsup['address']}")
+                        print(f"[{cid}] Could not geocode: {vsup['address']}")
                 if van_geocoded:
                     save_geocache(cid)
         buildings = {}
@@ -435,10 +443,18 @@ def make_routes(prefix, cid):
                     'city': v['city'], 'state': v['state'], 'zip': v['zip'],
                     'apt': v['apt'], 'lat': coords[0], 'lng': coords[1], 'voters': [],
                 }
+            # When candidate filter active, only include voters who are named VAN supporters
+            if candidate_only and van_key_names:
+                norm_name = v['name'].upper().strip()
+                vanid = van_key_names.get(k, {}).get(norm_name)
+                if vanid is None:
+                    continue  # not a named VAN supporter - skip
+            else:
+                vanid = van_geocode_to_id.get(k)
             buildings[k]['voters'].append({
                 'name': v['name'], 'unit': v['unit'],
                 'party': v['party'], 'yob': v.get('yob'),
-                'vanid': van_geocode_to_id.get(k),
+                'vanid': vanid,
             })
         # When candidate_only: also add VAN supporters not found in CE-068
         if candidate_only and van_supporters.get(cid):
