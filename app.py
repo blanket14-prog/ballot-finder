@@ -962,14 +962,14 @@ for cid in CAMPAIGNS:
 # Start geocoding for any that need it
 def startup_geocoding():
     time.sleep(2)
-    for cid in CAMPAIGNS:
-        auto_geocode(cid)
-    # Auto-resume Nominatim if we have a partial cache and voters are loaded
+    # Auto-resume Nominatim in its own thread immediately — don't wait for auto_geocode
     if len(nominatim_cache) > 0 and not nominatim_progress['complete']:
         voters = states['default']['voters']
         if voters:
             print(f"Auto-resuming Nominatim build from {len(nominatim_cache):,} cached entries")
             threading.Thread(target=run_nominatim_build, args=(voters,), daemon=True).start()
+    for cid in CAMPAIGNS:
+        auto_geocode(cid)
 
 # Load nominatim cache in main thread so it's immediately available
 load_nominatim_cache()
