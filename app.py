@@ -375,9 +375,9 @@ def make_routes(prefix, cid):
         st = states[cid]
         cfg = CAMPAIGNS[cid]
         if cfg.get('all_voters_stats', False):
-            # Show all voters (neutral public page)
+            # Show all voters (neutral public page) - st['voters'] is already not-returned list
             total = st['total']
-            pending = len([v for v in st['voters'] if v.get('party') in ('DEM','UAF','REP','OTH','GRN','LBR')])
+            pending = len(st['voters'])
             returned = total - pending
             rate = round(returned / total * 100) if total > 0 else 0
         else:
