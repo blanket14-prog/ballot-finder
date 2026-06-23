@@ -349,7 +349,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="12" height="8" rx="1"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>
         Drop boxes
       </a>
-      <span style="font-size:10px;color:var(--text3);">v2.8</span>
+      <span style="font-size:10px;color:var(--text3);">v2.9</span>
     </div>
   </div>
 </div>
@@ -594,7 +594,12 @@ async function loadConfig(){
     const statLabel=document.querySelector('.top-stat-label');
     if(statLabel) statLabel.textContent=allVotersStats?'Voters':'Dem & UAF';
     // If REP filter enabled, add REP to active party filters by default
-    if(showRepFilter) partyFilters.add('REP');
+    if(showRepFilter){
+      partyFilters.add('REP');
+      partyFilters.add('OTH');
+      // Activate REP and OTH chips visually
+      document.querySelectorAll('.chip[data-party="REP"],.chip[data-party="OTH"]').forEach(c=>c.classList.add('active'));
+    }
     renderFilterUI();
     // Password gate
     if(c.publicPassword){
@@ -637,9 +642,11 @@ async function submitPw(){
 }
 
 function renderFilterUI(){
-  // Show/hide REP chip
+  // Show/hide REP and OTH chips
   const repChip=document.querySelector('.chip[data-party="REP"]');
   if(repChip) repChip.style.display=showRepFilter?'':'none';
+  const othChip=document.getElementById('oth-chip');
+  if(othChip) othChip.style.display=showRepFilter?'':'none';
   // Show/hide party filter row
   const partyRow=document.querySelector('.filter-row:nth-child(1)');
   if(partyRow) partyRow.style.display=showPartyFilter?'flex':'none';
