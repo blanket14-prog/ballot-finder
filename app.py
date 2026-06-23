@@ -112,11 +112,15 @@ def load_nominatim_cache():
         try:
             with open(NOMINATIM_CACHE_FILE) as f:
                 nominatim_cache = json.load(f)
-            print(f"Loaded {len(nominatim_cache):,} Nominatim cached geocodes")
-            # Check if complete
-            if len(nominatim_cache) > 0:
-                nominatim_progress['done'] = len(nominatim_cache)
-                nominatim_progress['complete'] = True
+            count = len(nominatim_cache)
+            print(f"Loaded {count:,} Nominatim cached geocodes")
+            if count > 0:
+                nominatim_progress['done'] = count
+                nominatim_progress['total'] = count  # will be updated when build starts
+                # Mark as paused (not complete, not running) so UI shows resume option
+                nominatim_progress['running'] = False
+                nominatim_progress['complete'] = False
+                print(f"Nominatim: {count:,} cached — ready to resume or flip")
         except Exception as e:
             print(f"Nominatim cache load error: {e}")
 
@@ -692,7 +696,11 @@ def save_van_supporters(cid):
 
 def load_settings(cid):
     sf = settings_file(cid)
-    print(f"[{cid}] Looking for settings at: {sf}")
+    # Also check old location for migration
+    old_sf = os.path.join(BASE_DATA_DIR, f'settings_{cid}.json')
+    old_theme_f = os.path.join(BASE_DATA_DIR, f'theme_{cid}.json')
+
+    # Try new location first
     if os.path.exists(sf):
         try:
             with open(sf) as f:
@@ -703,12 +711,41 @@ def load_settings(cid):
             cfg['show_candidate_filter'] = data.get('show_candidate_filter', False)
             if 'theme' in data:
                 cfg['theme'] = data['theme']
-            print(f"[{cid}] Loaded settings: {data}")
+            print(f"[{cid}] Loaded settings from {sf}: {data}")
+            return
         except Exception as e:
             print(f"[{cid}] Settings load ERROR: {e}")
-            import traceback; traceback.print_exc()
-    else:
-        print(f"[{cid}] No settings file found at {sf} — using defaults")
+
+    # Fall back to old settings file location
+    if os.path.exists(old_sf):
+        try:
+            with open(old_sf) as f:
+                data = json.load(f)
+            cfg = CAMPAIGNS[cid]
+            cfg['public_password'] = data.get('public_password', '')
+            cfg['show_party_filter'] = data.get('show_party_filter', True)
+            cfg['show_candidate_filter'] = data.get('show_candidate_filter', False)
+            if 'theme' in data:
+                cfg['theme'] = data['theme']
+            print(f"[{cid}] Migrated settings from old location: {data}")
+            save_settings(cid)  # save to new location immediately
+            return
+        except Exception as e:
+            print(f"[{cid}] Old settings migration error: {e}")
+
+    # Fall back to old theme file
+    if os.path.exists(old_theme_f):
+        try:
+            with open(old_theme_f) as f:
+                data = json.load(f)
+            CAMPAIGNS[cid]['theme'] = data.get('theme', 'dark')
+            print(f"[{cid}] Migrated theme from theme file: {CAMPAIGNS[cid]['theme']}")
+            save_settings(cid)  # save to new location immediately
+            return
+        except Exception as e:
+            print(f"[{cid}] Theme file migration error: {e}")
+
+    print(f"[{cid}] No settings found anywhere — using defaults")
 
 def save_settings(cid):
     cfg = CAMPAIGNS[cid]
