@@ -516,20 +516,32 @@ async function pollNominatimStatus() {
     const bar = document.getElementById('nom-progress-bar');
     const barWrap = document.getElementById('nom-progress-bar-wrap');
     const flipBtn = document.getElementById('nom-flip-btn');
+    const startBtn = document.getElementById('nom-start-btn');
     if (d.running) {
       txt.style.color = '#6c63ff';
-      txt.textContent = `Building Nominatim cache: ${d.done.toLocaleString()} / ${d.total.toLocaleString()} (${d.pct}%)`;
+      txt.textContent = `Building: ${d.done.toLocaleString()} / ${d.total.toLocaleString()} (${d.pct}%) — ~${Math.round((d.total-d.done)/21/60)} hrs left`;
       barWrap.style.display = 'block';
-      bar.style.width = d.pct + '%';
+      bar.style.width = Math.max(d.pct,2) + '%';
       flipBtn.disabled = true; flipBtn.style.color = '#6b6890';
+      startBtn.textContent = '⏸ Running…'; startBtn.disabled = true;
     } else if (d.complete && d.cacheSize > 0) {
       txt.style.color = '#22c55e';
-      txt.textContent = `✓ Nominatim cache complete: ${d.cacheSize.toLocaleString()} addresses. Ready to flip!`;
+      txt.textContent = `✓ Complete: ${d.cacheSize.toLocaleString()} addresses geocoded. Ready to flip!`;
       barWrap.style.display = 'block'; bar.style.width = '100%';
       flipBtn.disabled = false; flipBtn.style.background = '#22c55e'; flipBtn.style.color = 'white';
+      startBtn.textContent = '✓ Done'; startBtn.disabled = true;
+    } else if (d.cacheSize > 0) {
+      // Paused - has partial cache from previous run
+      txt.style.color = '#f97316';
+      txt.textContent = `Paused: ${d.cacheSize.toLocaleString()} addresses cached so far. Click Resume to continue.`;
+      barWrap.style.display = 'block';
+      bar.style.width = Math.round(d.cacheSize / 1500) + '%';
+      flipBtn.disabled = true;
+      startBtn.textContent = '▶ Resume'; startBtn.disabled = false;
     } else {
       txt.style.color = '#6b6890';
-      txt.textContent = d.cacheSize > 0 ? `Nominatim cache: ${d.cacheSize.toLocaleString()} addresses cached (paused)` : 'Not started. Click Start Build to begin.';
+      txt.textContent = 'Not started. Enter password and click Start Build.';
+      startBtn.textContent = '▶ Start Build'; startBtn.disabled = false;
     }
   } catch(e) {}
 }
