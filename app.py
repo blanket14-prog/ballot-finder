@@ -9,6 +9,7 @@ ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'changeme')
 
 # ── CAMPAIGN CONFIGS ──────────────────────────────────────────────
 BASE_DATA_DIR = '/opt/render/project/src/data'
+os.makedirs(BASE_DATA_DIR, exist_ok=True)  # ensure root data dir exists
 SHARED_DATA_FILE = os.path.join(BASE_DATA_DIR, 'current_data.txt')
 SHARED_META_FILE = os.path.join(BASE_DATA_DIR, 'meta.json')
 
@@ -663,7 +664,8 @@ def theme_file(cid):
     return os.path.join(BASE_DATA_DIR, f'theme_{cid}.json')
 
 def settings_file(cid):
-    return os.path.join(BASE_DATA_DIR, f'settings_{cid}.json')
+    # Store in campaign's own data_dir which is guaranteed to be created on startup
+    return os.path.join(CAMPAIGNS[cid]['data_dir'], 'settings.json')
 
 def van_file(cid):
     return os.path.join(BASE_DATA_DIR, f'van_supporters_{cid}.json')
@@ -690,6 +692,7 @@ def save_van_supporters(cid):
 
 def load_settings(cid):
     sf = settings_file(cid)
+    print(f"[{cid}] Looking for settings at: {sf}")
     if os.path.exists(sf):
         try:
             with open(sf) as f:
@@ -700,22 +703,30 @@ def load_settings(cid):
             cfg['show_candidate_filter'] = data.get('show_candidate_filter', False)
             if 'theme' in data:
                 cfg['theme'] = data['theme']
-            print(f"[{cid}] Loaded settings")
+            print(f"[{cid}] Loaded settings: {data}")
         except Exception as e:
-            print(f"[{cid}] Settings load error: {e}")
+            print(f"[{cid}] Settings load ERROR: {e}")
+            import traceback; traceback.print_exc()
+    else:
+        print(f"[{cid}] No settings file found at {sf} — using defaults")
 
 def save_settings(cid):
     cfg = CAMPAIGNS[cid]
+    sf = settings_file(cid)
     try:
-        with open(settings_file(cid), 'w') as f:
-            json.dump({
+        os.makedirs(os.path.dirname(sf), exist_ok=True)
+        with open(sf, 'w') as f:
+            data = {
                 'public_password': cfg.get('public_password', ''),
                 'show_party_filter': cfg.get('show_party_filter', True),
                 'show_candidate_filter': cfg.get('show_candidate_filter', False),
                 'theme': cfg.get('theme', 'dark'),
-            }, f)
+            }
+            json.dump(data, f)
+        print(f"[{cid}] Settings saved to {sf}: {data}")
     except Exception as e:
-        print(f"[{cid}] Settings save error: {e}")
+        print(f"[{cid}] Settings save ERROR: {e}")
+        import traceback; traceback.print_exc()
 
 def parse_van_xls(file_stream):
     """Parse VAN tab-separated XLS export. Returns dict of {vanid: voter_dict}."""
