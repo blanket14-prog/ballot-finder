@@ -365,10 +365,20 @@ def make_routes(prefix, cid):
             lat = float(request.args.get('lat'))
             lng = float(request.args.get('lng'))
         except: return jsonify({'error': 'lat and lng required'}), 400
-        party_set = set(request.args.get('party','DEM,UAF').split(','))
+        party_arg = request.args.get('party','DEM,UAF')
+        filter_by_party = (party_arg != 'ALL')
+        party_set = set(party_arg.split(',')) if filter_by_party else set()
         access_set = set(request.args.get('access','accessible,inaccessible').split(','))
         candidate_only = request.args.get('candidate','') == '1'
         limit = min(int(request.args.get('limit', 30)), 100)
+        # Enforce server-side: if party filter disabled in admin, show no one unless candidate filter active
+        cfg = CAMPAIGNS[cid]
+        if not cfg.get('show_party_filter', True) and not candidate_only:
+            # Party filter off AND no candidate filter = show nothing
+            return jsonify({'results': []})
+        if not cfg.get('show_candidate_filter', False):
+            # Candidate filter off in admin = never filter by candidate
+            candidate_only = False
         # Build VAN geocode key set for fast lookup
         van_keys = set()
         if candidate_only and van_supporters.get(cid):
@@ -380,8 +390,9 @@ def make_routes(prefix, cid):
             for vid, vsup in van_supporters[cid].items():
                 van_geocode_to_id[vsup['geocodeKey']] = vid
         for v in st['voters']:
-            # When candidate filter is active, skip party filter entirely
-            if not candidate_only and v['party'] not in party_set: continue
+            # Party filter: skip if party filtering enabled and party not in set
+            if filter_by_party and not candidate_only and v['party'] not in party_set: continue
+            # Candidate filter: if active, only include VAN supporters
             if candidate_only and van_keys and v['geocodeKey'] not in van_keys: continue
             k = v['geocodeKey']
             if k not in buildings:
@@ -781,8 +792,7 @@ def startup_campaign(cid):
         os.makedirs(CAMPAIGNS[cid]['data_dir'], exist_ok=True)
     except Exception as e:
         print(f"[{cid}] Could not create data dir: {e}")
-    load_theme(cid)
-    load_settings(cid)
+    load_settings(cid)   # loads theme, public_password, filter toggles
     load_van_supporters(cid)
     load_geocache(cid)
     saved = data_file(cid, 'current_data.txt')
