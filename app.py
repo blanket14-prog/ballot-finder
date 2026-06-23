@@ -397,8 +397,24 @@ def make_routes(prefix, cid):
             candidate_only = False
         # Build VAN geocode key set for fast lookup
         van_keys = set()
+        van_geocoded = {}  # geocodeKey -> coords for VAN supporters
         if candidate_only and van_supporters.get(cid):
             van_keys = set(v['geocodeKey'] for v in van_supporters[cid].values())
+            # Pre-check which VAN supporters have geocache entries
+            geocache = st['geocache']
+            missing = [v for v in van_supporters[cid].values() if v['geocodeKey'] not in geocache or not geocache[v['geocodeKey']]]
+            if missing:
+                print(f"[{cid}] {len(missing)} VAN supporters missing from geocache — geocoding now")
+                for vsup in missing:
+                    coords = geocode_census_original(vsup['address'], vsup['city'], vsup.get('state','CO'), vsup['zip'])
+                    if coords:
+                        geocache[vsup['geocodeKey']] = coords
+                        van_geocoded[vsup['geocodeKey']] = coords
+                        print(f"[{cid}] Geocoded VAN supporter: {vsup['address']} -> {coords}")
+                    else:
+                        print(f"[{cid}] Could not geocode VAN supporter: {vsup['address']}")
+                if van_geocoded:
+                    save_geocache(cid)
         buildings = {}
         # Build vanid lookup: geocodeKey -> vanid for fast annotation
         van_geocode_to_id = {}
@@ -424,6 +440,23 @@ def make_routes(prefix, cid):
                 'party': v['party'], 'yob': v.get('yob'),
                 'vanid': van_geocode_to_id.get(k),
             })
+        # When candidate_only: also add VAN supporters not found in CE-068
+        if candidate_only and van_supporters.get(cid):
+            geocache = st['geocache']
+            for vid, vsup in van_supporters[cid].items():
+                k = vsup['geocodeKey']
+                if k not in buildings:
+                    coords = geocache.get(k)
+                    if coords:
+                        buildings[k] = {
+                            'buildingAddress': vsup['address'],
+                            'city': vsup['city'], 'state': vsup.get('state','CO'), 'zip': vsup['zip'],
+                            'apt': False, 'lat': coords[0], 'lng': coords[1], 'voters': [{
+                                'name': vsup['name'], 'unit': '',
+                                'party': 'UAF', 'yob': None,
+                                'vanid': vid,
+                            }],
+                        }
         result = list(buildings.values())
         if 'accessible' not in access_set: result = [b for b in result if b['apt']]
         elif 'inaccessible' not in access_set: result = [b for b in result if not b['apt']]
