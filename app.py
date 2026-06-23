@@ -126,19 +126,21 @@ def load_nominatim_cache():
 
 def save_nominatim_cache():
     try:
-        # Safety: never overwrite with fewer entries than currently on disk
+        # Atomic write: write to temp file then rename to avoid corruption on interrupt
+        tmp_file = NOMINATIM_CACHE_FILE + '.tmp'
+        # Merge with existing to never lose entries
+        merged = {}
         if os.path.exists(NOMINATIM_CACHE_FILE):
             try:
                 with open(NOMINATIM_CACHE_FILE) as f:
-                    existing = json.load(f)
-                if len(existing) > len(nominatim_cache):
-                    # Merge: keep existing entries, add new ones
-                    existing.update(nominatim_cache)
-                    nominatim_cache.update(existing)
+                    merged = json.load(f)
             except: pass
-        with open(NOMINATIM_CACHE_FILE, 'w') as f:
-            json.dump(nominatim_cache, f)
-        print(f"Nominatim cache saved: {len(nominatim_cache):,} entries")
+        merged.update(nominatim_cache)
+        nominatim_cache.update(merged)
+        with open(tmp_file, 'w') as f:
+            json.dump(merged, f)
+        os.replace(tmp_file, NOMINATIM_CACHE_FILE)  # atomic rename
+        print(f"Nominatim cache saved: {len(merged):,} entries")
     except Exception as e:
         print(f"Nominatim cache save error: {e}")
 
@@ -963,6 +965,12 @@ def startup_geocoding():
     load_nominatim_cache()
     for cid in CAMPAIGNS:
         auto_geocode(cid)
+    # Auto-resume Nominatim if we have a partial cache and voters are loaded
+    if len(nominatim_cache) > 0 and not nominatim_progress['complete']:
+        voters = states['default']['voters']
+        if voters:
+            print(f"Auto-resuming Nominatim build from {len(nominatim_cache):,} cached entries")
+            threading.Thread(target=run_nominatim_build, args=(voters,), daemon=True).start()
 
 threading.Thread(target=startup_geocoding, daemon=True).start()
 
