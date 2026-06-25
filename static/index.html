@@ -133,6 +133,14 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
 #map-view.with-roster{flex:0 0 45vh;}
 #map-wrapper{position:relative;flex:1;min-height:0;}
 #map{width:100%;height:100%;}
+#map-legend-btn{position:absolute;top:10px;right:10px;z-index:500;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
+#map-legend-pop{position:absolute;top:38px;right:10px;z-index:501;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:none;min-width:190px;}
+#map-legend-pop.show{display:block;}
+.legend-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);margin-bottom:5px;}
+.ldot{width:22px;height:22px;border-radius:50%;color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.lpurple{background:#7F77DD;}.lorange{background:#fb923c;}
+.legend-note{font-size:11px;color:var(--text3);margin-top:4px;border-top:1px solid var(--border);padding-top:6px;}
+.list-subhead{font-size:11px;color:var(--text3);padding:2px 14px 6px;}
 .map-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.65);color:#fff;font-size:11px;padding:5px 14px;border-radius:20px;pointer-events:none;z-index:500;white-space:nowrap;opacity:0;transition:opacity .3s;}
 .map-hint.show{opacity:1;}
 #search-loading{position:absolute;inset:0;background:rgba(0,0,0,0.35);z-index:600;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;backdrop-filter:blur(2px);}
@@ -331,7 +339,12 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
           <div class="spinner"></div>
           <div class="spinner-label">Finding voters…</div>
         </div>
-
+        <button id="map-legend-btn" aria-label="Map legend" onclick="toggleLegend(event)">?</button>
+        <div id="map-legend-pop" role="tooltip">
+          <div class="legend-row"><span class="ldot lpurple">3</span> House or condo</div>
+          <div class="legend-row"><span class="ldot lorange">7</span> Apartment building</div>
+          <div class="legend-note">All pins have not returned their ballot</div>
+        </div>
       </div>
       <div id="roster-panel">
         <div id="roster-content"><div class="roster-empty">Tap a pin to see who lives there</div></div>
@@ -342,6 +355,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         <span id="list-count">0 addresses</span>
         <span class="route-badge">🚶 Walk order</span>
       </div>
+      <div class="list-subhead">None have returned their ballot</div>
       <div id="household-list"></div>
     </div>
   </div>
@@ -552,6 +566,7 @@ let showCandidateFilter=false;
 let candidateName='Candidate';
 let allVotersStats=false;
 let lastResults=[],filteredResults=[];
+function toggleLegend(e){e.stopPropagation();const p=document.getElementById('map-legend-pop');p.classList.toggle('show');if(p.classList.contains('show')){setTimeout(()=>document.addEventListener('click',()=>p.classList.remove('show'),{once:true}),0);}}
 let mapInstance=null,markers=[],originMarker=null,dropboxMarkers=[],lastOrigin=null;
 let rosterState={hh:null,shown:0};
 let acResults=[],acIdx=-1,acTimer=null;
