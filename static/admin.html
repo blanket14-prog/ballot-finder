@@ -334,7 +334,8 @@ async function upload() {
     pollTimer = setInterval(async () => {
       await loadStatus();
       attempts++;
-      const s = await (await fetch('/api/status')).json();
+      const _p = (() => { const p = window.location.pathname; if(p.startsWith('/melat')) return '/melat'; if(p.startsWith('/phil')) return '/phil'; if(p.startsWith('/denverdems')) return '/denverdems'; return ''; })();
+      const s = await (await fetch(_p + '/api/status')).json();
       if(s.hasData) {
         clearInterval(pollTimer);
         resultEl.className = 'result success';
