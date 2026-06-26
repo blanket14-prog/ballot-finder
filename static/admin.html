@@ -360,10 +360,10 @@ function uploadWithProgress(formData, onProgress) {
     const xhr = new XMLHttpRequest();
     const adminPath = (() => {
         const p = window.location.pathname;
-        if (p.startsWith('/melat')) return '/melat/admin';
-        if (p.startsWith('/phil')) return '/phil/admin';
-        if (p.startsWith('/denverdems')) return '/denverdems/admin';
-        return '/admin';
+        if (p.startsWith('/melat')) return '/melat/admin-d7x9k';
+        if (p.startsWith('/phil')) return '/phil/admin-d7x9k';
+        if (p.startsWith('/denverdems')) return '/denverdems/admin-d7x9k';
+        return '/admin-d7x9k';
       })();
       xhr.open('POST', adminPath);
     xhr.upload.onprogress = e => { if(e.lengthComputable) onProgress(e.loaded, e.total); };
