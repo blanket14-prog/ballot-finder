@@ -369,7 +369,8 @@ def make_routes(prefix, cid):
     @app.route(f'{url_prefix}/api/config', endpoint=f'config_{cid}')
     def api_config():
         cfg = CAMPAIGNS[cid]
-        logo_url = f'/static/logo-{cfg["logo"]}.png' if cfg['logo'] else ''
+        logo_ext = 'svg' if cfg['logo'] == 'phil' else 'png'
+        logo_url = f'/static/logo-{cfg["logo"]}.{logo_ext}' if cfg['logo'] else ''
         has_van = len(van_supporters.get(cid, {})) > 0
         return jsonify({
             'campaignName': cfg['name'],
@@ -378,6 +379,7 @@ def make_routes(prefix, cid):
             'prefix': url_prefix,
             'theme': cfg.get('theme', 'dark'),
             'publicPassword': cfg.get('public_password', ''),
+            'hideStats': cfg.get('hide_stats', False),
             'showPartyFilter': cfg.get('show_party_filter', True),
             'showRepFilter': cfg.get('show_rep_filter', False),
             'showCandidateFilter': cfg.get('show_candidate_filter', False) and has_van,
