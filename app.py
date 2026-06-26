@@ -676,7 +676,7 @@ def make_routes(prefix, cid):
         f = request.files['file']
         file_bytes = f.read()
         import io
-        supporters = parse_van_xls(io.BytesIO(file_bytes))
+        supporters = parse_van_xls(io.BytesIO(file_bytes), filename=f.filename)
         if not supporters:
             return jsonify({'error': 'Could not parse VAN file. Make sure it is the standard VAN export.'}), 400
         van_supporters[cid] = supporters
@@ -874,41 +874,52 @@ def save_settings(cid):
         print(f"[{cid}] Settings save ERROR: {e}")
         import traceback; traceback.print_exc()
 
-def parse_van_xls(file_stream):
-    """Parse VAN tab-separated XLS export. Returns dict of {vanid: voter_dict}."""
+def parse_van_xls(file_stream, filename=''):
+    """Parse VAN supporter export. Handles .xlsx, .xls (tab-sep UTF-16), and .csv."""
     supporters = {}
     try:
-        content = file_stream.read()
-        # Handle UTF-16 BOM from VAN exports
-        if content[:2] in (b'\xff\xfe', b'\xfe\xff'):
-            text = content.decode('utf-16')
+        raw = file_stream.read()
+        is_xlsx = raw[:2] == b'PK'
+        is_utf16 = raw[:2] in (b'\xff\xfe', b'\xfe\xff')
+        if is_xlsx:
+            import io as _io, openpyxl
+            wb = openpyxl.load_workbook(_io.BytesIO(raw), read_only=True, data_only=True)
+            ws = wb.active
+            rows = list(ws.iter_rows(values_only=True))
+            if not rows: return supporters
+            headers = [str(h).strip() if h is not None else '' for h in rows[0]]
+            data_rows = rows[1:]
+        elif is_utf16:
+            text = raw.decode('utf-16')
+            lines = text.strip().split('\n')
+            headers = [h.strip().strip('\r') for h in lines[0].split('\t')]
+            data_rows = [[c.strip('\r') for c in line.split('\t')] for line in lines[1:] if line.strip()]
         else:
-            text = content.decode('utf-8', errors='replace')
-        lines = text.strip().split('\n')
-        if not lines: return supporters
-        # Find header
-        headers = [h.strip().strip('\r') for h in lines[0].split('\t')]
-        # Map column names (VAN uses various names)
+            text = raw.decode('utf-8', errors='replace')
+            sep = ',' if (',' in text.split('\n')[0] and '\t' not in text.split('\n')[0]) else '\t'
+            lines = text.strip().split('\n')
+            headers = [h.strip().strip('\r').strip('"') for h in lines[0].split(sep)]
+            data_rows = [[c.strip('\r').strip('"') for c in line.split(sep)] for line in lines[1:] if line.strip()]
         col = {}
         for i, h in enumerate(headers):
-            hl = h.lower().replace(' ', '').replace('_', '')
+            hl = str(h).lower().replace(' ', '').replace('_', '')
             col[hl] = i
         def get_col(row, *names):
             for n in names:
                 n = n.lower().replace(' ','').replace('_','')
                 if n in col and col[n] < len(row):
-                    return row[col[n]].strip().strip('=').strip('"')
+                    val = row[col[n]]
+                    return str(val).strip().strip('=').strip('"') if val is not None else ''
             return ''
-        for line in lines[1:]:
-            if not line.strip(): continue
-            row = [c.strip('\r') for c in line.split('\t')]
+        for row in data_rows:
             vanid = get_col(row, 'VoterFileVANID', 'VANID', 'vanid')
-            if not vanid or not vanid.isdigit(): continue
-            # Use residential address (Address col) not mailing (mAddress)
+            if not vanid or not str(vanid).strip().replace('.0','').isdigit(): continue
+            vanid = str(vanid).strip().replace('.0','')
             addr = get_col(row, 'Address')
             city = get_col(row, 'City')
             state = get_col(row, 'State')
             zip5 = get_col(row, 'Zip5', 'Zip')
+            zip5 = str(zip5).replace('.0','').strip()
             first = get_col(row, 'FirstName', 'First')
             last = get_col(row, 'LastName', 'Last')
             if not addr or not zip5: continue
