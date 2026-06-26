@@ -58,15 +58,16 @@ CAMPAIGNS = {
     'phil': {
         'name': 'Phil Weiser for Governor',
         'logo': 'phil',
-        'color': '#1a5fa8',
+        'color': '#175ec8',
         'password': os.environ.get('PHIL_PASSWORD', 'changeme'),
         'data_dir': os.path.join(BASE_DATA_DIR, 'phil'),
         'theme': 'dark',
         'public_password': '',
-        'show_party_filter': True,
+        'show_party_filter': False,
         'show_candidate_filter': False,
         'show_rep_filter': False,
         'all_voters_stats': False,
+        'hide_stats': True,
     },
     'denverdems': {
         'name': 'Denver Democrats',
