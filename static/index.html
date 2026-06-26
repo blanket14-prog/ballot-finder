@@ -146,6 +146,9 @@ body.hide-stats #campaign-tagline{display:block;max-width:260px;font-size:13px;c
 .lpurple{background:#7F77DD;}.lorange{background:#fb923c;}.licon{width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .legend-note{font-size:11px;color:var(--text3);margin-top:4px;border-top:1px solid var(--border);padding-top:6px;}
 .list-subhead{font-size:13px;color:var(--text2);padding:6px 14px 4px;text-align:center;}
+#legend-onboard{position:absolute;top:10px;right:10px;z-index:502;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;min-width:200px;display:none;}
+#legend-onboard.show{display:block;}
+#legend-onboard-close{position:absolute;top:6px;right:8px;background:none;border:none;color:var(--text2);font-size:16px;cursor:pointer;line-height:1;padding:0;}
 .map-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.65);color:#fff;font-size:11px;padding:5px 14px;border-radius:20px;pointer-events:none;z-index:500;white-space:nowrap;opacity:0;transition:opacity .3s;}
 .map-hint.show{opacity:1;}
 #search-loading{position:absolute;inset:0;background:rgba(0,0,0,0.35);z-index:600;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;backdrop-filter:blur(2px);}
@@ -346,6 +349,14 @@ body.hide-stats #campaign-tagline{display:block;max-width:260px;font-size:13px;c
           <div class="spinner"></div>
           <div class="spinner-label">Finding voters…</div>
         </div>
+        <div id="legend-onboard">
+          <button id="legend-onboard-close" onclick="closeLegendOnboard()">✕</button>
+          <div class="legend-row"><span class="ldot lpurple">3</span> House or condo</div>
+          <div class="legend-row"><span class="ldot lorange">7</span> Apartment building</div>
+          <div class="legend-row"><span class="licon"><svg viewBox="0 0 28 28" width="22" height="22" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="4" width="24" height="20" rx="2" fill="#1565c0"/><rect x="2" y="4" width="24" height="5" rx="2" fill="#0d47a1"/><rect x="9" y="7" width="10" height="2" rx="1" fill="white"/><path d="M10 15 L14 19 L18 15" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="14" y1="12" x2="14" y2="19" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></span> 24-hr ballot drop box</div>
+          <div class="legend-row"><span class="licon"><svg viewBox="0 0 32 32" width="22" height="22" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="28" height="28" rx="6" fill="#15803d"/><rect x="8" y="9" width="16" height="14" rx="1.5" fill="white" opacity="0.9"/><line x1="11" y1="13" x2="21" y2="13" stroke="#15803d" stroke-width="1.5" stroke-linecap="round"/><line x1="11" y1="16" x2="21" y2="16" stroke="#15803d" stroke-width="1.5" stroke-linecap="round"/><path d="M11 19.5 L13 21.5 L17 17.5" stroke="#15803d" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span> In-person voting center</div>
+          <div class="legend-note">All pins have not returned their ballot</div>
+        </div>
         <button id="map-legend-btn" aria-label="Map legend" onclick="toggleLegend(event)">?</button>
         <div id="map-legend-pop" role="tooltip">
           <div class="legend-row"><span class="ldot lpurple">3</span> House or condo</div>
@@ -385,7 +396,7 @@ body.hide-stats #campaign-tagline{display:block;max-width:260px;font-size:13px;c
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1"/><line x1="5" y1="6" x2="11" y2="6"/><line x1="5" y1="9" x2="11" y2="9"/><line x1="5" y1="12" x2="9" y2="12"/></svg>
         Terms
       </a>
-      <span style="font-size:10px;color:var(--text3);">v3.7</span>
+      <span style="font-size:10px;color:var(--text3);">v3.8</span>
     </div>
   </div>
 </div>
@@ -608,6 +619,14 @@ let showCandidateFilter=false;
 let candidateName='Candidate';
 let allVotersStats=false;
 let lastResults=[],filteredResults=[];
+function closeLegendOnboard(){
+  document.getElementById('legend-onboard').classList.remove('show');
+  try{localStorage.setItem('legendSeen','1');}catch(e){}
+}
+function maybeShowLegendOnboard(){
+  try{if(localStorage.getItem('legendSeen')) return;}catch(e){return;}
+  setTimeout(()=>document.getElementById('legend-onboard').classList.add('show'),800);
+}
 function toggleLegend(e){e.stopPropagation();const p=document.getElementById('map-legend-pop');p.classList.toggle('show');if(p.classList.contains('show')){setTimeout(()=>document.addEventListener('click',()=>p.classList.remove('show'),{once:true}),0);}}
 let mapInstance=null,markers=[],originMarker=null,dropboxMarkers=[],lastOrigin=null;
 let rosterState={hh:null,shown:0};
@@ -618,6 +637,7 @@ const PAGE=10;
 // ── INIT ──────────────────────────────────────────────────────────
 async function init(){
   populateDropboxModal();
+  maybeShowLegendOnboard();
   await loadConfig();
   await checkStatus();
   setInterval(checkStatus,20000);
