@@ -572,10 +572,36 @@ const DROP_BOXES = [
   {name:'Athmar Park Library',address:'1055 S. Tejon St.',lat:39.6971105,lng:-105.0135798},
 ];
 
-const VSPC_HOURS_MAIN = 'Today (Jun 30): 7am–7pm';
-const VSPC_HOURS_P1 = 'Today (Jun 30): 7am–7pm';
-const VSPC_HOURS_P2 = 'Today (Jun 30): 7am–7pm';
-const VSPC_HOURS_MLK = 'Today (Jun 30): 7am–7pm';
+function getVspcHours(type) {
+  const now = new Date();
+  const mo = now.getMonth(); // 5 = June
+  const d = now.getDate();
+  if (mo !== 5) return 'See denvergov.org for hours';
+  // Jun 26 (Thu) or Jun 27 (Sat)
+  if (d === 26) {
+    if (type === 'main') return 'Today (Jun 26): 8am–6pm · Sat Jun 27: 10am–2pm';
+    if (type === 'p1')   return 'Today (Jun 26): 10am–6pm · Sat Jun 27: 10am–2pm';
+    return 'Opens Mon Jun 29';
+  }
+  if (d === 27) {
+    if (type === 'main') return 'Today (Jun 27): 10am–2pm';
+    if (type === 'p1')   return 'Today (Jun 27): 10am–2pm';
+    if (type === 'mlk')  return 'Today (Jun 27): 10am–2pm';
+    return 'Opens Mon Jun 29';
+  }
+  if (d === 28) return 'Closed today · Opens Mon Jun 29';
+  if (d === 29) {
+    if (type === 'main') return 'Today (Jun 29): 8am–6pm · Election Day Jun 30: 7am–7pm';
+    if (type === 'mlk')  return 'Today (Jun 29): 8am–5pm · Election Day Jun 30: 7am–7pm';
+    return 'Today (Jun 29): 10am–6pm · Election Day Jun 30: 7am–7pm';
+  }
+  if (d === 30) return 'Election Day — Open 7am–7pm';
+  return 'Election has ended';
+}
+const VSPC_HOURS_MAIN = getVspcHours('main');
+const VSPC_HOURS_P1   = getVspcHours('p1');
+const VSPC_HOURS_P2   = getVspcHours('p2');
+const VSPC_HOURS_MLK  = getVspcHours('mlk');
 
 const VSPC_LOCATIONS = [
   {name:'Denver Public Library - Central Library',address:'10 W. 14th Ave. Pkwy',lat:39.7372618,lng:-104.9881457,phase:'Main VSPC',hours:VSPC_HOURS_MAIN},
