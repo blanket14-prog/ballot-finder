@@ -5,6 +5,21 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__, static_folder='static')
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
 
+# ── ADMIN RATE LIMITING ───────────────────────────────────────────
+_failed_attempts = {}  # ip -> [timestamp, ...]
+_MAX_ATTEMPTS = 5
+_LOCKOUT_SECONDS = 900  # 15 minutes
+
+def _check_rate_limit(ip):
+    now = time.time()
+    attempts = [t for t in _failed_attempts.get(ip, []) if now - t < _LOCKOUT_SECONDS]
+    _failed_attempts[ip] = attempts
+    return len(attempts) >= _MAX_ATTEMPTS
+
+def _record_failed(ip):
+    now = time.time()
+    _failed_attempts.setdefault(ip, []).append(now)
+
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'changeme')
 
 # ── CAMPAIGN CONFIGS ──────────────────────────────────────────────
@@ -564,12 +579,16 @@ def make_routes(prefix, cid):
             return jsonify(results)
         except: return jsonify([])
 
-    @app.route(f'{url_prefix}/admin', methods=['GET','POST'], endpoint=f'admin_{cid}')
+    @app.route(f'{url_prefix}/admin-d7x9k', methods=['GET','POST'], endpoint=f'admin_{cid}')
     def admin():
         if request.method == 'GET':
             return send_from_directory('static', 'admin.html')
+        ip = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0].strip()
+        if _check_rate_limit(ip):
+            return jsonify({'error': 'Too many failed attempts. Try again in 15 minutes.'}), 429
         password = request.form.get('password','')
         if password != CAMPAIGNS[cid]['password']:
+            _record_failed(ip)
             return jsonify({'error': 'Invalid password'}), 401
         if 'file' not in request.files:
             return jsonify({'error': 'No file provided'}), 400
