@@ -553,6 +553,24 @@ const DROP_BOXES = [
   {name:'Athmar Park Library',address:'1055 S. Tejon St.',lat:39.6971105,lng:-105.0135798},
 ];
 
+const VSPC_LOCATIONS = [
+  {name:'Denver Public Library - Central Library',address:'10 W. 14th Ave. Pkwy',lat:39.7373,lng:-104.9872,phase:'Main VSPC'},
+  {name:'Barnum Recreation Center',address:'360 N Hooker St',lat:39.7224,lng:-105.0280,phase:'Phase 1'},
+  {name:'Blair-Caldwell Library',address:'2401 Welton St',lat:39.7528,lng:-104.9809,phase:'Phase 1'},
+  {name:'Calvary Baptist Church of Denver',address:'6500 E Girard Ave',lat:39.6657,lng:-104.9377,phase:'Phase 1'},
+  {name:'Christ Church United Methodist',address:'690 N Colorado Blvd',lat:39.7295,lng:-104.9404,phase:'Phase 1'},
+  {name:'Harvard Gulch Recreation Center',address:'550 E Iliff Ave',lat:39.6677,lng:-104.9700,phase:'Phase 1'},
+  {name:'Harvey Park Recreation Center',address:'2120 S Tennyson Way',lat:39.6741,lng:-105.0338,phase:'Phase 1'},
+  {name:'Hiawatha Davis Jr Recreation Center',address:'3334 N Holly St',lat:39.7773,lng:-104.9323,phase:'Phase 1'},
+  {name:'Highland Recreation Center',address:'2880 N Osceola St',lat:39.7620,lng:-105.0437,phase:'Phase 1'},
+  {name:'Montbello Recreation Center',address:'15555 E 53rd Ave',lat:39.7795,lng:-104.8398,phase:'Phase 1'},
+  {name:'Green Valley Ranch Recreation Center',address:'4890 N Argonne Way',lat:39.7832,lng:-104.8220,phase:'Phase 2'},
+  {name:'Martin Luther King Jr. Library',address:'9898 E Colfax Ave',lat:39.7401,lng:-104.8394,phase:'Phase 2'},
+  {name:'Regis University / Claver Hall',address:'3333 Regis Blvd',lat:39.8028,lng:-105.0339,phase:'Phase 2'},
+  {name:'Tivoli Student Union at Auraria',address:'900 Auraria Pkwy',lat:39.7447,lng:-105.0063,phase:'Phase 2'},
+  {name:'University of Denver Dimond Family Residential Village',address:'2020 S High St',lat:39.6878,lng:-104.9617,phase:'Phase 2'},
+];
+
 function populateDropboxModal(){
   const ul=document.getElementById('dropbox-modal-list');
   ul.innerHTML=DROP_BOXES.map(db=>`<li><span class="db-icon">📦</span><div class="db-info"><div class="db-name">${db.name}</div><div class="db-addr">${db.address}</div></div></li>`).join('');
@@ -927,6 +945,15 @@ function ensureMap(){
     const m=L.marker([db.lat,db.lng],{icon,zIndexOffset:-100}).addTo(mapInstance);
     m.bindPopup(`<strong>${db.name}</strong><br/>${db.address}<br/><em style="font-size:11px">24-hr ballot drop box</em>`);
     dropboxMarkers.push(m);
+  });
+  // Add VSPC markers
+  VSPC_LOCATIONS.forEach(v=>{
+    const vspcIcon=L.divIcon({
+      html:`<div style="width:28px;height:28px;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.35))"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="12" width="20" height="14" rx="1" fill="#15803d"/><polygon points="2,13 14,3 26,13" fill="#16a34a"/><rect x="11" y="18" width="6" height="8" rx="1" fill="white"/><rect x="6" y="15" width="4" height="4" rx="0.5" fill="white" opacity="0.8"/><rect x="18" y="15" width="4" height="4" rx="0.5" fill="white" opacity="0.8"/></svg></div>`,
+      className:'',iconSize:[28,28],iconAnchor:[14,28]
+    });
+    const m=L.marker([v.lat,v.lng],{icon:vspcIcon,zIndexOffset:-90}).addTo(mapInstance);
+    m.bindPopup(`<strong>${v.name}</strong><br/>${v.address}<br/><em style="font-size:11px">Voter Service &amp; Polling Center &middot; ${v.phase}</em>`);
   });
 }
 
