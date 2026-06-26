@@ -68,6 +68,7 @@ CAMPAIGNS = {
         'show_rep_filter': False,
         'all_voters_stats': False,
         'hide_stats': True,
+        'tagline': 'Help Phil win — find priority voters near you who haven’t returned their ballot.',
     },
     'denverdems': {
         'name': 'Denver Democrats',
@@ -380,6 +381,7 @@ def make_routes(prefix, cid):
             'theme': cfg.get('theme', 'dark'),
             'publicPassword': cfg.get('public_password', ''),
             'hideStats': cfg.get('hide_stats', False),
+            'tagline': cfg.get('tagline', ''),
             'showPartyFilter': cfg.get('show_party_filter', True),
             'showRepFilter': cfg.get('show_rep_filter', False),
             'showCandidateFilter': cfg.get('show_candidate_filter', False) and has_van,
