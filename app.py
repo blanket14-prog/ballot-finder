@@ -448,21 +448,7 @@ def make_routes(prefix, cid):
                 norm = vsup['name'].upper().strip()
                 van_key_names[k][norm] = vid
             van_keys = set(van_key_names.keys())
-            # Geocode any missing supporters
-            missing = [v for v in van_supporters[cid].values()
-                      if v['geocodeKey'] not in geocache or not geocache[v['geocodeKey']]]
-            if missing:
-                print(f"[{cid}] {len(missing)} VAN supporters missing from geocache — geocoding now")
-                for vsup in missing:
-                    coords = geocode_census_original(vsup['address'], vsup['city'], vsup.get('state','CO'), vsup['zip'])
-                    if coords:
-                        geocache[vsup['geocodeKey']] = coords
-                        van_geocoded[vsup['geocodeKey']] = coords
-                        print(f"[{cid}] Geocoded: {vsup['address']} -> {coords}")
-                    else:
-                        print(f"[{cid}] Could not geocode: {vsup['address']}")
-                if van_geocoded:
-                    save_geocache(cid)
+            # Missing supporters are geocoded in background at startup -- skip here
         buildings = {}
         # Build vanid lookup: geocodeKey -> vanid for fast annotation
         van_geocode_to_id = {}
