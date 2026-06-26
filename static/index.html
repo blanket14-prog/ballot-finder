@@ -373,7 +373,11 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="12" height="8" rx="1"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>
         Drop boxes
       </a>
-      <span style="font-size:10px;color:var(--text3);">v3.4</span>
+      <a class="footer-link" onclick="openModal('terms-modal')">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1"/><line x1="5" y1="6" x2="11" y2="6"/><line x1="5" y1="9" x2="11" y2="9"/><line x1="5" y1="12" x2="9" y2="12"/></svg>
+        Terms
+      </a>
+      <span style="font-size:10px;color:var(--text3);">v3.5</span>
     </div>
   </div>
 </div>
@@ -432,6 +436,26 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
       <div class="modal-section" style="margin-top:12px;">
         <ul class="dropbox-list" id="dropbox-modal-list"></ul>
       </div>
+    </div>
+  </div>
+</div>
+
+<div id="terms-modal" class="modal-overlay" onclick="overlayClick(event,'terms-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('terms-modal')">✕</button>
+    <div class="modal-title">📋 Terms of Use</div>
+    <div class="modal-body">
+      <p>This tool is provided for civic engagement and ballot return assistance purposes only. All voter data displayed is publicly available pursuant to <strong>C.R.S. § 1-2-227</strong>, which requires Colorado county clerks to make voter registration and ballot status information available to the public.</p>
+      <div class="modal-section" style="margin-top:12px;">
+        <p style="margin-bottom:8px;">Use of this data is subject to the following restrictions under Colorado law:</p>
+        <ul style="padding-left:18px;line-height:1.8;">
+          <li>Voter data may not be used for commercial purposes</li>
+          <li>Voter data may not be used to harass, intimidate, or harm any individual</li>
+          <li>Redistribution or resale of this data is prohibited</li>
+        </ul>
+      </div>
+      <p style="margin-top:12px;">By using this tool, you agree to use voter information solely to assist Denver residents in returning their mail ballots during the 2026 Primary Election. Any other use is prohibited.</p>
     </div>
   </div>
 </div>
