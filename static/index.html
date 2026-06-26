@@ -142,7 +142,7 @@ body.hide-stats #campaign-logo{max-height:52px;width:auto;max-width:220px;}
 #map-legend-pop.show{display:block;}
 .legend-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);margin-bottom:5px;}
 .ldot{width:22px;height:22px;border-radius:50%;color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.lpurple{background:#7F77DD;}.lorange{background:#fb923c;}
+.lpurple{background:#7F77DD;}.lorange{background:#fb923c;}.licon{width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .legend-note{font-size:11px;color:var(--text3);margin-top:4px;border-top:1px solid var(--border);padding-top:6px;}
 .list-subhead{font-size:13px;color:var(--text2);padding:6px 14px 4px;text-align:center;}
 .map-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.65);color:#fff;font-size:11px;padding:5px 14px;border-radius:20px;pointer-events:none;z-index:500;white-space:nowrap;opacity:0;transition:opacity .3s;}
@@ -348,6 +348,8 @@ body.hide-stats #campaign-logo{max-height:52px;width:auto;max-width:220px;}
         <div id="map-legend-pop" role="tooltip">
           <div class="legend-row"><span class="ldot lpurple">3</span> House or condo</div>
           <div class="legend-row"><span class="ldot lorange">7</span> Apartment building</div>
+          <div class="legend-row"><span class="licon"><svg viewBox="0 0 28 28" width="22" height="22" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="4" width="24" height="20" rx="2" fill="#1565c0"/><rect x="2" y="4" width="24" height="5" rx="2" fill="#0d47a1"/><rect x="9" y="7" width="10" height="2" rx="1" fill="white"/><path d="M10 15 L14 19 L18 15" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="14" y1="12" x2="14" y2="19" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></span> 24-hr ballot drop box</div>
+          <div class="legend-row"><span class="licon"><svg viewBox="0 0 32 32" width="22" height="22" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="28" height="28" rx="6" fill="#15803d"/><rect x="8" y="9" width="16" height="14" rx="1.5" fill="white" opacity="0.9"/><line x1="11" y1="13" x2="21" y2="13" stroke="#15803d" stroke-width="1.5" stroke-linecap="round"/><line x1="11" y1="16" x2="21" y2="16" stroke="#15803d" stroke-width="1.5" stroke-linecap="round"/><path d="M11 19.5 L13 21.5 L17 17.5" stroke="#15803d" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span> In-person voting center</div>
           <div class="legend-note">All pins have not returned their ballot</div>
         </div>
       </div>
@@ -381,7 +383,7 @@ body.hide-stats #campaign-logo{max-height:52px;width:auto;max-width:220px;}
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1"/><line x1="5" y1="6" x2="11" y2="6"/><line x1="5" y1="9" x2="11" y2="9"/><line x1="5" y1="12" x2="9" y2="12"/></svg>
         Terms
       </a>
-      <span style="font-size:10px;color:var(--text3);">v3.6</span>
+      <span style="font-size:10px;color:var(--text3);">v3.7</span>
     </div>
   </div>
 </div>
@@ -558,21 +560,21 @@ const DROP_BOXES = [
 ];
 
 const VSPC_LOCATIONS = [
-  {name:'Denver Public Library - Central Library',address:'10 W. 14th Ave. Pkwy',lat:39.7373,lng:-104.9872,phase:'Main VSPC'},
-  {name:'Barnum Recreation Center',address:'360 N Hooker St',lat:39.7224,lng:-105.0280,phase:'Phase 1'},
-  {name:'Blair-Caldwell Library',address:'2401 Welton St',lat:39.7528,lng:-104.9809,phase:'Phase 1'},
-  {name:'Calvary Baptist Church of Denver',address:'6500 E Girard Ave',lat:39.6657,lng:-104.9377,phase:'Phase 1'},
-  {name:'Christ Church United Methodist',address:'690 N Colorado Blvd',lat:39.7295,lng:-104.9404,phase:'Phase 1'},
-  {name:'Harvard Gulch Recreation Center',address:'550 E Iliff Ave',lat:39.6677,lng:-104.9700,phase:'Phase 1'},
-  {name:'Harvey Park Recreation Center',address:'2120 S Tennyson Way',lat:39.6741,lng:-105.0338,phase:'Phase 1'},
-  {name:'Hiawatha Davis Jr Recreation Center',address:'3334 N Holly St',lat:39.7773,lng:-104.9323,phase:'Phase 1'},
-  {name:'Highland Recreation Center',address:'2880 N Osceola St',lat:39.7620,lng:-105.0437,phase:'Phase 1'},
-  {name:'Montbello Recreation Center',address:'15555 E 53rd Ave',lat:39.7795,lng:-104.8398,phase:'Phase 1'},
-  {name:'Green Valley Ranch Recreation Center',address:'4890 N Argonne Way',lat:39.7832,lng:-104.8220,phase:'Phase 2'},
-  {name:'Martin Luther King Jr. Library',address:'9898 E Colfax Ave',lat:39.7401,lng:-104.8394,phase:'Phase 2'},
-  {name:'Regis University / Claver Hall',address:'3333 Regis Blvd',lat:39.8028,lng:-105.0339,phase:'Phase 2'},
-  {name:'Tivoli Student Union at Auraria',address:'900 Auraria Pkwy',lat:39.7447,lng:-105.0063,phase:'Phase 2'},
-  {name:'University of Denver Dimond Family Residential Village',address:'2020 S High St',lat:39.6878,lng:-104.9617,phase:'Phase 2'},
+  {name:'Denver Public Library - Central Library',address:'10 W. 14th Ave. Pkwy',lat:39.7372618,lng:-104.9881457,phase:'Main VSPC'},
+  {name:'Barnum Recreation Center',address:'360 N Hooker St',lat:39.7224465,lng:-105.0280307,phase:'Phase 1'},
+  {name:'Blair-Caldwell Library',address:'2401 Welton St',lat:39.7524003,lng:-104.9816252,phase:'Phase 1'},
+  {name:'Calvary Baptist Church of Denver',address:'6500 E Girard Ave',lat:39.6536097,lng:-104.9121823,phase:'Phase 1'},
+  {name:'Christ Church United Methodist',address:'690 N Colorado Blvd',lat:39.7269374,lng:-104.9402543,phase:'Phase 1'},
+  {name:'Harvard Gulch Recreation Center',address:'550 E Iliff Ave',lat:39.6744274,lng:-104.9810815,phase:'Phase 1'},
+  {name:'Harvey Park Recreation Center',address:'2120 S Tennyson Way',lat:39.6781413,lng:-105.0418389,phase:'Phase 1'},
+  {name:'Hiawatha Davis Jr Recreation Center',address:'3334 N Holly St',lat:39.764413,lng:-104.9221037,phase:'Phase 1'},
+  {name:'Highland Recreation Center',address:'2880 N Osceola St',lat:39.7581399,lng:-105.0374752,phase:'Phase 1'},
+  {name:'Montbello Recreation Center',address:'15555 E 53rd Ave',lat:39.7923968,lng:-104.8058367,phase:'Phase 1'},
+  {name:'Green Valley Ranch Recreation Center',address:'4890 N Argonne Way',lat:39.7858289,lng:-104.767285,phase:'Phase 2'},
+  {name:'Martin Luther King Jr. Library',address:'9898 E Colfax Ave',lat:39.7397201,lng:-104.8735205,phase:'Phase 2'},
+  {name:'Regis University / Claver Hall',address:'3333 Regis Blvd',lat:39.7913279,lng:-105.0324733,phase:'Phase 2'},
+  {name:'Tivoli Student Union at Auraria',address:'900 Auraria Pkwy',lat:39.7451929,lng:-105.0058526,phase:'Phase 2'},
+  {name:'University of Denver Dimond Family Residential Village',address:'2020 S High St',lat:39.6798505,lng:-104.9649917,phase:'Phase 2'},
 ];
 
 function populateDropboxModal(){
@@ -956,8 +958,8 @@ function ensureMap(){
   // Add VSPC markers
   VSPC_LOCATIONS.forEach(v=>{
     const vspcIcon=L.divIcon({
-      html:`<div style="width:28px;height:28px;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.35))"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="12" width="20" height="14" rx="1" fill="#15803d"/><polygon points="2,13 14,3 26,13" fill="#16a34a"/><rect x="11" y="18" width="6" height="8" rx="1" fill="white"/><rect x="6" y="15" width="4" height="4" rx="0.5" fill="white" opacity="0.8"/><rect x="18" y="15" width="4" height="4" rx="0.5" fill="white" opacity="0.8"/></svg></div>`,
-      className:'',iconSize:[28,28],iconAnchor:[14,28]
+      html:`<div style="width:28px;height:28px;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.35))"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="28" height="28" rx="6" fill="#15803d"/><rect x="8" y="9" width="16" height="14" rx="1.5" fill="white" opacity="0.9"/><line x1="11" y1="13" x2="21" y2="13" stroke="#15803d" stroke-width="1.5" stroke-linecap="round"/><line x1="11" y1="16" x2="21" y2="16" stroke="#15803d" stroke-width="1.5" stroke-linecap="round"/><path d="M11 19.5 L13 21.5 L17 17.5" stroke="#15803d" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`,
+      className:'',iconSize:[28,28],iconAnchor:[14,14]
     });
     const m=L.marker([v.lat,v.lng],{icon:vspcIcon,zIndexOffset:-90}).addTo(mapInstance);
     m.bindPopup(`<strong>${v.name}</strong><br/>${v.address}<br/><em style="font-size:11px">Voter Service &amp; Polling Center &middot; ${v.phase}</em>`);
