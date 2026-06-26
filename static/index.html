@@ -74,6 +74,7 @@ body.hide-stats #top-stats{display:none;}
 body.hide-stats #top-bar{justify-content:center;padding:6px 16px;}
 body.hide-stats #top-logo{flex:none;text-align:center;}
 body.hide-stats #campaign-logo{max-height:52px;width:auto;max-width:220px;}
+body.hide-stats #campaign-tagline{display:block;}
 .top-stat-divider{width:1px;background:var(--border);align-self:stretch;flex-shrink:0;}
 #geocoding-banner{margin:0 12px 3px;padding:5px 12px;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.2);border-radius:8px;font-size:11px;color:var(--accent);display:none;text-align:center;flex-shrink:0;}
 
@@ -257,6 +258,7 @@ body.hide-stats #campaign-logo{max-height:52px;width:auto;max-width:220px;}
       <img id="campaign-logo" src="" alt="" style="display:none;"/>
       <span id="campaign-name">📋 Ballot Finder</span>
     </div>
+    <div id="campaign-tagline" style="display:none;font-size:13px;color:rgba(255,255,255,0.85);max-width:240px;line-height:1.4;"></div>
     <div id="top-stats">
       <div class="top-stat"><div class="top-stat-label">Dem &amp; UAF</div><div class="top-stat-value" id="stat-total">—</div></div>
       <div class="top-stat-divider"></div>
@@ -643,6 +645,10 @@ async function loadConfig(){
     }
     if(c.hideStats){
       document.body.classList.add('hide-stats');
+    }
+    if(c.tagline){
+      const tl=document.getElementById('campaign-tagline');
+      if(tl) tl.textContent=c.tagline;
     }
     if(c.campaignName){
       document.title=c.campaignName+' — Ballot Finder';
