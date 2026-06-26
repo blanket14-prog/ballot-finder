@@ -70,6 +70,10 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
 .top-stat-label{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px;white-space:nowrap;}
 .top-stat-value{font-size:14px;font-weight:700;color:var(--text);}
 .top-stat-value.warn{color:#fb923c;}
+body.hide-stats #top-stats{display:none;}
+body.hide-stats #top-bar{justify-content:center;padding:6px 16px;}
+body.hide-stats #top-logo{flex:none;text-align:center;}
+body.hide-stats #campaign-logo{max-height:52px;width:auto;max-width:220px;}
 .top-stat-divider{width:1px;background:var(--border);align-self:stretch;flex-shrink:0;}
 #geocoding-banner{margin:0 12px 3px;padding:5px 12px;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.2);border-radius:8px;font-size:11px;color:var(--accent);display:none;text-align:center;flex-shrink:0;}
 
@@ -377,7 +381,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1"/><line x1="5" y1="6" x2="11" y2="6"/><line x1="5" y1="9" x2="11" y2="9"/><line x1="5" y1="12" x2="9" y2="12"/></svg>
         Terms
       </a>
-      <span style="font-size:10px;color:var(--text3);">v3.5</span>
+      <span style="font-size:10px;color:var(--text3);">v3.6</span>
     </div>
   </div>
 </div>
@@ -634,6 +638,9 @@ async function loadConfig(){
     }
     if(c.accentColor&&c.accentColor!=='#6c63ff'){
       document.documentElement.style.setProperty('--accent',c.accentColor);
+    }
+    if(c.hideStats){
+      document.body.classList.add('hide-stats');
     }
     if(c.campaignName){
       document.title=c.campaignName+' — Ballot Finder';
