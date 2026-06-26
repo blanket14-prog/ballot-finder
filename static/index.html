@@ -140,7 +140,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
 .ldot{width:22px;height:22px;border-radius:50%;color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .lpurple{background:#7F77DD;}.lorange{background:#fb923c;}
 .legend-note{font-size:11px;color:var(--text3);margin-top:4px;border-top:1px solid var(--border);padding-top:6px;}
-.list-subhead{font-size:11px;color:var(--text3);padding:2px 14px 6px;}
+.list-subhead{font-size:13px;color:var(--text2);padding:6px 14px 4px;text-align:center;}
 .map-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.65);color:#fff;font-size:11px;padding:5px 14px;border-radius:20px;pointer-events:none;z-index:500;white-space:nowrap;opacity:0;transition:opacity .3s;}
 .map-hint.show{opacity:1;}
 #search-loading{position:absolute;inset:0;background:rgba(0,0,0,0.35);z-index:600;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;backdrop-filter:blur(2px);}
@@ -329,6 +329,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
     </button>
     -->
   </div>
+  <div class="list-subhead" style="text-align:center;font-size:13px;padding:6px 14px 4px;">Ballots not yet returned · enter address or place a pin</div>
   <div id="content">
     <!-- empty state overlays the map -->
     <div id="map-view">
@@ -350,7 +351,6 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         <div id="roster-content"><div class="roster-empty">Tap a pin to see who lives there</div></div>
       </div>
     </div>
-    <div class="list-subhead">Ballots not yet returned · enter address or place a pin</div>
     <div id="list-view">
       <div class="list-header">
         <span id="list-count">0 addresses</span>
@@ -373,7 +373,7 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="12" height="8" rx="1"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>
         Drop boxes
       </a>
-      <span style="font-size:10px;color:var(--text3);">v3.3</span>
+      <span style="font-size:10px;color:var(--text3);">v3.4</span>
     </div>
   </div>
 </div>
