@@ -274,7 +274,7 @@ body.hide-stats #campaign-tagline{display:block;max-width:260px;font-size:13px;c
   <div id="search-bar">
     <div class="search-row">
       <div class="input-wrap" style="position:relative">
-        <input type="text" id="addr-input" placeholder="Enter your Denver address…"
+        <input type="text" id="addr-input" placeholder="Enter your address…"
           autocomplete="off" autocorrect="off" spellcheck="false"
           oninput="onInput()" onkeydown="onKeydown(event)"
           onfocus="onFocus()" onblur="onBlur()"/>
@@ -670,6 +670,9 @@ async function loadConfig(){
       const tl=document.getElementById('campaign-tagline');
       if(tl) tl.textContent=c.tagline;
     }
+    if(c.mapCenter){window._mapLat=c.mapCenter[0];window._mapLng=c.mapCenter[1];}
+    if(c.mapZoom){window._mapZoom=c.mapZoom;}
+    if(c.county&&c.county!=='Denver'){window._hideDenverDropboxes=true;}
     if(c.campaignName){
       document.title=c.campaignName+' — Ballot Finder';
       document.getElementById('pw-title').textContent=c.campaignName;
@@ -949,7 +952,7 @@ function handleMapClick(e){
 // ── MAP ───────────────────────────────────────────────────────────
 function ensureMap(){
   if(mapInstance)return;
-  mapInstance=L.map('map',{zoomControl:true,center:[DLAT,DLNG],zoom:13,tap:true,tapTolerance:20});
+  mapInstance=L.map('map',{zoomControl:true,center:[window._mapLat||DLAT,window._mapLng||DLNG],zoom:window._mapZoom||13,tap:true,tapTolerance:20});
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
     attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',
     maxZoom:19,subdomains:'abcd'
@@ -965,7 +968,7 @@ function ensureMap(){
   }});
   new PinCtrl({position:'topleft'}).addTo(mapInstance);
   // Add drop box markers
-  DROP_BOXES.forEach(db=>{
+  if(!window._hideDenverDropboxes){DROP_BOXES.forEach(db=>{
     const icon=L.divIcon({
       html:`<div style="width:28px;height:28px;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.35))">
         <svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
@@ -981,7 +984,7 @@ function ensureMap(){
     const m=L.marker([db.lat,db.lng],{icon,zIndexOffset:-100}).addTo(mapInstance);
     m.bindPopup(`<strong>${db.name}</strong><br/>${db.address}<br/><em style="font-size:11px">24-hr ballot drop box</em>`);
     dropboxMarkers.push(m);
-  });
+  });}
   // Add VSPC markers
   VSPC_LOCATIONS.forEach(v=>{
     const vspcIcon=L.divIcon({
