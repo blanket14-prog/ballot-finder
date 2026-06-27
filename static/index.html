@@ -396,7 +396,7 @@ body.hide-stats #campaign-tagline{display:block;max-width:260px;font-size:13px;c
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1"/><line x1="5" y1="6" x2="11" y2="6"/><line x1="5" y1="9" x2="11" y2="9"/><line x1="5" y1="12" x2="9" y2="12"/></svg>
         Terms
       </a>
-      <span style="font-size:10px;color:var(--text3);">v3.8</span>
+      <span style="font-size:10px;color:var(--text3);">v3.9</span>
     </div>
   </div>
 </div>
@@ -649,7 +649,7 @@ let showRepFilter=false;
 let showCandidateFilter=false;
 let candidateName='Candidate';
 let allVotersStats=false;
-let lastResults=[],filteredResults=[];
+let lastResults=[],filteredResults=[],lastLookupResults=[];
 function closeLegendOnboard(){
   document.getElementById('legend-onboard').classList.remove('show');
   try{localStorage.setItem('legendSeen','1');}catch(e){}
@@ -888,7 +888,7 @@ function onFocus(){if(acResults.length)renderAC();}
 function onBlur(){setTimeout(closeAC,150);}
 
 // ── SEARCH ────────────────────────────────────────────────────────
-async function handleSearch(){
+async async function handleSearch(){
   closeAC();
   const addr=document.getElementById('addr-input').value.trim();
   if(!addr){alert('Please enter a Denver address.');return;}
@@ -901,6 +901,9 @@ async function handleSearch(){
       if(!r.ok){alert('Could not find that address in Denver. Try adding the street type, e.g. "552 S Pennsylvania St".');return;}
       origin=await r.json();lastOrigin=origin;
     }
+    const lookupR=await fetch(apiUrl('/api/lookup?address=')+encodeURIComponent(addr));
+    const lookupD=await lookupR.json();
+    lastLookupResults=lookupD.found?lookupD.results:[];
     await doSearch(origin);
   }finally{btn.textContent='Search';btn.disabled=false;document.getElementById('addr-input').blur();}
 }
@@ -1141,10 +1144,29 @@ function renderRoster(){
 function loadMore(){rosterState.shown=Math.min(rosterState.shown+PAGE,rosterState.hh.voters.length);renderRoster();}
 
 // ── LIST ──────────────────────────────────────────────────────────
-function renderList(results){
+function renderList(results,lookupResults){
   document.getElementById('list-count').textContent=`${results.length} address${results.length!==1?'es':''}`;
   const ul=document.getElementById('household-list');
-  if(!results.length){ul.innerHTML=`<div style="padding:3rem 2rem;text-align:center;color:var(--text3);font-size:14px;">⏳ No cached addresses near you yet — geocoding is running. Try again in a few minutes.</div>`;return;}
+  let lookupHtml='';
+  if(lookupResults&&lookupResults.length){
+    lookupResults.forEach(hh=>{
+      const unreturned=hh.voters.filter(v=>!v.returned);
+      if(!unreturned.length){
+        lookupHtml+=`<div style="border-left:3px solid #22c55e;border-radius:8px;margin:8px 12px;padding:10px 12px;font-size:12px;color:#22c55e;">All ballots at this address have been returned.</div>`;
+        return;
+      }
+      lookupHtml+=`<div style="border-left:3px solid var(--accent);border-radius:8px;margin:8px 12px;padding:10px 12px;">`;
+      lookupHtml+=`<div style="font-size:11px;color:var(--accent);font-weight:600;margin-bottom:6px;">Searched address - ${unreturned.length} unreturned ballot${unreturned.length!==1?'s':''}</div>`;
+      lookupHtml+=`<div style="font-weight:500;font-size:13px;margin-bottom:6px;">${hh.address}</div>`;
+      unreturned.forEach((v,i)=>{
+        lookupHtml+=`<div style="font-size:12px;color:var(--text2);padding:2px 0;">${i+1}. ${v.name} - ${v.party}</div>`;
+      });
+      lookupHtml+=`</div>`;
+    });
+  }
+  if(!results.length&&!lookupHtml){ul.innerHTML=`<div style="padding:3rem 2rem;text-align:center;color:var(--text3);font-size:14px;">No cached addresses near you yet - geocoding is running. Try again in a few minutes.</div>`;return;}
+  ul.innerHTML=lookupHtml;
+  if(!results.length)return;
   let html='',stop=0;
   results.forEach((hh,i)=>{
     stop++;
@@ -1179,9 +1201,8 @@ function focusMarker(i){
 
 function renderAll(results,origin){
   filteredResults=results;
-
   renderMap(results,origin||lastOrigin);
-  renderList(results);
+  renderList(results,lastLookupResults);
   closeRoster();
 }
 
