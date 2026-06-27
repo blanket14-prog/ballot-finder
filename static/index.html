@@ -888,7 +888,7 @@ function onFocus(){if(acResults.length)renderAC();}
 function onBlur(){setTimeout(closeAC,150);}
 
 // ── SEARCH ────────────────────────────────────────────────────────
-async async function handleSearch(){
+async async async function handleSearch(){
   closeAC();
   const addr=document.getElementById('addr-input').value.trim();
   if(!addr){alert('Please enter a Denver address.');return;}
