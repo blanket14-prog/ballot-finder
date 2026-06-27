@@ -539,6 +539,52 @@ def make_routes(prefix, cid):
         except: pass
         return jsonify({'error': 'Address not found'}), 404
 
+    @app.route(f'{url_prefix}/api/lookup', endpoint=f'lookup_{cid}')
+    def lookup():
+        """Look up voters at an exact address. Returns household if found in CE-068."""
+        addr = request.args.get('address','').strip().upper()
+        if not addr or not voters_data:
+            return jsonify({'found': False})
+        # Normalize: remove trailing punctuation, collapse spaces
+        import re
+        addr_norm = re.sub(r'[.,]', '', addr).strip()
+        # Try to match against buildingAddress in voters_data
+        matches = {}
+        for v in voters_data:
+            baddr = v.get('buildingAddress','').upper()
+            baddr_norm = re.sub(r'[.,]', '', baddr).strip()
+            # Match if typed address is contained in building address or vice versa
+            if addr_norm in baddr_norm or baddr_norm.startswith(addr_norm):
+                key = v['geocodeKey']
+                if key not in matches:
+                    matches[key] = {
+                        'address': v.get('buildingAddress',''),
+                        'city': v.get('city','Denver'),
+                        'state': v.get('state','CO'),
+                        'zip': v.get('zip',''),
+                        'apt': v.get('apt', False),
+                        'geocodeKey': key,
+                        'voters': [],
+                        'lat': 0, 'lng': 0,
+                    }
+                matches[key]['voters'].append({
+                    'name': v.get('name',''),
+                    'party': v.get('party',''),
+                    'returned': v.get('returned', False),
+                })
+        if not matches:
+            return jsonify({'found': False})
+        # Get coords for matches
+        use_nominatim = CAMPAIGNS[cid].get('use_nominatim', False)
+        results = []
+        for key, hh in matches.items():
+            coords = (nominatim_cache if use_nominatim else geocache).get(key)
+            if coords:
+                hh['lat'] = coords[0]
+                hh['lng'] = coords[1]
+            results.append(hh)
+        return jsonify({'found': True, 'results': results})
+
     @app.route(f'{url_prefix}/api/autocomplete', endpoint=f'autocomplete_{cid}')
     def api_autocomplete():
         q = request.args.get('q','')
