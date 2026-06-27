@@ -566,7 +566,7 @@ function getPrefix() {
 }
 
 async function clearAndRebuildNominatim() {
-  const pw = document.getElementById('admin-pw-nom') ? document.getElementById('admin-pw-nom').value : document.querySelector('[id$="admin-pw"]') ? document.querySelector('[id$="admin-pw"]').value : '';
+  const pw = document.getElementById('geocache-password') ? document.getElementById('geocache-password').value : '';
   if (!confirm('Clear all 142k Nominatim cached coordinates and rebuild from scratch? This takes ~40 hours. The app stays live using Census coords during rebuild.')) return;
   const fd = new FormData();
   fd.append('password', pw);
