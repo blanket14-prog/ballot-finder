@@ -174,7 +174,7 @@ def geocode_nominatim_single(building_addr, city, state_abbr, zip5):
         full = f"{building_addr}, {city}, {state_abbr} {zip5}"
         r = requests.get(
             'https://nominatim.openstreetmap.org/search',
-            params={'q': full, 'format': 'json', 'limit': 1, 'countrycodes': 'us'},
+            params={'q': full, 'format': 'json', 'limit': 1, 'countrycodes': 'us', 'featuretype': 'address'},
             headers={'User-Agent': 'BallotFinder/2.0 (Denver GOTV)'},
             timeout=8)
         data = r.json()
