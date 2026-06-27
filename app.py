@@ -70,6 +70,19 @@ CAMPAIGNS = {
         'hide_stats': True,
         'tagline': 'Help Phil win — find priority voters near you who haven’t returned their ballot.',
     },
+    'arapahoe': {
+        'name': 'Arapahoe Ballot Finder',
+        'logo': '',
+        'color': '#6c63ff',
+        'password': os.environ.get('ADMIN_PASSWORD', 'changeme'),
+        'data_dir': os.path.join(BASE_DATA_DIR, 'default'),
+        'theme': 'dark',
+        'public_password': '',
+        'show_party_filter': True,
+        'show_candidate_filter': False,
+        'show_rep_filter': True,
+        'all_voters_stats': False,
+    },
     'denverdems': {
         'name': 'Denver Democrats',
         'logo': 'denverdems',
@@ -271,6 +284,17 @@ def parse_from_disk(cid, filename):
     delim = '|' if '|' in lines[0] else ','
     header_cols = split_line(lines[0].strip(), delim)
     col = {name.strip(): i for i, name in enumerate(header_cols)}
+    # Normalize Arapahoe column names to Denver format
+    ARAPAHOE_COL_MAP = {
+        'RES ADDRESS': 'RES_ADDRESS',
+        'RES CITY': 'RES_CITY',
+        'RES STATE': 'RES_STATE',
+        'RES ZIP': 'RES_ZIP',
+        'VOTE METHOD': 'VOTE_METHOD',
+    }
+    for old_name, new_name in ARAPAHOE_COL_MAP.items():
+        if old_name in col and new_name not in col:
+            col[new_name] = col[old_name]
     required = ['VOTER_ID','FIRST_NAME','LAST_NAME','PARTY','RES_ADDRESS','RES_CITY','RES_STATE','RES_ZIP']
     missing = [c for c in required if c not in col]
     if missing: raise ValueError(f"Missing columns: {missing}")
