@@ -396,7 +396,7 @@ body.hide-stats #campaign-tagline{display:block;max-width:260px;font-size:13px;c
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1"/><line x1="5" y1="6" x2="11" y2="6"/><line x1="5" y1="9" x2="11" y2="9"/><line x1="5" y1="12" x2="9" y2="12"/></svg>
         Terms
       </a>
-      <span style="font-size:10px;color:var(--text3);">v3.9</span>
+      <span style="font-size:10px;color:var(--text3);">v3.8</span>
     </div>
   </div>
 </div>
@@ -572,53 +572,22 @@ const DROP_BOXES = [
   {name:'Athmar Park Library',address:'1055 S. Tejon St.',lat:39.6971105,lng:-105.0135798},
 ];
 
-function getVspcHours(type) {
-  const now = new Date();
-  const mo = now.getMonth(); // 5 = June
-  const d = now.getDate();
-  if (mo !== 5) return 'See denvergov.org for hours';
-  // Jun 26 (Thu) or Jun 27 (Sat)
-  if (d === 26) {
-    if (type === 'main') return 'Today (Jun 26): 8am–6pm · Sat Jun 27: 10am–2pm';
-    if (type === 'p1')   return 'Today (Jun 26): 10am–6pm · Sat Jun 27: 10am–2pm';
-    return 'Opens Mon Jun 29';
-  }
-  if (d === 27) {
-    if (type === 'main') return 'Today (Jun 27): 10am–2pm';
-    if (type === 'p1')   return 'Today (Jun 27): 10am–2pm';
-    if (type === 'mlk')  return 'Today (Jun 27): 10am–2pm';
-    return 'Opens Mon Jun 29';
-  }
-  if (d === 28) return 'Closed today · Opens Mon Jun 29';
-  if (d === 29) {
-    if (type === 'main') return 'Today (Jun 29): 8am–6pm · Election Day Jun 30: 7am–7pm';
-    if (type === 'mlk')  return 'Today (Jun 29): 8am–5pm · Election Day Jun 30: 7am–7pm';
-    return 'Today (Jun 29): 10am–6pm · Election Day Jun 30: 7am–7pm';
-  }
-  if (d === 30) return 'Election Day — Open 7am–7pm';
-  return 'Election has ended';
-}
-const VSPC_HOURS_MAIN = getVspcHours('main');
-const VSPC_HOURS_P1   = getVspcHours('p1');
-const VSPC_HOURS_P2   = getVspcHours('p2');
-const VSPC_HOURS_MLK  = getVspcHours('mlk');
-
 const VSPC_LOCATIONS = [
-  {name:'Denver Public Library - Central Library',address:'10 W. 14th Ave. Pkwy',lat:39.7372618,lng:-104.9881457,phase:'Main VSPC',hours:VSPC_HOURS_MAIN},
-  {name:'Barnum Recreation Center',address:'360 N Hooker St',lat:39.7224465,lng:-105.0280307,phase:'Phase 1',hours:VSPC_HOURS_P1},
-  {name:'Blair-Caldwell Library',address:'2401 Welton St',lat:39.7524003,lng:-104.9816252,phase:'Phase 1',hours:VSPC_HOURS_P1},
-  {name:'Calvary Baptist Church of Denver',address:'6500 E Girard Ave',lat:39.6536097,lng:-104.9121823,phase:'Phase 1',hours:VSPC_HOURS_P1},
-  {name:'Christ Church United Methodist',address:'690 N Colorado Blvd',lat:39.7269374,lng:-104.9402543,phase:'Phase 1',hours:VSPC_HOURS_P1},
-  {name:'Harvard Gulch Recreation Center',address:'550 E Iliff Ave',lat:39.6744274,lng:-104.9810815,phase:'Phase 1',hours:VSPC_HOURS_P1},
-  {name:'Harvey Park Recreation Center',address:'2120 S Tennyson Way',lat:39.6781413,lng:-105.0418389,phase:'Phase 1',hours:VSPC_HOURS_P1},
-  {name:'Hiawatha Davis Jr Recreation Center',address:'3334 N Holly St',lat:39.764413,lng:-104.9221037,phase:'Phase 1',hours:VSPC_HOURS_P1},
-  {name:'Highland Recreation Center',address:'2880 N Osceola St',lat:39.7581399,lng:-105.0374752,phase:'Phase 1',hours:VSPC_HOURS_P1},
-  {name:'Montbello Recreation Center',address:'15555 E 53rd Ave',lat:39.7923968,lng:-104.8058367,phase:'Phase 1',hours:VSPC_HOURS_P1},
-  {name:'Green Valley Ranch Recreation Center',address:'4890 N Argonne Way',lat:39.7858289,lng:-104.767285,phase:'Phase 2',hours:VSPC_HOURS_P2},
-  {name:'Martin Luther King Jr. Library',address:'9898 E Colfax Ave',lat:39.7397201,lng:-104.8735205,phase:'Phase 2',hours:VSPC_HOURS_MLK},
-  {name:'Regis University / Claver Hall',address:'3333 Regis Blvd',lat:39.7913279,lng:-105.0324733,phase:'Phase 2',hours:VSPC_HOURS_P2},
-  {name:'Tivoli Student Union at Auraria',address:'900 Auraria Pkwy',lat:39.7451929,lng:-105.0058526,phase:'Phase 2',hours:VSPC_HOURS_P2},
-  {name:'University of Denver Dimond Family Residential Village',address:'2020 S High St',lat:39.6798505,lng:-104.9649917,phase:'Phase 2',hours:VSPC_HOURS_P2},
+  {name:'Denver Public Library - Central Library',address:'10 W. 14th Ave. Pkwy',lat:39.7372618,lng:-104.9881457,phase:'Main VSPC'},
+  {name:'Barnum Recreation Center',address:'360 N Hooker St',lat:39.7224465,lng:-105.0280307,phase:'Phase 1'},
+  {name:'Blair-Caldwell Library',address:'2401 Welton St',lat:39.7524003,lng:-104.9816252,phase:'Phase 1'},
+  {name:'Calvary Baptist Church of Denver',address:'6500 E Girard Ave',lat:39.6536097,lng:-104.9121823,phase:'Phase 1'},
+  {name:'Christ Church United Methodist',address:'690 N Colorado Blvd',lat:39.7269374,lng:-104.9402543,phase:'Phase 1'},
+  {name:'Harvard Gulch Recreation Center',address:'550 E Iliff Ave',lat:39.6744274,lng:-104.9810815,phase:'Phase 1'},
+  {name:'Harvey Park Recreation Center',address:'2120 S Tennyson Way',lat:39.6781413,lng:-105.0418389,phase:'Phase 1'},
+  {name:'Hiawatha Davis Jr Recreation Center',address:'3334 N Holly St',lat:39.764413,lng:-104.9221037,phase:'Phase 1'},
+  {name:'Highland Recreation Center',address:'2880 N Osceola St',lat:39.7581399,lng:-105.0374752,phase:'Phase 1'},
+  {name:'Montbello Recreation Center',address:'15555 E 53rd Ave',lat:39.7923968,lng:-104.8058367,phase:'Phase 1'},
+  {name:'Green Valley Ranch Recreation Center',address:'4890 N Argonne Way',lat:39.7858289,lng:-104.767285,phase:'Phase 2'},
+  {name:'Martin Luther King Jr. Library',address:'9898 E Colfax Ave',lat:39.7397201,lng:-104.8735205,phase:'Phase 2'},
+  {name:'Regis University / Claver Hall',address:'3333 Regis Blvd',lat:39.7913279,lng:-105.0324733,phase:'Phase 2'},
+  {name:'Tivoli Student Union at Auraria',address:'900 Auraria Pkwy',lat:39.7451929,lng:-105.0058526,phase:'Phase 2'},
+  {name:'University of Denver Dimond Family Residential Village',address:'2020 S High St',lat:39.6798505,lng:-104.9649917,phase:'Phase 2'},
 ];
 
 function populateDropboxModal(){
@@ -649,7 +618,7 @@ let showRepFilter=false;
 let showCandidateFilter=false;
 let candidateName='Candidate';
 let allVotersStats=false;
-let lastResults=[],filteredResults=[],lastLookupResults=[];
+let lastResults=[],filteredResults=[];
 function closeLegendOnboard(){
   document.getElementById('legend-onboard').classList.remove('show');
   try{localStorage.setItem('legendSeen','1');}catch(e){}
@@ -888,7 +857,7 @@ function onFocus(){if(acResults.length)renderAC();}
 function onBlur(){setTimeout(closeAC,150);}
 
 // ── SEARCH ────────────────────────────────────────────────────────
-async async async function handleSearch(){
+async function handleSearch(){
   closeAC();
   const addr=document.getElementById('addr-input').value.trim();
   if(!addr){alert('Please enter a Denver address.');return;}
@@ -901,9 +870,6 @@ async async async function handleSearch(){
       if(!r.ok){alert('Could not find that address in Denver. Try adding the street type, e.g. "552 S Pennsylvania St".');return;}
       origin=await r.json();lastOrigin=origin;
     }
-    const lookupR=await fetch(apiUrl('/api/lookup?address=')+encodeURIComponent(addr));
-    const lookupD=await lookupR.json();
-    lastLookupResults=lookupD.found?lookupD.results:[];
     await doSearch(origin);
   }finally{btn.textContent='Search';btn.disabled=false;document.getElementById('addr-input').blur();}
 }
@@ -1022,7 +988,7 @@ function ensureMap(){
       className:'',iconSize:[28,28],iconAnchor:[14,14]
     });
     const m=L.marker([v.lat,v.lng],{icon:vspcIcon,zIndexOffset:-90}).addTo(mapInstance);
-    m.bindPopup(`<strong>${v.name}</strong><br/>${v.address}<br/><em style="font-size:11px">Voter Service &amp; Polling Center &middot; ${v.phase}</em><br/><span style="font-size:11px;color:#16a34a;">⏰ ${v.hours}</span>`);
+    m.bindPopup(`<strong>${v.name}</strong><br/>${v.address}<br/><em style="font-size:11px">Voter Service &amp; Polling Center &middot; ${v.phase}</em>`);
   });
 }
 
@@ -1144,29 +1110,10 @@ function renderRoster(){
 function loadMore(){rosterState.shown=Math.min(rosterState.shown+PAGE,rosterState.hh.voters.length);renderRoster();}
 
 // ── LIST ──────────────────────────────────────────────────────────
-function renderList(results,lookupResults){
+function renderList(results){
   document.getElementById('list-count').textContent=`${results.length} address${results.length!==1?'es':''}`;
   const ul=document.getElementById('household-list');
-  let lookupHtml='';
-  if(lookupResults&&lookupResults.length){
-    lookupResults.forEach(hh=>{
-      const unreturned=hh.voters.filter(v=>!v.returned);
-      if(!unreturned.length){
-        lookupHtml+=`<div style="border-left:3px solid #22c55e;border-radius:8px;margin:8px 12px;padding:10px 12px;font-size:12px;color:#22c55e;">All ballots at this address have been returned.</div>`;
-        return;
-      }
-      lookupHtml+=`<div style="border-left:3px solid var(--accent);border-radius:8px;margin:8px 12px;padding:10px 12px;">`;
-      lookupHtml+=`<div style="font-size:11px;color:var(--accent);font-weight:600;margin-bottom:6px;">Searched address - ${unreturned.length} unreturned ballot${unreturned.length!==1?'s':''}</div>`;
-      lookupHtml+=`<div style="font-weight:500;font-size:13px;margin-bottom:6px;">${hh.address}</div>`;
-      unreturned.forEach((v,i)=>{
-        lookupHtml+=`<div style="font-size:12px;color:var(--text2);padding:2px 0;">${i+1}. ${v.name} - ${v.party}</div>`;
-      });
-      lookupHtml+=`</div>`;
-    });
-  }
-  if(!results.length&&!lookupHtml){ul.innerHTML=`<div style="padding:3rem 2rem;text-align:center;color:var(--text3);font-size:14px;">No cached addresses near you yet - geocoding is running. Try again in a few minutes.</div>`;return;}
-  ul.innerHTML=lookupHtml;
-  if(!results.length)return;
+  if(!results.length){ul.innerHTML=`<div style="padding:3rem 2rem;text-align:center;color:var(--text3);font-size:14px;">⏳ No cached addresses near you yet — geocoding is running. Try again in a few minutes.</div>`;return;}
   let html='',stop=0;
   results.forEach((hh,i)=>{
     stop++;
@@ -1201,8 +1148,9 @@ function focusMarker(i){
 
 function renderAll(results,origin){
   filteredResults=results;
+
   renderMap(results,origin||lastOrigin);
-  renderList(results,lastLookupResults);
+  renderList(results);
   closeRoster();
 }
 
