@@ -73,7 +73,7 @@ CAMPAIGNS = {
     'arapahoe': {
         'name': 'Arapahoe Ballot Finder',
         'logo': '',
-        'color': '#6c63ff',
+        'color': '#1a6fa8',
         'password': os.environ.get('ADMIN_PASSWORD', 'changeme'),
         'data_dir': os.path.join(BASE_DATA_DIR, 'default'),
         'theme': 'dark',
@@ -82,6 +82,9 @@ CAMPAIGNS = {
         'show_candidate_filter': False,
         'show_rep_filter': True,
         'all_voters_stats': False,
+        'map_center': [39.6508, -104.8858],
+        'map_zoom': 12,
+        'county': 'Arapahoe',
     },
     'denverdems': {
         'name': 'Denver Democrats',
@@ -405,6 +408,9 @@ def make_routes(prefix, cid):
             'theme': cfg.get('theme', 'dark'),
             'publicPassword': cfg.get('public_password', ''),
             'hideStats': cfg.get('hide_stats', False),
+            'mapCenter': cfg.get('map_center', [39.7392, -104.9903]),
+            'mapZoom': cfg.get('map_zoom', 13),
+            'county': cfg.get('county', 'Denver'),
             'tagline': cfg.get('tagline', ''),
             'showPartyFilter': cfg.get('show_party_filter', True),
             'showRepFilter': cfg.get('show_rep_filter', False),
