@@ -132,6 +132,7 @@ button.upload-btn:disabled{opacity:.4;cursor:not-allowed;}
   </div>
   <div style="display:flex;gap:8px;margin-top:10px;">
     <button id="nom-start-btn" onclick="startNominatim()" style="flex:1;padding:11px;border-radius:10px;border:none;background:#6c63ff;color:white;font-size:13px;font-weight:600;cursor:pointer;">▶ Start Build</button>
+    <button onclick="clearAndRebuildNominatim()" style="flex:1;padding:11px;border-radius:10px;border:1px solid rgba(255,100,100,0.4);background:#2a1a1a;color:#ff6b6b;font-size:13px;font-weight:600;cursor:pointer;">🗑 Clear & Rebuild</button>
     <button id="nom-flip-btn" onclick="flipToNominatim()" style="flex:1;padding:11px;border-radius:10px;border:none;background:#22222f;color:#6b6890;font-size:13px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,0.1);" disabled>⚡ Flip to Nominatim</button>
   </div>
   <div id="geocache-msg" style="font-size:13px;margin-top:8px;display:none;"></div>
@@ -564,6 +565,19 @@ function getPrefix() {
   return '';
 }
 
+async function clearAndRebuildNominatim() {
+  const pw = document.getElementById('admin-pw-nom') ? document.getElementById('admin-pw-nom').value : document.querySelector('[id$="admin-pw"]') ? document.querySelector('[id$="admin-pw"]').value : '';
+  if (!confirm('Clear all 142k Nominatim cached coordinates and rebuild from scratch? This takes ~40 hours. The app stays live using Census coords during rebuild.')) return;
+  const fd = new FormData();
+  fd.append('password', pw);
+  try {
+    const r = await fetch(getPrefix() + '/api/nominatim-clear', {method:'POST', body:fd});
+    const d = await r.json();
+    if (d.error) { alert('Error: ' + d.error); return; }
+    alert('Cache cleared. Rebuilding in background with corrected coordinates.');
+    pollNominatimStatus();
+  } catch(e) { alert('Error: ' + e); }
+}
 async function pollNominatimStatus() {
   try {
     const r = await fetch(getPrefix() + '/api/nominatim-status');
