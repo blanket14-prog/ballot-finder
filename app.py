@@ -714,6 +714,27 @@ def make_routes(prefix, cid):
             'cacheSize': len(nominatim_cache),
         })
 
+    @app.route(f'{url_prefix}/api/nominatim-clear', methods=['POST'], endpoint=f'nomclear_{cid}')
+    def nominatim_clear():
+        password = request.form.get('password','')
+        if password != CAMPAIGNS[cid]['password']:
+            return jsonify({'error': 'Invalid password'}), 401
+        global nominatim_cache
+        nominatim_cache.clear()
+        if os.path.exists(NOMINATIM_CACHE_FILE):
+            os.remove(NOMINATIM_CACHE_FILE)
+        nominatim_progress['done'] = 0
+        nominatim_progress['total'] = 0
+        nominatim_progress['running'] = False
+        nominatim_progress['complete'] = False
+        # Start rebuild in background using current voter data
+        voters = list(SHARED_VOTERS.values()) if SHARED_VOTERS else []
+        if voters:
+            import threading
+            t = threading.Thread(target=run_nominatim_build, args=(voters,), daemon=True)
+            t.start()
+        return jsonify({'ok': True, 'message': f'Cache cleared. Rebuilding {len(voters)} addresses.'})
+
     @app.route(f'{url_prefix}/api/start-nominatim', methods=['POST'], endpoint=f'startnominatim_{cid}')
     def start_nominatim():
         password = (request.json or {}).get('password','')
