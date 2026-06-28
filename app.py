@@ -287,17 +287,10 @@ def parse_from_disk(cid, filename):
     delim = '|' if '|' in lines[0] else ','
     header_cols = split_line(lines[0].strip(), delim)
     col = {name.strip(): i for i, name in enumerate(header_cols)}
-    # Normalize Arapahoe column names to Denver format
-    ARAPAHOE_COL_MAP = {
-        'RES ADDRESS': 'RES_ADDRESS',
-        'RES CITY': 'RES_CITY',
-        'RES STATE': 'RES_STATE',
-        'RES ZIP': 'RES_ZIP',
-        'VOTE METHOD': 'VOTE_METHOD',
-    }
-    for old_name, new_name in ARAPAHOE_COL_MAP.items():
-        if old_name in col and new_name not in col:
-            col[new_name] = col[old_name]
+    # Normalize Arapahoe column names (spaces) to Denver format (underscores)
+    for old_n, new_n in [('RES ADDRESS','RES_ADDRESS'),('RES CITY','RES_CITY'),('RES STATE','RES_STATE'),('RES ZIP','RES_ZIP'),('VOTE METHOD','VOTE_METHOD')]:
+        if old_n in col and new_n not in col:
+            col[new_n] = col[old_n]
     required = ['VOTER_ID','FIRST_NAME','LAST_NAME','PARTY','RES_ADDRESS','RES_CITY','RES_STATE','RES_ZIP']
     missing = [c for c in required if c not in col]
     if missing: raise ValueError(f"Missing columns: {missing}")
@@ -614,6 +607,24 @@ def make_routes(prefix, cid):
                 hh['lng'] = coords[1]
             results.append(hh)
         return jsonify({'found': True, 'results': results})
+
+    @app.route(f'{url_prefix}/api/lookup', endpoint=f'lookup_{cid}')
+    def lookup():
+        addr = request.args.get('address','').strip().upper()
+        if not addr or not voters_data:
+            return jsonify({'found': False, 'results': []})
+        import re as _re
+        addr_norm = _re.sub(r'[.,#]', '', addr).strip()
+        matches = {}
+        for v in voters_data:
+            baddr = _re.sub(r'[.,#]', '', v.get('buildingAddress','').upper()).strip()
+            if addr_norm in baddr or baddr.startswith(addr_norm.split()[0] if addr_norm else ''):
+                if addr_norm not in baddr: continue
+                key = v['geocodeKey']
+                if key not in matches:
+                    matches[key] = {'address': v.get('buildingAddress',''), 'voters': []}
+                matches[key]['voters'].append({'name': v.get('name',''), 'party': v.get('party',''), 'returned': v.get('returned', False)})
+        return jsonify({'found': bool(matches), 'results': list(matches.values())[:5]})
 
     @app.route(f'{url_prefix}/api/autocomplete', endpoint=f'autocomplete_{cid}')
     def api_autocomplete():
