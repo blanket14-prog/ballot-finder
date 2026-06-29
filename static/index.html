@@ -524,6 +524,24 @@ const ARAPAHOE_DROP_BOXES = [
   {name:'City of Sheridan Municipal Center',address:'4101 S. Federal Blvd., Sheridan',lat:39.6418698,lng:-105.0267810},
   {name:'Adams County Sheriff Substation',address:'2550 Strasburg Rd., Strasburg',lat:39.7517932,lng:-104.3202369},
 ];
+function getArapahoeVspcHours() {
+  var mo=new Date().getMonth(),d=new Date().getDate();
+  if(mo!==5) return 'See arapahoeco.gov for hours';
+  if(d>=22&&d<=26) return 'Today: 8am–5pm · Sat Jun 27: 10am–2pm';
+  if(d===27) return 'Today (Sat Jun 27): 10am–2pm';
+  if(d===28) return 'Closed today (Sunday) · Opens Mon Jun 29';
+  if(d===29) return 'Today (Jun 29): 8am–5pm · Election Day Jun 30: 7am–7pm';
+  if(d===30) return 'Election Day — Open 7am–7pm';
+  return 'Election has ended';
+}
+var ARAPAHOE_VSPC_LOCATIONS=[
+  {name:'Arapahoe County CentrePoint Plaza',address:'14980 E. Alameda Dr., Aurora',lat:39.7085654,lng:-104.8146855},
+  {name:'Martin Luther King Jr. Library',address:'9898 E. Colfax Ave., Aurora',lat:39.7397201,lng:-104.8735205},
+  {name:'Kelver Library',address:'585 S. Main St., Byers',lat:39.7033195,lng:-104.2238235},
+  {name:'Arapahoe County Lima Plaza',address:'6954 S. Lima St., Centennial',lat:39.5902014,lng:-104.8563006},
+  {name:'Smoky Hill Library',address:'5430 S. Biscay Cir., Centennial',lat:39.6181390,lng:-104.7674478},
+  {name:'Arapahoe Community College',address:'5900 S. Santa Fe Dr., Littleton',lat:39.6080683,lng:-105.0188452},
+];
 function getSunTimes(d){
   const J=d.getTime()/86400000+2440587.5,n=Math.ceil(J-2451545.0+0.0008);
   const Js=n-DLNG/360,M=(357.5291+0.98560028*Js)%360;
@@ -1035,6 +1053,7 @@ function ensureMap(){
     dropboxMarkers.push(m);
   });}
   // Add VSPC markers
+  if(window._hideDenverDropboxes){var _ah=getArapahoeVspcHours();ARAPAHOE_VSPC_LOCATIONS.forEach(function(v){var ai=L.divIcon({html:'<div style="width:28px;height:28px;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.35))"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="28" height="28" rx="6" fill="#15803d"/><rect x="8" y="9" width="16" height="14" rx="1.5" fill="white" opacity="0.9"/><line x1="11" y1="13" x2="21" y2="13" stroke="#15803d" stroke-width="1.5" stroke-linecap="round"/><line x1="11" y1="16" x2="21" y2="16" stroke="#15803d" stroke-width="1.5" stroke-linecap="round"/><path d="M11 19.5 L13 21.5 L17 17.5" stroke="#15803d" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>',className:'',iconSize:[28,28],iconAnchor:[14,14]});var am=L.marker([v.lat,v.lng],{icon:ai,zIndexOffset:600}).addTo(mapInstance);am.bindPopup('<strong>'+v.name+'</strong><br/>'+v.address+'<br/><em style="font-size:11px">Voter Service &amp; Polling Center</em><br/><span style="font-size:11px;color:#16a34a;">⏰ '+_ah+'</span>');});} else {
   VSPC_LOCATIONS.forEach(v=>{
     const vspcIcon=L.divIcon({
       html:`<div style="width:28px;height:28px;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.35))"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="28" height="28" rx="6" fill="#15803d"/><rect x="8" y="9" width="16" height="14" rx="1.5" fill="white" opacity="0.9"/><line x1="11" y1="13" x2="21" y2="13" stroke="#15803d" stroke-width="1.5" stroke-linecap="round"/><line x1="11" y1="16" x2="21" y2="16" stroke="#15803d" stroke-width="1.5" stroke-linecap="round"/><path d="M11 19.5 L13 21.5 L17 17.5" stroke="#15803d" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`,
@@ -1043,6 +1062,7 @@ function ensureMap(){
     const m=L.marker([v.lat,v.lng],{icon:vspcIcon,zIndexOffset:-90}).addTo(mapInstance);
     m.bindPopup(`<strong>${v.name}</strong><br/>${v.address}<br/><em style="font-size:11px">Voter Service &amp; Polling Center &middot; ${v.phase}</em>`);
   });
+  }
 }
 
 function makeIcon(hh,highlight){
