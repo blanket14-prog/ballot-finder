@@ -484,6 +484,46 @@ function apiUrl(path) { return PATH_PREFIX + path; }
 
 // ── THEME ─────────────────────────────────────────────────────────
 const DLAT=39.7392,DLNG=-104.9903;
+
+const ARAPAHOE_DROP_BOXES = [
+  {name:'Arapahoe County CentrePoint Plaza',address:'14980 E. Alameda Dr., Aurora',lat:39.7085654,lng:-104.8146855},
+  {name:'Arapahoe County Fairgrounds',address:'25690 E. Quincy Ave., Aurora',lat:39.6334376,lng:-104.6895027},
+  {name:'Aurora Center for Active Adults (Del Mar Park)',address:'30 Del Mar Cir., Aurora',lat:39.7248333,lng:-104.8490950},
+  {name:'Aurora Public Library (Central)',address:'14949 E. Alameda Pkwy., Aurora',lat:39.7104366,lng:-104.8151731},
+  {name:'Beck Recreation Center',address:'800 Telluride St., Aurora',lat:39.7303182,lng:-104.7797466},
+  {name:'Central Recreation Center',address:'18150 E. Vassar Pl., Aurora',lat:39.6685613,lng:-104.7758813},
+  {name:'Community College of Aurora - CentreTech',address:'16000 E. CentreTech Pkwy., Aurora',lat:39.7178373,lng:-104.8027665},
+  {name:'Heather Gardens Clubhouse',address:'2888 S. Heather Gardens Way, Aurora',lat:39.6632080,lng:-104.8311507},
+  {name:'Iliff RTD Parking Structure',address:'14000 E. Wesley Ave., Aurora',lat:39.6729877,lng:-104.8253949},
+  {name:'Martin Luther King Jr. Library',address:'9898 E. Colfax Ave., Aurora',lat:39.7397201,lng:-104.8735205},
+  {name:'Mission Viejo Library',address:'15324 E. Hampden Cir., Aurora',lat:39.6505925,lng:-104.8092771},
+  {name:'Saddle Rock Golf Course',address:'21705 E. Arapahoe Rd., Aurora',lat:39.5958489,lng:-104.7361964},
+  {name:"Tallyn's Reach Library",address:'23911 E. Arapahoe Rd., Aurora',lat:39.5901200,lng:-104.7089728},
+  {name:'Utah Park Pool',address:'1800 S. Peoria St., Aurora',lat:39.6843245,lng:-104.8447323},
+  {name:'Adams County Bennett Motor Vehicle',address:'355 S. First St., Bennett',lat:39.7522312,lng:-104.4339919},
+  {name:'Kelver Library',address:'585 S. Main St., Byers',lat:39.7033195,lng:-104.2238235},
+  {name:'Arapahoe County Lima Plaza',address:'6954 S. Lima St., Centennial',lat:39.5902014,lng:-104.8563006},
+  {name:'Centennial Civic Center',address:'13133 E. Arapahoe Rd., Centennial',lat:39.5957440,lng:-104.8358855},
+  {name:'Goodson Recreation Center',address:'6315 S. University Blvd., Centennial',lat:39.6028772,lng:-104.9619208},
+  {name:'Koelbel Library',address:'5955 S. Holly St., Centennial',lat:39.6089431,lng:-104.9236547},
+  {name:'Smoky Hill Library',address:'5430 S. Biscay Cir., Centennial',lat:39.6181390,lng:-104.7674478},
+  {name:'Trails Recreation Center',address:'16799 E. Lake Ave., Centennial',lat:39.6101316,lng:-104.7955458},
+  {name:'Cherry Hills Village Center',address:'2450 E. Quincy Ave., Cherry Hills Village',lat:39.6373803,lng:-104.9579784},
+  {name:'Deer Trail Town Hall',address:'555 Second Ave., Deer Trail',lat:39.6136321,lng:-104.0453373},
+  {name:'Cook Park Recreation Center',address:'7100 Cherry Creek S. Dr., Denver',lat:39.6870709,lng:-104.9088634},
+  {name:'Eloise May Library',address:'1471 S. Parker Rd., Denver',lat:39.6899293,lng:-104.8913064},
+  {name:'Hampden Branch Library',address:'9755 E. Girard Ave., Denver',lat:39.6546726,lng:-104.8747836},
+  {name:'Arapahoe County Public Health',address:'4857 S. Broadway, Englewood',lat:39.6283044,lng:-104.9883679},
+  {name:'Englewood Civic Center',address:'1000 Englewood Pkwy., Englewood',lat:39.6547674,lng:-104.9987566},
+  {name:'Glendale City Hall',address:'950 S. Birch St., Glendale',lat:39.6991184,lng:-104.9360563},
+  {name:'Greenwood Village City Hall',address:'6060 S. Quebec St., Greenwood Village',lat:39.6064319,lng:-104.9031886},
+  {name:'Arapahoe Community College',address:'5900 S. Santa Fe Dr., Littleton',lat:39.6080683,lng:-105.0188452},
+  {name:'Arapahoe County Administration Building',address:'5334 S. Prince St., Littleton',lat:39.6199264,lng:-105.0138397},
+  {name:'Arapahoe County Warehouse',address:'5251 S. Federal Blvd., Littleton',lat:39.6213121,lng:-105.0294803},
+  {name:'South Suburban Sports Complex',address:'4810 E. County Line Rd., Littleton',lat:39.5654076,lng:-104.9266324},
+  {name:'City of Sheridan Municipal Center',address:'4101 S. Federal Blvd., Sheridan',lat:39.6418698,lng:-105.0267810},
+  {name:'Adams County Sheriff Substation',address:'2550 Strasburg Rd., Strasburg',lat:39.7517932,lng:-104.3202369},
+];
 function getSunTimes(d){
   const J=d.getTime()/86400000+2440587.5,n=Math.ceil(J-2451545.0+0.0008);
   const Js=n-DLNG/360,M=(357.5291+0.98560028*Js)%360;
@@ -596,9 +636,11 @@ function populateDropboxModal(){
 }
 
 function updateNearestDropbox(origin){
-  if(!origin||!DROP_BOXES.length)return;
+  if(!origin)return;
+  const _boxes=window._hideDenverDropboxes?ARAPAHOE_DROP_BOXES:DROP_BOXES;
+  if(!_boxes.length)return;
   let nearest=null,nearestDist=Infinity;
-  DROP_BOXES.forEach(db=>{
+  _boxes.forEach(db=>{
     const d=hav(origin.lat,origin.lng,db.lat,db.lng);
     if(d<nearestDist){nearestDist=d;nearest=db;}
   });
@@ -983,6 +1025,13 @@ function ensureMap(){
     });
     const m=L.marker([db.lat,db.lng],{icon,zIndexOffset:-100}).addTo(mapInstance);
     m.bindPopup(`<strong>${db.name}</strong><br/>${db.address}<br/><em style="font-size:11px">24-hr ballot drop box</em>`);
+    dropboxMarkers.push(m);
+  });}
+  // Add Arapahoe drop box markers
+  if(window._hideDenverDropboxes){ARAPAHOE_DROP_BOXES.forEach(db=>{
+    const icon=L.divIcon({html:`<div style="width:28px;height:28px;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.4))"><svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="4" width="24" height="20" rx="2" fill="#1565c0"/><rect x="2" y="4" width="24" height="5" rx="2" fill="#0d47a1"/><rect x="9" y="7" width="10" height="2" rx="1" fill="white"/><path d="M10 15 L14 19 L18 15" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="14" y1="12" x2="14" y2="19" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></div>`,className:'',iconSize:[28,28],iconAnchor:[14,28]});
+    const m=L.marker([db.lat,db.lng],{icon,zIndexOffset:500}).addTo(mapInstance);
+    m.bindPopup(`<strong>${db.name}</strong><br/>${db.address}<br/><em style="font-size:11px">24-Hour Ballot Drop Box</em>`);
     dropboxMarkers.push(m);
   });}
   // Add VSPC markers
