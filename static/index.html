@@ -396,7 +396,7 @@ body.hide-stats #campaign-tagline{display:block;max-width:260px;font-size:13px;c
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1"/><line x1="5" y1="6" x2="11" y2="6"/><line x1="5" y1="9" x2="11" y2="9"/><line x1="5" y1="12" x2="9" y2="12"/></svg>
         Terms
       </a>
-      <span style="font-size:10px;color:var(--text3);">v4.4</span>
+      <span style="font-size:10px;color:var(--text3);">v4.5</span>
     </div>
   </div>
 </div>
@@ -410,7 +410,7 @@ body.hide-stats #campaign-tagline{display:block;max-width:260px;font-size:13px;c
     <div class="modal-body">
       <div class="modal-section">
         <div class="modal-section-title">Source</div>
-        <p>Denver Elections Division — <strong>CE-068 Voters With Ballots List</strong> from <a href="https://www.denvergov.org/Government/Agencies-Departments-Offices/Agencies-Departments-Offices-Directory/Denver-Clerk-and-Recorder/Elections-Division/Election-Data-and-Maps" target="_blank" style="color:var(--accent);">denvergov.org</a>.</p>
+        <p id="modal-source-agency">Elections Division — <strong>CE-068 Voters With Ballots List</strong> from <a id="modal-source-link" href="#" target="_blank" style="color:var(--accent);">elections website</a>.</p>
         <p>File: <strong id="modal-filename">—</strong><br/>Loaded: <strong id="modal-loaded">—</strong></p>
       </div>
       <div class="modal-section">
@@ -421,7 +421,7 @@ body.hide-stats #campaign-tagline{display:block;max-width:260px;font-size:13px;c
         <div class="modal-section-title">What this data does NOT include</div>
         <ul><li>How anyone voted</li><li>Social Security or driver's license numbers</li><li>Email addresses or signatures</li></ul>
       </div>
-      <p style="font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:10px;margin-top:4px;">Voter data is public record under C.R.S. 1-2-227 · Denver Elections Division</p>
+      <p style="font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:10px;margin-top:4px;">Voter data is public record under C.R.S. 1-2-227 · <span id="modal-footer-agency">Elections Division</span></p>
     </div>
   </div>
 </div>
@@ -731,6 +731,15 @@ async function loadConfig(){
       const tl=document.getElementById('campaign-tagline');
       if(tl) tl.textContent=c.tagline;
     }
+    // Update data source modal
+    const agencyEl=document.getElementById('modal-source-agency');
+    const linkEl=document.getElementById('modal-source-link');
+    const footerEl=document.getElementById('modal-footer-agency');
+    const agency=c.sourceAgency||'Denver Elections Division';
+    const siteUrl=c.sourceUrl||'https://www.denvergov.org/Government/Agencies-Departments-Offices/Agencies-Departments-Offices-Directory/Denver-Clerk-and-Recorder/Elections-Division/Election-Data-and-Maps';
+    const siteName=c.sourceSite||'denvergov.org';
+    if(agencyEl) agencyEl.innerHTML=agency+' — <strong>CE-068 Voters With Ballots List</strong> from <a href="'+siteUrl+'" target="_blank" style="color:var(--accent);">'+siteName+'</a>.';
+    if(footerEl) footerEl.textContent=agency;
     if(c.mapCenter){window._mapLat=c.mapCenter[0];window._mapLng=c.mapCenter[1];}
     if(c.mapZoom){window._mapZoom=c.mapZoom;}
     if(c.county&&c.county!=='Denver'){window._hideDenverDropboxes=true;}
