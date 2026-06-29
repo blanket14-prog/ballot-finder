@@ -811,6 +811,7 @@ make_routes('default', 'default')
 make_routes('melat', 'melat')
 make_routes('phil', 'phil')
 make_routes('denverdems', 'denverdems')
+make_routes('arapahoe', 'arapahoe')
 
 # Static files
 @app.route('/static/manifest.json')
