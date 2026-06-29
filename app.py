@@ -1084,7 +1084,12 @@ for cid in CAMPAIGNS:
 
 # Start geocoding for any that need it
 def startup_geocoding():
-    time.sleep(2)
+    # Wait for voter data to finish loading (can take 30+ seconds for large files)
+    import time as _time
+    for _ in range(60):
+        if states['default']['voters']:
+            break
+        _time.sleep(2)
     # Auto-resume Nominatim in its own thread immediately — don't wait for auto_geocode
     if len(nominatim_cache) > 0 and not nominatim_progress['complete']:
         voters = states['default']['voters']
