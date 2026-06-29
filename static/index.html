@@ -385,7 +385,7 @@ body.hide-stats #campaign-tagline{display:block;max-width:260px;font-size:13px;c
         Data source
       </a>
       <a class="footer-link" onclick="openModal('safety-modal')">
-        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L14 4.5v4.7c0 3-2.5 5-6 5.5C2.5 14 0 12 0 9V4.5z" transform="translate(1,0)"/></svg>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L14 4.5v4.8c0 3-2.5 5-6 5.5C2.5 14 0 12 0 9V4.5z" transform="translate(1,0)"/></svg>
         Safety
       </a>
       <a class="footer-link" onclick="openModal('dropbox-modal')">
@@ -451,7 +451,7 @@ body.hide-stats #campaign-tagline{display:block;max-width:260px;font-size:13px;c
     <button class="modal-close" onclick="closeModal('dropbox-modal')">✕</button>
     <div class="modal-title">🗳️ 24-Hour Ballot Drop Boxes</div>
     <div class="modal-body">
-      <p>Open 24/7 through <strong>June 30, 2026 at 7:00 PM</strong>. You can drop a Denver ballot in any Denver County drop box.</p>
+      <p>Open 24/7 through <strong>June 30, 2026 at 7:00 PM</strong>. You can drop your ballot in any drop box location listed below.</p>
       <div class="modal-section" style="margin-top:12px;">
         <ul class="dropbox-list" id="dropbox-modal-list"></ul>
       </div>
@@ -651,7 +651,8 @@ const VSPC_LOCATIONS = [
 
 function populateDropboxModal(){
   const ul=document.getElementById('dropbox-modal-list');
-  ul.innerHTML=DROP_BOXES.map(db=>`<li><span class="db-icon">📦</span><div class="db-info"><div class="db-name">${db.name}</div><div class="db-addr">${db.address}</div></div></li>`).join('');
+  const boxes=window._hideDenverDropboxes?ARAPAHOE_DROP_BOXES:DROP_BOXES;
+  ul.innerHTML=boxes.map(db=>`<li><span class="db-icon">📦</span><div class="db-info"><div class="db-name">${db.name}</div><div class="db-addr">${db.address}</div></div></li>`).join('');
 }
 
 function updateNearestDropbox(origin){
