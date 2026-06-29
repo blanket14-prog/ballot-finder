@@ -816,7 +816,7 @@ def make_routes(prefix, cid):
 @app.before_request
 def hostname_redirect():
     host = request.host.lower().split(':')[0]
-    if 'arapahoe' in host and not request.path.startswith('/arapahoe') and not request.path.startswith('/static'):
+    if 'arapahoe' in host and not request.path.startswith('/arapahoe') and not request.path.startswith('/static') and not request.path.startswith('/admin'):
         from flask import redirect
         return redirect('/arapahoe' if request.path == '/' else '/arapahoe' + request.path, code=302)
 
