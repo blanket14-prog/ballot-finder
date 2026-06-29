@@ -71,7 +71,7 @@ CAMPAIGNS = {
         'tagline': 'Help Phil win — find priority voters near you who haven’t returned their ballot.',
     },
     'arapahoe': {
-        'name': 'Arapahoe Ballot Finder',
+        'name': 'Arapahoe County Ballot Finder',
         'logo': '',
         'color': '#1a6fa8',
         'password': os.environ.get('ADMIN_PASSWORD', 'changeme'),
