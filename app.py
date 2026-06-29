@@ -812,6 +812,14 @@ def make_routes(prefix, cid):
                 print(f"[{c}] Error saving flipped geocache: {e}")
         return jsonify({'success': True, 'message': f'Flipped to Nominatim geocache ({len(nominatim_cache):,} addresses)'})
 
+# Hostname-based redirects
+@app.before_request
+def hostname_redirect():
+    host = request.host.lower().split(':')[0]
+    if 'arapahoe' in host and not request.path.startswith('/arapahoe'):
+        from flask import redirect
+        return redirect('/arapahoe' + request.path if request.path != '/' else '/arapahoe', code=302)
+
 # Register routes for all campaigns
 make_routes('default', 'default')
 make_routes('melat', 'melat')
