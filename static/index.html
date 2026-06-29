@@ -61,14 +61,14 @@ html,body{height:100%;max-height:100%;overflow:hidden;position:fixed;width:100%;
 #app{display:flex;flex-direction:column;height:100%;max-width:600px;margin:0 auto;background:var(--bg);}
 #title-bar{text-align:center;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:5px 14px 3px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border);}
 #top-bar{padding:4px 12px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;min-height:56px;}
-#top-logo{display:flex;align-items:center;white-space:nowrap;flex-shrink:0;height:44px;}
-#campaign-name{font-size:15px;font-weight:700;letter-spacing:-.3px;background:linear-gradient(135deg,var(--text) 0%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+#top-logo{display:flex;align-items:center;white-space:nowrap;flex-shrink:0;height:auto;min-height:44px;}
+#campaign-name{font-size:13px;font-weight:700;letter-spacing:-.3px;background:linear-gradient(135deg,var(--text) 0%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;}
 #campaign-logo{max-height:44px;max-width:180px;width:auto;object-fit:contain;}
-#top-stats{display:flex;align-items:center;gap:0;flex:1;background:var(--surface);border-radius:9px;border:1px solid var(--border);overflow:hidden;height:44px;}
+#top-stats{display:flex;align-items:center;gap:0;flex:1;background:var(--surface);border-radius:9px;border:1px solid var(--border);overflow:hidden;}
 
 .top-stat{flex:1;padding:4px 8px;text-align:center;}
-.top-stat-label{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px;white-space:nowrap;}
-.top-stat-value{font-size:14px;font-weight:700;color:var(--text);}
+.top-stat-label{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.top-stat-value{font-size:13px;font-weight:700;color:var(--text);}
 .top-stat-value.warn{color:#fb923c;}
 body.hide-stats #top-stats{display:none;}
 body.hide-stats #top-bar{justify-content:center;padding:6px 16px;gap:14px;}
@@ -267,7 +267,7 @@ body.hide-stats #campaign-tagline{display:block;max-width:260px;font-size:13px;c
       <div class="top-stat-divider"></div>
       <div class="top-stat"><div class="top-stat-label">Not returned</div><div class="top-stat-value warn" id="stat-pending">—</div></div>
       <div class="top-stat-divider"></div>
-      <div class="top-stat"><div class="top-stat-label">Return rate</div><div class="top-stat-value" id="stat-rate">—</div></div>
+      <div class="top-stat"><div class="top-stat-label">Return %</div><div class="top-stat-value" id="stat-rate">—</div></div>
     </div>
   </div>
   <div id="geocoding-banner" style="display:none!important;"><span id="geocoding-text"></span></div>
@@ -385,7 +385,7 @@ body.hide-stats #campaign-tagline{display:block;max-width:260px;font-size:13px;c
         Data source
       </a>
       <a class="footer-link" onclick="openModal('safety-modal')">
-        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L14 4.5v4.6c0 3-2.5 5-6 5.5C2.5 14 0 12 0 9V4.5z" transform="translate(1,0)"/></svg>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L14 4.5v4.7c0 3-2.5 5-6 5.5C2.5 14 0 12 0 9V4.5z" transform="translate(1,0)"/></svg>
         Safety
       </a>
       <a class="footer-link" onclick="openModal('dropbox-modal')">
