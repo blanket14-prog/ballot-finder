@@ -81,7 +81,7 @@ CAMPAIGNS = {
         'show_party_filter': True,
         'show_candidate_filter': False,
         'show_rep_filter': True,
-        'all_voters_stats': False,
+        'all_voters_stats': True,
         'map_center': [39.6508, -104.8858],
         'map_zoom': 12,
         'county': 'Arapahoe',
