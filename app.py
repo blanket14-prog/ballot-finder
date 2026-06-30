@@ -816,9 +816,17 @@ def make_routes(prefix, cid):
 @app.before_request
 def hostname_redirect():
     host = request.host.lower().split(':')[0]
-    skip = ('/arapahoe', '/static', '/admin', '/api', '/favicon')
-    if 'arapahoe' in host and not any(request.path.startswith(p) for p in skip):
-        from flask import redirect
+    skip = ('/static', '/admin', '/api', '/favicon')
+    is_skip_path = any(request.path.startswith(p) for p in skip)
+    if is_skip_path:
+        return None
+    from flask import redirect
+    # Canonicalize onrender.com -> custom domain
+    if host.endswith('onrender.com'):
+        path = request.path if request.path != '/' else '/arapahoe'
+        return redirect('https://arapahoeballotfinder.com' + path, code=301)
+    # Redirect bare domain to /arapahoe path
+    if 'arapahoe' in host and not request.path.startswith('/arapahoe'):
         return redirect('/arapahoe' if request.path == '/' else '/arapahoe' + request.path, code=302)
 
 # Register routes for all campaigns
